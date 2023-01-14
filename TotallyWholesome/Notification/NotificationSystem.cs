@@ -91,9 +91,9 @@ namespace TotallyWholesome.Notification
             }
             
             if(MetaPort.Instance.isUsingVr)
-                _hudContent = PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject;
-            else
                 _hudContent = PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject;
+            else
+                _hudContent = PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject;
 
             _notificationGO.transform.parent = _hudContent.transform;
             
