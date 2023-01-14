@@ -1,6 +1,10 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
+    <a href="https://github.com/TotallyWholesome/TotallyWholesomeMod">
+    <img src="images/TW_Logo_Pride.png" alt="Logo" width="150" height="150">
+  </a>
+  
 <h3 align="center">Totally Wholesome</h3>
 
   <p align="center">
