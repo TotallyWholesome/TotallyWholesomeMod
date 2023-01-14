@@ -1,0 +1,9 @@
+[submodule "ManagedButtplugIo"]
+	path = ManagedButtplugIo
+	url = https://github.com/Er1807/ManagedButtplugIo
+[submodule "Yggdrasil"]
+	path = Yggdrasil
+	url = https://github.com/TotallyWholesomeVRC/Yggdrasil.git
+[submodule "TWNetCommon"]
+	path = TWNetCommon
+	url = https://github.com/TotallyWholesomeVRC/TWNetCommon.git
