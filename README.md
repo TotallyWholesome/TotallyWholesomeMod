@@ -138,7 +138,7 @@ To see requests and hints for upcoming feature updates to Totally Wholesome plea
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+Distributed under the Mozilla Public License v2.0. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
