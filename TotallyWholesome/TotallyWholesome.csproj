@@ -335,6 +335,9 @@
   <ItemGroup>
     <EmbeddedResource Include="TWUI\TWUIBuildAdmin.zip" Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="ILMergeConfig.json" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\ILMerge.MSBuild.Task.1.0.7\build\ILMerge.MSBuild.Task.targets" Condition="Exists('..\packages\ILMerge.MSBuild.Task.1.0.7\build\ILMerge.MSBuild.Task.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

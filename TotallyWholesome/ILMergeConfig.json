@@ -13,7 +13,8 @@
 		  "Yggdrasil.dll",
 		  "MessagePack.dll",
 		  "MessagePack.Annotations.dll",
-		  "Microsoft.NET.StringTools.dll"
+		  "Microsoft.NET.StringTools.dll",
+		  "System.Numerics.Vectors.dll"
         ]
     }
 }
