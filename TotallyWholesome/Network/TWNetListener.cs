@@ -17,6 +17,7 @@ using TWNetCommon;
 using TWNetCommon.Auth;
 using TWNetCommon.BasicMessages;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 using WholesomeLoader;
 
 namespace TotallyWholesome.Network
@@ -31,6 +32,8 @@ namespace TotallyWholesome.Network
         public static Action<MasterSettings> MasterSettingsEvent;
         public static Action<MasterRemoteControl> MasterRemoteControlEvent;
         public static Action<LeashConfigUpdate> LeashConfigUpdate;
+        public static Action<PiShockUpdate> PiShockUpdateEvent;
+        public static Action<ButtplugUpdate> ButtplugUpdateEvent;
 
         public bool NetworkUnreachable;
         public DateTime ReconnectAttemptTime;
@@ -187,7 +190,34 @@ namespace TotallyWholesome.Network
                 Con.Error("An error occured during OnMasterRemoteControl");
                 Con.Error(e);
             }
-            
+        }
+        
+        public override void OnButtplugUpdate(ButtplugUpdate packet, TWNetClient conn)
+        {
+            try
+            {
+                Con.Debug($"[RECV] - {packet}");
+                ButtplugUpdateEvent?.Invoke(packet);
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured during OnButtplugUpdate");
+                Con.Error(e);
+            }
+        }
+
+        public override void OnPiShockUpdate(PiShockUpdate packet, TWNetClient conn)
+        {
+            try
+            {
+                Con.Debug($"[RECV] - {packet}");
+                PiShockUpdateEvent?.Invoke(packet);
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured during OnPiShockUpdate");
+                Con.Error(e);
+            }
         }
 
         public override void OnSystemNotice(MessageResponse packet, TWNetClient conn)

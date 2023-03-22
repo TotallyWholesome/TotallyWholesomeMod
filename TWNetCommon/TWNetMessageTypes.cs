@@ -43,11 +43,13 @@
         public const int LeadRequestResp = 0x2001;
         public const int LeadAccept = 0x2002;
         public const int InstanceInfo = 0x2003;
-        public const int MasterRemoteControl = 0x2004;
         public const int MasterSettings = 0x2005;
         public const int StatusUpdate = 0x2006;
         public const int StatusUpdateConfirmation = 0x2007;
         public const int InstanceFollowResponse = 0x2008;
         public const int LeashConfigUpdate = 0x2009;
+        public const int PiShockUpdate = 0x2010;
+        public const int ButtplugUpdate = 0x2011;
+        public const int MasterRemoteControl2 = 0x2012;
     }
 }

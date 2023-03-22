@@ -22,6 +22,7 @@ using TotallyWholesome.Objects;
 using TotallyWholesome.TWUI;
 using TWNetCommon;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 using TWNetCommon.Data.NestedObjects;
 using UnityEngine;
 using WholesomeLoader;
@@ -78,7 +79,7 @@ namespace TotallyWholesome.Managers.Lead
             Instance = this;
 
             TetherRange = new SliderFloat("leashLengthSlider", 2f);
-            TetherRange.OnValueUpdated += f => { LeadSenders.UpdateMasterSettingsAsync(); };
+            TetherRange.OnValueUpdated += f => { TWNetSendHelpers.UpdateMasterSettingsAsync(); };
             TetherRangeIPC = new SliderFloat("leashLengthSliderIPC", 2f);
             TetherRangeIPC.OnValueUpdated += f =>
             {
@@ -88,7 +89,7 @@ namespace TotallyWholesome.Managers.Lead
                     return;
 
                 leadPair.LeadLength = f;
-                LeadSenders.UpdateMasterSettingsAsync(leadPair);
+                TWNetSendHelpers.UpdateMasterSettingsAsync(leadPair);
             }; 
             _pairKeys = new List<string>();
             LastPairKeys = new List<string>();
@@ -131,7 +132,7 @@ namespace TotallyWholesome.Managers.Lead
                 Configuration.JSONConfig.LeashStyle = (LeashStyle)i;
                 Configuration.SaveConfig();
                 
-                LeadSenders.SendLeashConfigUpdate();
+                TWNetSendHelpers.SendLeashConfigUpdate();
             };
 
             _propSelection = new MultiSelection("Prop Selection", Array.Empty<string>(), 0);
@@ -143,14 +144,14 @@ namespace TotallyWholesome.Managers.Lead
                 
                 UserInterface.Instance.SelectedLeadPair.PropTarget = _props.Keys.ToArray()[i];
                 if (!UserInterface.Instance.SelectedLeadPair.LockToProp) return;
-                LeadSenders.SendMasterRemoteSettingsAsync(UserInterface.Instance.SelectedLeadPair);
+                TWNetSendHelpers.SendMasterRemoteSettingsAsync(UserInterface.Instance.SelectedLeadPair);
             };
 
             _propSelectionGlobal.OnOptionUpdated += i =>
             {
                 PropTarget = _props.Keys.ToArray()[i];
                 if (!LockToProp) return;
-                LeadSenders.SendMasterRemoteSettingsAsync();
+                TWNetSendHelpers.SendMasterRemoteSettingsAsync();
             };
         }
 
@@ -231,7 +232,7 @@ namespace TotallyWholesome.Managers.Lead
             {
                 Instance.LeashPinPosition = vector3;
                 if (!Instance.LockToWorld) return;
-                LeadSenders.SendMasterRemoteSettingsAsync();
+                TWNetSendHelpers.SendMasterRemoteSettingsAsync();
             });
         }
         
@@ -244,7 +245,7 @@ namespace TotallyWholesome.Managers.Lead
                 if (UserInterface.Instance.SelectedLeadPair == null) return;
                 UserInterface.Instance.SelectedLeadPair.LeashPinPosition = vector3;
                 if (!UserInterface.Instance.SelectedLeadPair.LockToWorld) return;
-                LeadSenders.SendMasterRemoteSettingsAsync(UserInterface.Instance.SelectedLeadPair);
+                TWNetSendHelpers.SendMasterRemoteSettingsAsync(UserInterface.Instance.SelectedLeadPair);
             });
         }
 
@@ -275,7 +276,7 @@ namespace TotallyWholesome.Managers.Lead
             Configuration.JSONConfig.LeashColour = "#" + ColorUtility.ToHtmlStringRGB(newColor);
             Configuration.SaveConfig();
             
-            LeadSenders.SendLeashConfigUpdate();
+            TWNetSendHelpers.SendLeashConfigUpdate();
         }
 
         [UIEventHandler("clearLeads")]
@@ -385,9 +386,9 @@ namespace TotallyWholesome.Managers.Lead
             }
             
             if(_petRequest)
-                LeadSenders.AcceptPetRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
+                TWNetSendHelpers.AcceptPetRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
             else
-                LeadSenders.AcceptMasterRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
+                TWNetSendHelpers.AcceptMasterRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
         }
 
         #endregion
@@ -408,7 +409,7 @@ namespace TotallyWholesome.Managers.Lead
                     {
                         Con.Debug("Auto accepted master request");
                         NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a master request!", 4f, TWAssets.Crown);
-                        LeadSenders.AcceptMasterRequest(packet.Key, packet.RequesterID);
+                        TWNetSendHelpers.AcceptMasterRequest(packet.Key, packet.RequesterID);
                         return;
                     }
                 }
@@ -435,7 +436,7 @@ namespace TotallyWholesome.Managers.Lead
                     {
                         Con.Debug("Auto accepted pet request");
                         NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a pet request!", 4f, TWAssets.Handcuffs);
-                        LeadSenders.AcceptPetRequest(packet.Key, packet.RequesterID);
+                        TWNetSendHelpers.AcceptPetRequest(packet.Key, packet.RequesterID);
                         return;
                     }
                 }
@@ -496,7 +497,7 @@ namespace TotallyWholesome.Managers.Lead
             }
             
             if(shouldUpdate)
-                LeadSenders.SendLeashConfigUpdate(FollowerPair);
+                TWNetSendHelpers.SendLeashConfigUpdate(FollowerPair);
         }
 
         private void ApplyForcedMute(bool mute)

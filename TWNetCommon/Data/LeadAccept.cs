@@ -46,10 +46,19 @@ namespace TWNetCommon.Data
         public bool DisableFlight { get; set; }
         [Key(18)] 
         public bool DisableSeats { get; set; }
+        [Key(19)]
+        public bool BlindPet { get; set; }
+        [Key(20)]
+        public bool DeafenPet { get; set; }
 
         public override string ToString()
         {
-            return $"LeadAccept - [MasterID: {MasterID}, MasterBoneTarget: {MasterBoneTarget}, LeadLength: {LeadLength}, ForcedMute: {ForcedMute}, NoVisibleLeash: {NoVisibleLeash}, PrivateLeash: {PrivateLeash}, PetID: {FollowerID}, PetBoneTarget: {PetBoneTarget}, FollowerRequest: {FollowerAccept}, LeadRemove: {LeadRemove}, TempUnlockLeash: {TempUnlockLeash}, Key: {Key}, MasterLeashColour: {MasterLeashColour}, PetLeashColour: {PetLeashColour}, DisableFlight: {DisableFlight}, DisableSeats: {DisableSeats}]";
+            return $"LeadAccept - [MasterID: {MasterID}, MasterBoneTarget: {MasterBoneTarget}, LeadLength: {LeadLength}, " +
+                   $"ForcedMute: {ForcedMute}, NoVisibleLeash: {NoVisibleLeash}, PrivateLeash: {PrivateLeash}, " +
+                   $"PetID: {FollowerID}, PetBoneTarget: {PetBoneTarget}, FollowerRequest: {FollowerAccept}, " +
+                   $"LeadRemove: {LeadRemove}, TempUnlockLeash: {TempUnlockLeash}, Key: {Key}, " +
+                   $"MasterLeashColour: {MasterLeashColour}, PetLeashColour: {PetLeashColour}, " +
+                   $"DisableFlight: {DisableFlight}, DisableSeats: {DisableSeats}, BlindPet: {BlindPet}, DeafenPet: {DeafenPet}]";
         }
     }
 }

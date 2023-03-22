@@ -4,6 +4,7 @@ using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 
 namespace TotallyWholesome.Managers
 {

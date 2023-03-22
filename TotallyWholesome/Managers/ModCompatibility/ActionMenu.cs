@@ -146,12 +146,12 @@ namespace TotallyWholesome.Managers.ModCompatibility
             {
 
                 leadpair.LeadLength = value;
-                LeadSenders.UpdateMasterSettingsAsync(leadpair);
+                TWNetSendHelpers.UpdateMasterSettingsAsync(leadpair);
             }
             else
             {
                 LeadManager.Instance.TetherRange.SliderValue = value;
-                LeadSenders.UpdateMasterSettingsAsync();
+                TWNetSendHelpers.UpdateMasterSettingsAsync();
             }
         }
 
@@ -160,12 +160,12 @@ namespace TotallyWholesome.Managers.ModCompatibility
             if (pair == null)
             {
                 ButtplugManager.Instance.ToyStrength.SliderValue = value;
-                LeadSenders.SendMasterRemoteSettingsAsync();
+                TWNetSendHelpers.SendButtplugUpdate();
             }
             else
             {
                 pair.ToyStrength = value;
-                LeadSenders.SendMasterRemoteSettingsAsync(pair);
+                TWNetSendHelpers.SendButtplugUpdate(pair);
             }
         }
 
@@ -174,12 +174,12 @@ namespace TotallyWholesome.Managers.ModCompatibility
             if (pair == null)
             {
                 LeadManager.Instance.TempUnlockLeash = state;
-                LeadSenders.UpdateMasterSettingsAsync();
+                TWNetSendHelpers.UpdateMasterSettingsAsync();
             }
             else
             {
                 pair.TempUnlockLeash = state;
-                LeadSenders.UpdateMasterSettingsAsync(pair);
+                TWNetSendHelpers.UpdateMasterSettingsAsync(pair);
             }
         }
 
@@ -188,12 +188,12 @@ namespace TotallyWholesome.Managers.ModCompatibility
             if (pair == null)
             {
                 LeadManager.Instance.ForcedMute = state;
-                LeadSenders.UpdateMasterSettingsAsync();
+                TWNetSendHelpers.UpdateMasterSettingsAsync();
             }
             else
             {
                 pair.ForcedMute = state;
-                LeadSenders.UpdateMasterSettingsAsync(pair);
+                TWNetSendHelpers.UpdateMasterSettingsAsync(pair);
             }
         }
 

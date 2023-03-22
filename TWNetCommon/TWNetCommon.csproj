@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;ADMIN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -34,7 +34,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Admin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;ADMIN</DefineConstants>
+    <DefineConstants>TRACE;ADMIN</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>7.3</LangVersion>
@@ -42,16 +42,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MessagePack, Version=2.4.0.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
-      <HintPath>..\packages\MessagePack.2.4.35\lib\netstandard2.0\MessagePack.dll</HintPath>
+      <HintPath>..\packages\MessagePack.2.4.59\lib\netstandard2.0\MessagePack.dll</HintPath>
     </Reference>
     <Reference Include="MessagePack.Annotations, Version=2.4.0.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
-      <HintPath>..\packages\MessagePack.Annotations.2.4.35\lib\netstandard2.0\MessagePack.Annotations.dll</HintPath>
+      <HintPath>..\packages\MessagePack.Annotations.2.4.59\lib\netstandard2.0\MessagePack.Annotations.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.NET.StringTools, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.NET.StringTools.17.3.1\lib\net472\Microsoft.NET.StringTools.dll</HintPath>
+      <HintPath>..\packages\Microsoft.NET.StringTools.17.4.0\lib\net472\Microsoft.NET.StringTools.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
@@ -82,13 +82,15 @@
     <Compile Include="Auth\Auth.cs" />
     <Compile Include="Auth\AuthResp.cs" />
     <Compile Include="BasicMessages\MessageResponse.cs" />
+    <Compile Include="Data\ControlPackets\ButtplugUpdate.cs" />
+    <Compile Include="Data\ControlPackets\LeashConfigUpdate.cs" />
+    <Compile Include="Data\ControlPackets\MasterRemoteControl.cs" />
+    <Compile Include="Data\ControlPackets\MasterSettings.cs" />
+    <Compile Include="Data\ControlPackets\PiShockUpdate.cs" />
     <Compile Include="Data\InstanceFollowResponse.cs" />
     <Compile Include="Data\InstanceInfo.cs" />
     <Compile Include="Data\LeadAccept.cs" />
     <Compile Include="Data\LeadRequest.cs" />
-    <Compile Include="Data\LeashConfigUpdate.cs" />
-    <Compile Include="Data\MasterRemoteControl.cs" />
-    <Compile Include="Data\MasterSettings.cs" />
     <Compile Include="Data\Moderation.cs" />
     <Compile Include="Data\NestedObjects\MasterRemoteParameter.cs" />
     <Compile Include="Data\NestedObjects\TWVector3.cs" />

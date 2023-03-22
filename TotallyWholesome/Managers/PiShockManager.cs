@@ -16,6 +16,7 @@ using TotallyWholesome.Objects;
 using TotallyWholesome.Objects.ConfigObjects;
 using TotallyWholesome.TWUI;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 using UnityEngine;
 using WholesomeLoader;
 using Yggdrasil.Extensions;
@@ -58,7 +59,7 @@ namespace TotallyWholesome.Managers
         private GameObject cubeShow;
         private object _piShockHeightCoroutineToken;
 
-        private MasterRemoteControl lastPacket;
+        private PiShockUpdate lastPacket;
 
         private int heightState = -1;
         
@@ -113,7 +114,7 @@ namespace TotallyWholesome.Managers
             ShockHeightStrengthStepIPC = new SliderFloat("piShockStepStrengthSliderIPC", 0f);
             ShockHeightStrengthStepIPC.OnValueUpdated += f => SetShockHeightControlIPC(step: f);
 
-            TWNetListener.MasterRemoteControlEvent += ReceivePiShockEvent;
+            TWNetListener.PiShockUpdateEvent += ReceivePiShockEvent;
             LeadManager.OnLeadPairDestroyed += OnLeadRemoveEvent;
             UserInterface.Instance.OnOpenedPage += OnOpenedPage;
         }
@@ -218,27 +219,27 @@ namespace TotallyWholesome.Managers
         public static void BeepAction()
         {
             Instance.Operation = ShockOperation.Beep;
-            LeadSenders.SendMasterRemoteSettingsAsync();
+            TWNetSendHelpers.SendPiShockUpdate();
             
-            UIUtils.ShowToast($"Sent PiShock Beep to all pets for {Instance.Duration} seconds!");
+            UIUtils.ShowToast($"Sent PiShock Beep to all pets for {Instance.Duration.SliderValue} seconds!");
         }
 
         [UIEventHandler("pishockVibrate")]
         public static void VibrateAction()
         {
             Instance.Operation = ShockOperation.Vibrate;
-            LeadSenders.SendMasterRemoteSettingsAsync();
+            TWNetSendHelpers.SendPiShockUpdate();
             
-            UIUtils.ShowToast($"Sent PiShock Vibrate to all pets for {Instance.Duration} seconds at %{Instance.Strength}!");
+            UIUtils.ShowToast($"Sent PiShock Vibrate to all pets for {Instance.Duration.SliderValue} seconds at {Instance.Strength.SliderValue}%!");
         }
 
         [UIEventHandler("pishockShock")]
         public static void ShockAction()
         {
             Instance.Operation = ShockOperation.Shock;
-            LeadSenders.SendMasterRemoteSettingsAsync();
+            TWNetSendHelpers.SendPiShockUpdate();
             
-            UIUtils.ShowToast($"Sent PiShock Shock to all pets for {Instance.Duration} seconds at %{Instance.Strength}!");
+            UIUtils.ShowToast($"Sent PiShock Shock to all pets for {Instance.Duration.SliderValue} seconds at {Instance.Strength.SliderValue}%!");
         }
         
         [UIEventHandler("pishockBeepIPC")]
@@ -250,7 +251,7 @@ namespace TotallyWholesome.Managers
                 return;
             
             leadPair.ShockOperation = ShockOperation.Beep;
-            LeadSenders.SendMasterRemoteSettingsAsync(leadPair);
+            TWNetSendHelpers.SendPiShockUpdate(leadPair);
             
             UIUtils.ShowToast($"Sent PiShock Beep to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds!");
         }
@@ -264,7 +265,7 @@ namespace TotallyWholesome.Managers
                 return;
             
             leadPair.ShockOperation = ShockOperation.Vibrate;
-            LeadSenders.SendMasterRemoteSettingsAsync(leadPair);
+            TWNetSendHelpers.SendPiShockUpdate(leadPair);
             
             UIUtils.ShowToast($"Sent PiShock Vibrate to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds at %{leadPair.ShockStrength}!");
         }
@@ -278,7 +279,7 @@ namespace TotallyWholesome.Managers
                 return;
             
             leadPair.ShockOperation = ShockOperation.Shock;
-            LeadSenders.SendMasterRemoteSettingsAsync(leadPair);
+            TWNetSendHelpers.SendPiShockUpdate(leadPair);
             
             UIUtils.ShowToast($"Sent PiShock Shock to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds at %{leadPair.ShockStrength}!");
         }
@@ -331,7 +332,7 @@ namespace TotallyWholesome.Managers
 
             if (Instance != null && TWUtils.GetOurPlayer() != null)
                 Instance.ShowCube(TWUtils.GetOurPlayer(), Instance.ShockHeight.SliderValue, true, ColorShown);
-            LeadSenders.SendMasterRemoteSettingsAsync();
+            TWNetSendHelpers.SendPiShockUpdate();
         }
         
         public static void SetShockHeightControlIPC(bool? enable = null, float? height = null, float? min = null, float? max = null, float? step = null)
@@ -354,7 +355,7 @@ namespace TotallyWholesome.Managers
             
             if (Instance != null)
                 Instance.ShowCube(leadPair.Pet, leadPair.ShockHeight, true, ColorShown);
-            LeadSenders.SendMasterRemoteSettingsAsync(leadPair);
+            TWNetSendHelpers.SendPiShockUpdate(leadPair);
         }
 
         #endregion
@@ -567,7 +568,7 @@ namespace TotallyWholesome.Managers
             });
         }
 
-        private void ReceivePiShockEvent(MasterRemoteControl packet)
+        private void ReceivePiShockEvent(PiShockUpdate packet)
         {
             if (LeadManager.Instance.FollowerPair == null) return;
             if (LeadManager.Instance.FollowerPair.Key != packet.Key) return;

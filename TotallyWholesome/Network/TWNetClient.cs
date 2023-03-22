@@ -23,8 +23,10 @@ using TWNetCommon;
 using TWNetCommon.Auth;
 using TWNetCommon.BasicMessages;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 using UnityEngine;
 using WholesomeLoader;
+using Yggdrasil.Network.Framing;
 using Yggdrasil.Network.TCP;
 
 namespace TotallyWholesome.Network
@@ -54,16 +56,18 @@ namespace TotallyWholesome.Network
         private bool _connectedToGS;
         private DateTime _lastPetFollowFail = DateTime.Now;
         private List<Action> _waitingForGSConnection = new();
-
+        
         private string _host = "potato.moe";
-        private int _port = 14004;
+        private int _port = 14005;
         private Auth _authPacket;
+        private LengthPrefixFramer _framer = new(16000);
 
         public TWNetClient()
         {
             Instance = this;
 
             Listener = new TWNetListener();
+            _framer.MessageReceived += FramerReceivedData;
 
             Patches.Patches.EarlyWorldJoin += OnEarlyWorldJoin;
             Patches.Patches.OnGameNetworkConnected += OnEarlyWorldJoin;
@@ -143,7 +147,7 @@ namespace TotallyWholesome.Network
                         Con.Debug($"[SEND] - {obj}");
                         writer.Write(MessagePackSerializer.Serialize((InstanceInfo)obj));
                         break;
-                    case TWNetMessageTypes.MasterRemoteControl:
+                    case TWNetMessageTypes.MasterRemoteControl2:
                         Con.Debug($"[SEND] - {obj}");
                         writer.Write(MessagePackSerializer.Serialize((MasterRemoteControl)obj));
                         break;
@@ -172,11 +176,19 @@ namespace TotallyWholesome.Network
                         Con.Debug($"[SEND] - {obj}");
                         writer.Write(MessagePackSerializer.Serialize((LeashConfigUpdate)obj));
                         break;
+                    case TWNetMessageTypes.ButtplugUpdate:
+                        Con.Debug($"[SEND] - {obj}");
+                        writer.Write(MessagePackSerializer.Serialize((ButtplugUpdate)obj));
+                        break;
+                    case TWNetMessageTypes.PiShockUpdate:
+                        Con.Debug($"[SEND] - {obj}");
+                        writer.Write(MessagePackSerializer.Serialize((PiShockUpdate)obj));
+                        break;
                 }
                 
                 writer.Flush();
                 
-                Send(((MemoryStream)writer.BaseStream).ToArray());
+                Send(_framer.Frame(((MemoryStream)writer.BaseStream).ToArray()));
             }
             catch (Exception e)
             {
@@ -263,22 +275,23 @@ namespace TotallyWholesome.Network
         
         protected override void ReceiveData(byte[] buffer, int length)
         {
+            _framer.ReceiveData(buffer, length);            
+        }
+
+        private void FramerReceivedData(byte[] bytes)
+        {
             //Extract packet id
-            if (length < sizeof(int))
+            if (bytes.Length < sizeof(int))
             {
                 Con.Error("Connection has sent an invalid packet! Size less then packet id bytes");
                 return;
             }
 
-            byte[] data = new byte[length];
-        
-            Array.Copy(buffer, data, length);
-
-            int packetID = BitConverter.ToInt32(data, 0);
+            int packetID = BitConverter.ToInt32(bytes, 0);
             
-            byte[] finalBytes = new byte[data.Length - sizeof(int)];
+            byte[] finalBytes = new byte[bytes.Length - sizeof(int)];
             
-            Array.Copy(data, sizeof(int), finalBytes, 0, finalBytes.Length);
+            Array.Copy(bytes, sizeof(int), finalBytes, 0, finalBytes.Length);
             
             Listener.HandlePacket(this, finalBytes, packetID, ReceiveData);
         }

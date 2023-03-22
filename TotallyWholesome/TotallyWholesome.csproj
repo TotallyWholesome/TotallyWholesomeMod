@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;ADMIN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -37,7 +37,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Admin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;ADMIN</DefineConstants>
+    <DefineConstants>TRACE;ADMIN</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -271,7 +271,6 @@
     <Compile Include="Managers\Lead\LeadComponents\TWRaycaster.cs" />
     <Compile Include="Managers\Lead\LeadManager.cs" />
     <Compile Include="Managers\Lead\LeadPair.cs" />
-    <Compile Include="Managers\Lead\LeadSenders.cs" />
     <Compile Include="Managers\Lead\LeashStyle.cs" />
     <Compile Include="Managers\ModCompatibility\CompatbilityReflections\NotificationAPIAdapter.cs" />
     <Compile Include="Managers\ModCompatibility\CompatbilityReflections\UIXAdapter.cs" />
@@ -283,6 +282,7 @@
     <Compile Include="Managers\Status\StatusManager.cs" />
     <Compile Include="Managers\ButtplugManager.cs" />
     <Compile Include="Managers\ConfigManager.cs" />
+    <Compile Include="Network\TWNetSendHelpers.cs" />
     <Compile Include="Network\TWNetClient.cs" />
     <Compile Include="Network\TWNetListener.cs" />
     <Compile Include="Notification\NotificationController.cs" />

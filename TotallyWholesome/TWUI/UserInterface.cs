@@ -627,23 +627,23 @@ namespace TotallyWholesome.TWUI
                     break;
                 case "GagPet":
                     LeadManager.Instance.ForcedMute = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync();
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
                     break;
                 case "TempLeashUnlock":
                     LeadManager.Instance.TempUnlockLeash = state;
-                    LeadSenders.UpdateMasterSettingsAsync();
+                    TWNetSendHelpers.UpdateMasterSettingsAsync();
                     break;
                 case "TempLeashUnlockIPC":
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.TempUnlockLeash = state;
-                    LeadSenders.UpdateMasterSettingsAsync(SelectedLeadPair);
+                    TWNetSendHelpers.UpdateMasterSettingsAsync(SelectedLeadPair);
                     break;
                 case "GagPetIPC":
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.ForcedMute = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
                     break;
                 case "HeightControlIPC":
                     if (SelectedLeadPair == null)
@@ -652,43 +652,43 @@ namespace TotallyWholesome.TWUI
                     break;
                 case "LockToProp":
                     LeadManager.Instance.LockToProp = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync();
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
                     break;
                 case "LockToWorld":
                     LeadManager.Instance.LockToWorld = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync();
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
                     break;
                 case "DisableFlight":
                     LeadManager.Instance.DisableFlight = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync();
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
                     break;
                 case "DisableSeats":
                     LeadManager.Instance.DisableSeats = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync();
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
                     break;
                 case "LockToPropIPC":
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.LockToProp = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
                     break;
                 case "LockToWorldIPC":
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.LockToWorld = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
                     break;
                 case "DisableFlightIPC":
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.DisableFlight = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
                     break;
                 case "DisableSeatsIPC":
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.DisableSeats = state;
-                    LeadSenders.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
                     break;
             }
         }

@@ -13,6 +13,7 @@ using TotallyWholesome.Objects.ConfigObjects;
 using TotallyWholesome.TWUI;
 using TWNetCommon;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 using TWNetCommon.Data.NestedObjects;
 using WholesomeLoader;
 using Yggdrasil.Logging;
@@ -90,7 +91,7 @@ namespace TotallyWholesome.Managers.AvatarParams
             if (pair == null || pair.PetEnabledParameters.All(x => !x.IsUpdated))
                 return;
 
-            LeadSenders.SendMasterRemoteSettingsAsync(pair);
+            TWNetSendHelpers.SendMasterRemoteSettingsAsync(pair);
         }
         
         public void UpdateEnabledParameters(bool force = false)
@@ -124,7 +125,7 @@ namespace TotallyWholesome.Managers.AvatarParams
 
             _shouldUpdateParameters = false;
 
-            TWNetClient.Instance.Send(remoteControl, TWNetMessageTypes.MasterRemoteControl);
+            TWNetClient.Instance.Send(remoteControl, TWNetMessageTypes.MasterRemoteControl2);
         }
 
         private void UpdateEnabledParametersOnAccept(LeadPair pair)

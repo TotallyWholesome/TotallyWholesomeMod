@@ -1,4 +1,6 @@
-﻿using MessagePack;
+﻿using System.Collections.Generic;
+using MessagePack;
+using TWNetCommon.Data.NestedObjects;
 
 namespace TWNetCommon.Data
 {
@@ -38,10 +40,14 @@ namespace TWNetCommon.Data
         public bool DisableSeats { get; set; }
         [Key(13)]
         public bool TempUnlockLeash { get; set; }
+        [Key(14)]
+        public bool BlindPet { get; set; }
+        [Key(15)]
+        public bool DeafenPet { get; set; }
 
         public override string ToString()
         {
-            return $"LeadRequest - [Target: {Target}, BoneTarget: {BoneTarget}, LeadLength: {LeadLength}, ForcedMute: {ForcedMute}, NoVisibleLeash: {NoVisibleLeash}, PrivateLeash: {PrivateLeash}, Key: {Key}, RequesterID: {RequesterID}, MasterRequest: {MasterRequest}, LeashColour: {LeashColour}, DisableFlight: {DisableFlight}, DisableSeats: {DisableSeats}, TempLeashUnlock: {TempUnlockLeash}]";
+            return $"LeadRequest - [Target: {Target}, BoneTarget: {BoneTarget}, LeadLength: {LeadLength}, ForcedMute: {ForcedMute}, NoVisibleLeash: {NoVisibleLeash}, PrivateLeash: {PrivateLeash}, Key: {Key}, RequesterID: {RequesterID}, MasterRequest: {MasterRequest}, LeashColour: {LeashColour}, DisableFlight: {DisableFlight}, DisableSeats: {DisableSeats}, TempLeashUnlock: {TempUnlockLeash}, BlindPet: {BlindPet}, DeafenPet: {DeafenPet}]";
         }
     }
 }

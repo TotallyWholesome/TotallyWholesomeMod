@@ -5,6 +5,7 @@ using MessagePack;
 using TWNetCommon.Auth;
 using TWNetCommon.BasicMessages;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 
 namespace TWNetCommon
 {
@@ -61,7 +62,7 @@ namespace TWNetCommon
                         var instanceInfo = MessagePackSerializer.Deserialize<InstanceInfo>(bytes, out bytesRead);
                         OnInstanceInfo(instanceInfo, conn);
                         break;
-                    case TWNetMessageTypes.MasterRemoteControl:
+                    case TWNetMessageTypes.MasterRemoteControl2:
                         var masterRemote = MessagePackSerializer.Deserialize<MasterRemoteControl>(bytes, out bytesRead);
                         OnMasterRemoteControl(masterRemote, conn);
                         break;
@@ -93,6 +94,14 @@ namespace TWNetCommon
                     case TWNetMessageTypes.LeashConfigUpdate:
                         var config = MessagePackSerializer.Deserialize<LeashConfigUpdate>(bytes, out bytesRead);
                         OnLeashConfigUpdate(config, conn);
+                        break;
+                    case TWNetMessageTypes.PiShockUpdate:
+                        var psu = MessagePackSerializer.Deserialize<PiShockUpdate>(bytes, out bytesRead);
+                        OnPiShockUpdate(psu, conn);
+                        break;
+                    case TWNetMessageTypes.ButtplugUpdate:
+                        var bpu = MessagePackSerializer.Deserialize<ButtplugUpdate>(bytes, out bytesRead);
+                        OnButtplugUpdate(bpu, conn);
                         break;
                     default:
                         throw new Exception("Packet not registered in TWPacketHandler!");
@@ -141,5 +150,9 @@ namespace TWNetCommon
         public virtual void OnPacketHandlerException(Exception exception, int packetID) {}
 
         public virtual void OnLeashConfigUpdate(LeashConfigUpdate update, TConnection conn) { }
+
+        public virtual void OnButtplugUpdate(ButtplugUpdate update, TConnection conn) { }
+
+        public virtual void OnPiShockUpdate(PiShockUpdate update, TConnection conn) { }
     }
 }

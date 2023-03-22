@@ -18,6 +18,7 @@ using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using TotallyWholesome.TWUI;
 using TWNetCommon.Data;
+using TWNetCommon.Data.ControlPackets;
 using WholesomeLoader;
 
 namespace TotallyWholesome.Managers
@@ -52,7 +53,7 @@ namespace TotallyWholesome.Managers
             Instance = this;
 
             ToyStrength = new SliderFloat("lovenseStrengthSlider", 0f);
-            ToyStrength.OnValueUpdated += f => { LeadSenders.SendMasterRemoteSettingsAsync(); };
+            ToyStrength.OnValueUpdated += f => { TWNetSendHelpers.SendButtplugUpdate(); };
 
             ToyStrengthIPC = new SliderFloat("lovenseStrengthSliderIPC", 0f);
             ToyStrengthIPC.OnValueUpdated += f =>
@@ -63,7 +64,7 @@ namespace TotallyWholesome.Managers
                     return;
 
                 leadPair.ToyStrength = f;
-                LeadSenders.SendMasterRemoteSettingsAsync(leadPair);
+                TWNetSendHelpers.SendButtplugUpdate(leadPair);
             };
             
 
@@ -71,7 +72,7 @@ namespace TotallyWholesome.Managers
             if (!ConfigManager.Instance.IsActive(AccessType.EnableToyControl))
                 return;
 
-            TWNetListener.MasterRemoteControlEvent += OnMasterRemoteControlEvent;
+            TWNetListener.ButtplugUpdateEvent += OnButtplugUpdate;
             TWNetListener.LeadRemoveEvent += OnLeadRemoveEvent;
 
             VibeGoBrrCompatMode = MelonMod.RegisteredMelons.Any(x => x.Info.Name == "VibeGoesBrrr");
@@ -303,7 +304,7 @@ namespace TotallyWholesome.Managers
             }
         }
 
-        private void OnMasterRemoteControlEvent(MasterRemoteControl packet)
+        private void OnButtplugUpdate(ButtplugUpdate packet)
         {
             if (!ConfigManager.Instance.IsActive(AccessType.EnableToyControl))
                 return;
