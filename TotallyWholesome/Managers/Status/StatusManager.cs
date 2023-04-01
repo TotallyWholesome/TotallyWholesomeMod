@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Player;
@@ -25,6 +27,9 @@ namespace TotallyWholesome.Managers.Status
 
         private bool _isPublicWorld;
         private StatusUpdate _ourLastStatusUpdate;
+        private DateTime _lastStatusUpdate;
+        private Task _statusUpdateTask;
+        private StatusUpdate _nextUpdatePacket;
 
         public string ManagerName() => "StatusManager";
         public int Priority() => 1;
@@ -34,6 +39,10 @@ namespace TotallyWholesome.Managers.Status
             
             _statusComponents = new Dictionary<string, StatusComponent>();
             _knownStatuses = new Dictionary<string, StatusUpdate>();
+
+            ButtplugManager.Instance.ButtplugDeviceRemoved += DeviceChangeStatusUpdate;
+            ButtplugManager.Instance.ButtplugDeviceAdded += DeviceChangeStatusUpdate;
+            PiShockManager.Instance.PiShockDeviceUpdated += DeviceChangeStatusUpdate;
             
             Patches.Patches.OnNameplateRebuild += OnNameplateRebuild;
             Patches.Patches.OnWorldLeave += OnWorldLeave;
@@ -88,18 +97,52 @@ namespace TotallyWholesome.Managers.Status
                 SendStatusUpdate();
         }
 
-        public void SendStatusUpdate()
+        private void DeviceChangeStatusUpdate()
+        {
+            if(Configuration.JSONConfig.ShowDeviceStatus && Configuration.JSONConfig.EnableStatus && !(_isPublicWorld && Configuration.JSONConfig.HideInPublicWorlds))
+                SendStatusUpdate(true);
+        }
+
+        public void SendStatusUpdate(bool fromDevice = false)
         {
             StatusUpdate update = new StatusUpdate();
             update.EnableStatus = Configuration.JSONConfig.EnableStatus && !(_isPublicWorld && Configuration.JSONConfig.HideInPublicWorlds);
 
             if (update.EnableStatus)
             {
-                update.IsLookingForGroup = ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest) || ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest);
+                update.IsLookingForGroup = (ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest) || ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest)) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
                 update.DisplaySpecialRank = Configuration.JSONConfig.DisplaySpecialStatus;
-            } 
+                update.MasterAutoAccept = ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
+                update.PetAutoAccept = ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
+                update.PiShockDevice = Configuration.JSONConfig.PiShockShockers.Any(x => x.Enabled) && Configuration.JSONConfig.ShowDeviceStatus;
+                if(ButtplugManager.Instance.buttplugClient != null)
+                    update.ButtplugDevice = ButtplugManager.Instance.buttplugClient.Devices.Length > 0 && Configuration.JSONConfig.ShowDeviceStatus;
+            }
+
+            _nextUpdatePacket = update;
+
+            if (!fromDevice)
+            {
+                TWNetClient.Instance.Send(_nextUpdatePacket, TWNetMessageTypes.StatusUpdate);
+                return;
+            }
             
-            TWNetClient.Instance.Send(update, TWNetMessageTypes.StatusUpdate);
+            //If update is coming from a device then we limit it's speed
+            if (_statusUpdateTask != null && !_statusUpdateTask.IsCompleted)
+                return;
+
+            _statusUpdateTask = Task.Run(() =>
+            {
+                var timeBetweenLast = DateTime.Now.Subtract(_lastStatusUpdate).Milliseconds;
+
+                //Ensure MasterRemoteSettings waits before being sent
+                if (timeBetweenLast <= 5000)
+                    Thread.Sleep(50 - timeBetweenLast);
+
+                _lastStatusUpdate = DateTime.Now;
+                
+                TWNetClient.Instance.Send(_nextUpdatePacket, TWNetMessageTypes.StatusUpdate);
+            });
         }
 
         public void OnStatusUpdate(StatusUpdate packet)
@@ -141,7 +184,16 @@ namespace TotallyWholesome.Managers.Status
 
                 //Status will be shown and updated
                 component.gameObject.SetActive(true);
-                component.statusImage.gameObject.SetActive(packet.IsLookingForGroup);
+                if (packet.IsLookingForGroup && !packet.PetAutoAccept && !packet.MasterAutoAccept)
+                {
+                    //Old client, display single colour mode
+                    component.UpdateAutoAcceptGroup(false,false,true, false);
+                }
+                else
+                {
+                    //Updated client, show complete status indicator
+                    component.UpdateAutoAcceptGroup(packet.PiShockDevice, packet.ButtplugDevice, packet.PetAutoAccept, packet.MasterAutoAccept);
+                }
 
                 if (ColorUtility.TryParseHtmlString(packet.SpecialRankColour, out var colour))
                     component.specialMark.color = colour;
@@ -154,7 +206,7 @@ namespace TotallyWholesome.Managers.Status
         {
             if (_ourLastStatusUpdate == null) return;
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twStatusUpdate", string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankColour, string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankTextColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankTextColour, _ourLastStatusUpdate.SpecialRank, _ourLastStatusUpdate.DisplaySpecialRank, _ourLastStatusUpdate.IsLookingForGroup);
+            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twStatusUpdate", string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankColour, string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankTextColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankTextColour, _ourLastStatusUpdate.SpecialRank, _ourLastStatusUpdate.DisplaySpecialRank, _ourLastStatusUpdate.PetAutoAccept, _ourLastStatusUpdate.MasterAutoAccept, _ourLastStatusUpdate.ButtplugDevice, _ourLastStatusUpdate.PiShockDevice);
         }
 
         public void UpdatePetMasterMark(string userID, bool pet, bool master)

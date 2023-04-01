@@ -48,6 +48,7 @@ namespace TotallyWholesome.Network
         public MessageResponse DisconnectMessage;
         public string WholesomeLoaderLocation;
         public string TargetInstanceID;
+        public bool HasBeenRatelimited;
 
         private Thread _clientPollThread;
         private string _targetWorld;
@@ -512,6 +513,11 @@ namespace TotallyWholesome.Network
             if (!IsTWNetConnected()) return;
 
             Send(LastWorldJoinMessage, TWNetMessageTypes.InstanceInfo);
+        }
+
+        protected override void OnReceiveException(Exception ex)
+        {
+            Con.Error(ex);
         }
     }
 }

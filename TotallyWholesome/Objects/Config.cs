@@ -23,6 +23,8 @@ namespace TotallyWholesome.Objects
 
         //Pet Specific Settings
         public HumanBodyBones PetBoneTarget = HumanBodyBones.Neck;
+        public float BlindnessRadius = 1f;
+        public float DeafenAttenuation = -35f;
 
         public List<PiShockShocker> PiShockShockers = new();
 
@@ -34,5 +36,7 @@ namespace TotallyWholesome.Objects
         public bool DisplaySpecialStatus = false;
         public string LoginKey = "";
         public bool HideInPublicWorlds = true;
+        public bool ShowDeviceStatus = false;
+        public bool ShowAutoAccept = true;
     }
 }

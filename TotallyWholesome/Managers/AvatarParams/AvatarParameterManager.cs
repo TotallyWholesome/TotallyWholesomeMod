@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,6 +8,7 @@ using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI.CCK.Scripts;
 using cohtml;
+using MelonLoader;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Network;
 using TotallyWholesome.Objects.ConfigObjects;
@@ -15,6 +17,7 @@ using TWNetCommon;
 using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
 using TWNetCommon.Data.NestedObjects;
+using UnityEngine;
 using WholesomeLoader;
 using Yggdrasil.Logging;
 
@@ -25,6 +28,8 @@ namespace TotallyWholesome.Managers.AvatarParams
         public static AvatarParameterManager Instance;
 
         public List<AvatarParameter> TWAvatarParameters = new();
+        public int EnabledParams;
+        public bool ChangedPetParam;
 
         private int _maxParams = 12;
         private bool _shouldUpdateParameters = false;
@@ -91,7 +96,17 @@ namespace TotallyWholesome.Managers.AvatarParams
             if (pair == null || pair.PetEnabledParameters.All(x => !x.IsUpdated))
                 return;
 
+            ChangedPetParam = true;
+
             TWNetSendHelpers.SendMasterRemoteSettingsAsync(pair);
+        }
+
+        public void TrySetTemporaryParameter(string parameterName, float parameterValue, float resetValue, float duration, float waitForStart = 0f)
+        {
+            Main.Instance.MainThreadQueue.Enqueue(() =>
+            {
+                MelonCoroutines.Start(WaitForParamReset(parameterName, parameterValue, resetValue, duration, waitForStart));
+            });
         }
         
         public void UpdateEnabledParameters(bool force = false)
@@ -103,8 +118,8 @@ namespace TotallyWholesome.Managers.AvatarParams
             config.EnabledRemoteParams = new List<string>();
 
             MasterRemoteControl remoteControl = new MasterRemoteControl();
-            if(LeadManager.Instance.FollowerPair != null)
-                remoteControl.Key = LeadManager.Instance.FollowerPair.Key;
+            if(LeadManager.Instance.MasterPair != null)
+                remoteControl.Key = LeadManager.Instance.MasterPair.Key;
             remoteControl.ParameterConfigureUpdate = true;
             remoteControl.Parameters = new List<MasterRemoteParameter>();
 
@@ -119,6 +134,8 @@ namespace TotallyWholesome.Managers.AvatarParams
                     ParameterOptions = enabled.Options
                 });
             }
+
+            EnabledParams = config.EnabledRemoteParams.Count;
                 
             if(_shouldUpdateParameters)
                 Configuration.SaveAvatarConfig(config.AvatarID, config);
@@ -127,6 +144,18 @@ namespace TotallyWholesome.Managers.AvatarParams
 
             TWNetClient.Instance.Send(remoteControl, TWNetMessageTypes.MasterRemoteControl2);
         }
+
+        private IEnumerator WaitForParamReset(string parameterName, float targetValue, float resetValue, float duration, float waitForStart)
+        {
+            if (waitForStart > 0)
+                yield return new WaitForSeconds(waitForStart);
+            
+            TrySetParameterMain(parameterName, targetValue);
+            
+            yield return new WaitForSeconds(duration);
+            
+            TrySetParameterMain(parameterName, resetValue);
+        } 
 
         private void UpdateEnabledParametersOnAccept(LeadPair pair)
         {
@@ -172,7 +201,7 @@ namespace TotallyWholesome.Managers.AvatarParams
                     return;
                 }
                 
-                if (LeadManager.Instance.FollowerPair == null || !LeadManager.Instance.FollowerPair.Key.Equals(packet.Key))
+                if (LeadManager.Instance.MasterPair == null || !LeadManager.Instance.MasterPair.Key.Equals(packet.Key))
                     return;
 
                 foreach (var update in packet.Parameters)

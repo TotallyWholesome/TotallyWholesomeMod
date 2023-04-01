@@ -2,6 +2,7 @@
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Audio;
 using WholesomeLoader;
 
 namespace TotallyWholesome
@@ -17,8 +18,10 @@ namespace TotallyWholesome
         public static Sprite MicrophoneOff;
         public static Sprite Close;
         public static Sprite Checkmark;
+        public static Sprite BadgeGold, BadgeSilver, BadgeBronze;
         public static Material Classic, Chain, Gradient, Leather, Magic;
-        public static GameObject StatusPrefab, NotificationPrefab, TWRaycaster;
+        public static GameObject StatusPrefab, NotificationPrefab, TWRaycaster, TWBlindness;
+        public static AudioMixer TWMixer;
 
         //AssetBundle Parts
         private static AssetBundle _twAssetsBundle;
@@ -71,10 +74,20 @@ namespace TotallyWholesome
                 Leather.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 Magic = _twAssetsBundle.LoadAsset<Material>("TWMagic");
                 Magic.hideFlags |= HideFlags.DontUnloadUnusedAsset;
-                NotificationPrefab = _twAssetsBundle.LoadAsset<GameObject>("Notification");
+                NotificationPrefab = _twAssetsBundle.LoadAsset<GameObject>("NotificationRoot");
                 NotificationPrefab.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 TWRaycaster = _twAssetsBundle.LoadAsset<GameObject>("TWRaycaster");
                 TWRaycaster.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                TWBlindness = _twAssetsBundle.LoadAsset<GameObject>("TWBlindness");
+                TWBlindness.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                TWMixer = _twAssetsBundle.LoadAsset<AudioMixer>("TWMixer");
+                TWMixer.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                BadgeGold = _twAssetsBundle.LoadAsset<Sprite>("Badge-Gold");
+                BadgeGold.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                BadgeSilver = _twAssetsBundle.LoadAsset<Sprite>("Badge-Silver");
+                BadgeSilver.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                BadgeBronze = _twAssetsBundle.LoadAsset<Sprite>("Badge-Bronze");
+                BadgeBronze.hideFlags |= HideFlags.DontUnloadUnusedAsset;
             }
 
             Con.Debug("Successfully loaded in assets from TWNotification bundle!");

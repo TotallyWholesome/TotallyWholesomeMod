@@ -8,6 +8,7 @@ using TMPro;
 using TotallyWholesome.Managers.ModCompatibility;
 using UnityEngine;
 using UnityEngine.UI;
+using WholesomeLoader;
 
 namespace TotallyWholesome.Notification
 {
@@ -17,11 +18,15 @@ namespace TotallyWholesome.Notification
         
         //Objects
         private Animator _notificationAnimator;
+        private Animator _achievementAnimator;
         private Image _iconImage;
+        private Image _iconAchievement;
         private Image _backgroundImage;
         private TextMeshProUGUI _titleText;
         private TextMeshProUGUI _descriptionText;
-
+        private TextMeshProUGUI _descriptionTextAchievement;
+        private AudioSource _achievementJingle;
+        
         private Queue<NotificationObject> _notificationQueue;
         private bool _isDisplaying;
         private object _timerToken;
@@ -38,19 +43,30 @@ namespace TotallyWholesome.Notification
 
         public void ClearNotifications()
         {
-            _notificationQueue.Clear();
-            ClearNotification();
+            try
+            {
+                _notificationQueue.Clear();
+                ClearNotification();
+            }
+            catch (Exception e)
+            {
+                Con.Error(e);
+            }
         }
 
         private void Start()
         {
             _notificationQueue = new Queue<NotificationObject>();
             
-            _notificationAnimator = gameObject.GetComponent<Animator>();
-            _backgroundImage = gameObject.transform.Find("Content/Background").GetComponent<Image>();
-            _iconImage = gameObject.transform.Find("Content/Icon").gameObject.GetComponent<Image>();
-            _titleText = gameObject.transform.Find("Content/Title").gameObject.GetComponent<TextMeshProUGUI>();
-            _descriptionText = gameObject.transform.Find("Content/Description").gameObject.GetComponent<TextMeshProUGUI>();
+            _notificationAnimator = gameObject.transform.Find("Notification").GetComponent<Animator>();
+            _backgroundImage = gameObject.transform.Find("Notification/Content/Background").GetComponent<Image>();
+            _iconImage = gameObject.transform.Find("Notification/Content/Icon").gameObject.GetComponent<Image>();
+            _titleText = gameObject.transform.Find("Notification/Content/Title").gameObject.GetComponent<TextMeshProUGUI>();
+            _descriptionText = gameObject.transform.Find("Notification/Content/Description").gameObject.GetComponent<TextMeshProUGUI>();
+            _iconAchievement = gameObject.transform.Find("Achievement/Content/Icon").gameObject.GetComponent<Image>();
+            _descriptionTextAchievement = gameObject.transform.Find("Achievement/Content/Description").gameObject.GetComponent<TextMeshProUGUI>();
+            _achievementAnimator = gameObject.transform.Find("Achievement").GetComponent<Animator>();
+            _achievementJingle = gameObject.transform.Find("AchievementJingle").GetComponent<AudioSource>();
         }
 
         private void Update()
@@ -62,7 +78,7 @@ namespace TotallyWholesome.Notification
             //Do not allow repeated messages within 30 seconds
             if (_currentNotification.Title.Equals(_titleText.text) && _currentNotification.Description.Equals(_descriptionText.text) && DateTime.Now.Subtract(_lastNotifTime).TotalSeconds < 30) return;
 
-            if (NotificationSystem.UseCVRNotificationSystem)
+            if (NotificationSystem.UseCVRNotificationSystem && !_currentNotification.UseAchievementPopup)
             {
                 //Using CVR HUD Messages
                 if(CohtmlHud.Instance != null && !NotificationAPIAdapter.IsNotifAPIAvailable())
@@ -75,24 +91,33 @@ namespace TotallyWholesome.Notification
             _lastNotifTime = DateTime.Now;
 
             //Update UI
-            _titleText.text = _currentNotification.Title;
-            _descriptionText.text = _currentNotification.Description;
-            _iconImage.sprite = _currentNotification.Icon == null ? defaultSprite : _currentNotification.Icon;
-            _iconImage.enabled = true;
-            _currentNotification.BackgroundColor.a = NotificationSystem.NotificationAlpha.Value;
-            _backgroundImage.color = _currentNotification.BackgroundColor;
-            _titleText.faceColor = _white;
-            _descriptionText.faceColor = _white;
-            _titleText.color = Color.white;
-            _descriptionText.color = Color.white;
+            if (!_currentNotification.UseAchievementPopup)
+            {
+                _titleText.text = _currentNotification.Title;
+                _descriptionText.text = _currentNotification.Description;
+                _iconImage.sprite = _currentNotification.Icon == null ? defaultSprite : _currentNotification.Icon;
+                _iconImage.enabled = true;
+                _currentNotification.BackgroundColor.a = NotificationSystem.NotificationAlpha.Value;
+                _backgroundImage.color = _currentNotification.BackgroundColor;
+                _titleText.faceColor = _white;
+                _descriptionText.faceColor = _white;
+                _titleText.color = Color.white;
+                _descriptionText.color = Color.white;
+            }
+            else
+            {
+                _iconAchievement.sprite = _currentNotification.Icon == null ? defaultSprite : _currentNotification.Icon;
+                _descriptionTextAchievement.text = _currentNotification.Description;
+                _achievementJingle.Play();
+            }
 
             OpenNotification();
         }
 
         public void ClearNotification()
         {
-            _currentNotification = null;
             CloseNotification();
+            _currentNotification = null;
         }
 
         private void OpenNotification()
@@ -105,7 +130,10 @@ namespace TotallyWholesome.Notification
             }
                 
             //Play slide in animation
-            _notificationAnimator.Play("In");
+            if(!_currentNotification.UseAchievementPopup)
+                _notificationAnimator.Play("In");
+            else
+                _achievementAnimator.Play("In");
 
             //Start notification timer
             _timerToken = MelonCoroutines.Start(StartTimer());
@@ -123,7 +151,10 @@ namespace TotallyWholesome.Notification
 
             _isDisplaying = false;
             //Play slide out
-            _notificationAnimator.Play("Out");
+            if(!_currentNotification.UseAchievementPopup)
+                _notificationAnimator.Play("Out");
+            else
+                _achievementAnimator.Play("Out");
         }
 
         private IEnumerator StartTimer()

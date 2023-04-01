@@ -184,6 +184,15 @@ namespace TotallyWholesome.Managers
                 case AccessType.HideNameplateBadges:
                     StatusManager.Instance.SetTWBadgeHideStatus(value);
                     break;
+                case AccessType.AllowBlindfolding:
+                    PlayerRestrictionManager.Instance.ApplyBlindfold(false, true);
+                    break;
+                case AccessType.AllowMovementControls:
+                    PlayerRestrictionManager.Instance.ChangeMovementOptions(false, false, true);
+                    break;
+                case AccessType.AllowDeafening:
+                    PlayerRestrictionManager.Instance.ApplyDeafen(false, true);
+                    break;
                 default:
                     break;
             }
@@ -297,6 +306,10 @@ namespace TotallyWholesome.Managers
 
         [Access(Category = "Pet", Name = "Allow Movement Controls", DescriptionGlobal = "Allows all masters to disable Flight and Seat usage, may include more down the road.", DescriptionUser = "Allows this master to disable Flight and Seat usage, may include more down the road.", Global = true, User = true)]
         AllowMovementControls = 0x1008,
+        [Access(Category = "Pet", Name = "Allow Blindfolding", DescriptionGlobal = "Allows all masters to blindfold you!", DescriptionUser = "Allows this master to blindfold you!", Global = true, User = true)]
+        AllowBlindfolding = 0x1009,
+        [Access(Category = "Pet", Name = "Allow Deafening", DescriptionGlobal = "Allows all masters to deafen you!", DescriptionUser = "Allows this master to deafen you!", Global = true, User = true)]
+        AllowDeafening = 0x1010,
 
         [Access(Category = "Master", Name = "Allow Pet to follow you",
             DescriptionGlobal = "This will allow all pets to follow you on World change",
@@ -360,6 +373,11 @@ namespace TotallyWholesome.Managers
             DescriptionGlobal = "Use the custom leash colour",
             Global = true, User = false, Default = false)]
         UseCustomLeashColour = 0x4001,
+        
+        [Access(Category = "TWNet", Name = "Hide Custom Leash Style",
+            DescriptionGlobal = "Hides the custom leash style on other users, you can do this individually for users as well!",
+            Global = true, User = true, Default = false, DescriptionUser = "Hides the custom leash style for this user")]
+        HideCustomLeashStyle = 0x4002,
 
         [Access(Category = "ToyControls", Name = "Hide Pi Shock Elements",
             DescriptionGlobal = "Hide All Elements related to PiShock",

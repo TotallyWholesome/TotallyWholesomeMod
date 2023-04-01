@@ -103,6 +103,11 @@ namespace TotallyWholesome.Network
                     packet.ShockHeightStrengthMax = pair.ShockHeightStrengthMax;
                     packet.ShockHeightStrengthStep = pair.ShockHeightStrengthStep;
                     pair.ShockOperation = ShockOperation.NoOp;
+
+                    PiShockManager.Instance.LastStrengthMaster = packet.ShockStrength;
+                    PiShockManager.Instance.LastDurationMaster = packet.ShockDuration;
+                    PiShockManager.Instance.LastOperationMaster = packet.ShockOperation;
+                    PiShockManager.Instance.LastOperationFiredMaster = DateTime.Now;
                 }
                 else
                 {
@@ -115,6 +120,12 @@ namespace TotallyWholesome.Network
                     packet.ShockHeightStrengthMax = PiShockManager.Instance.ShockHeightStrengthMax.SliderValue;
                     packet.ShockHeightStrengthStep = PiShockManager.Instance.ShockHeightStrengthStep.SliderValue;
                     PiShockManager.Instance.Operation = ShockOperation.NoOp;
+                    
+                    PiShockManager.Instance.LastStrengthMaster = packet.ShockStrength;
+                    PiShockManager.Instance.LastDurationMaster = packet.ShockDuration;
+                    PiShockManager.Instance.LastOperationMaster = packet.ShockOperation;
+                    PiShockManager.Instance.LastOperationFiredMaster = DateTime.Now;
+                    PiShockManager.Instance.LastOperationGlobalMaster = DateTime.Now;
 
                     foreach (var keyPair in LeadManager.Instance.ActiveLeadPairs.Where(x => x.Value.AreWeMaster()))
                     {
@@ -202,6 +213,8 @@ namespace TotallyWholesome.Network
                     packet.Parameters = new List<MasterRemoteParameter>();
                     packet.DisableFlight = pair.DisableFlight;
                     packet.DisableSeats = pair.DisableSeats;
+                    packet.BlindPet = pair.Blindfold;
+                    packet.DeafenPet = pair.Deafen;
                     
                     if (pair.PropTarget != null)
                         packet.PropTarget = pair.LockToProp ? pair.PropTarget : null;
@@ -224,6 +237,8 @@ namespace TotallyWholesome.Network
                     packet.GagPet = LeadManager.Instance.ForcedMute;
                     packet.DisableFlight = LeadManager.Instance.DisableFlight;
                     packet.DisableSeats = LeadManager.Instance.DisableSeats;
+                    packet.BlindPet = LeadManager.Instance.Blindfold;
+                    packet.DeafenPet = LeadManager.Instance.Deafen;
 
                     if (LeadManager.Instance.PropTarget != null)
                         packet.PropTarget = LeadManager.Instance.LockToProp ? LeadManager.Instance.PropTarget : null;
@@ -241,6 +256,8 @@ namespace TotallyWholesome.Network
                         keyPair.Value.LeashPinPosition = LeadManager.Instance.LeashPinPosition;
                         keyPair.Value.LockToProp = LeadManager.Instance.LockToProp;
                         keyPair.Value.LockToWorld = LeadManager.Instance.LockToWorld;
+                        keyPair.Value.Blindfold = LeadManager.Instance.Blindfold;
+                        keyPair.Value.Deafen = LeadManager.Instance.Deafen;
                         keyPair.Value.GlobalValuesUpdate = true;
                     }
                 }

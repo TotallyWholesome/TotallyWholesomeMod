@@ -207,7 +207,9 @@ namespace TotallyWholesome
                 case LeashStyle.Chain:
                     return new Tuple<Material, LineTextureMode>(TWAssets.Chain, LineTextureMode.RepeatPerSegment);
                 case LeashStyle.Leather:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Leather, LineTextureMode.RepeatPerSegment); 
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Leather, LineTextureMode.RepeatPerSegment);
+                case LeashStyle.Custom:
+                    return new Tuple<Material, LineTextureMode>(null, LineTextureMode.RepeatPerSegment);
                 default:
                     return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
             }

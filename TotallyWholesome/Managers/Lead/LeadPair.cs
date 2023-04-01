@@ -44,6 +44,8 @@ namespace TotallyWholesome.Managers.Lead
         public bool DisableSeats = false;
         public bool LockToProp = false;
         public bool LockToWorld = false;
+        public bool Blindfold = false;
+        public bool Deafen = false;
         public List<MasterRemoteParameter> PetEnabledParameters = new List<MasterRemoteParameter>();
         public bool UpdatedEnabledParams;
 

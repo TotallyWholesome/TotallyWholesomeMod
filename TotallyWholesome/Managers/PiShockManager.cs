@@ -10,6 +10,7 @@ using ABI_RC.Core.Savior;
 using cohtml;
 using MelonLoader;
 using Newtonsoft.Json;
+using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Network;
 using TotallyWholesome.Objects;
@@ -52,6 +53,19 @@ namespace TotallyWholesome.Managers
         public SliderFloat ShockHeightStrengthMinIPC;
         public SliderFloat ShockHeightStrengthMaxIPC;
         public SliderFloat ShockHeightStrengthStepIPC;
+        
+        //Achievement data stuff
+        public ShockOperation LastOperationPet;
+        public int LastStrengthPet;
+        public int LastDurationPet;
+        public DateTime LastOperationFiredPet;
+        public ShockOperation LastOperationMaster;
+        public int LastStrengthMaster;
+        public int LastDurationMaster;
+        public DateTime LastOperationFiredMaster;
+        public DateTime LastOperationGlobalMaster;
+        public PiShockerInfo LastShockerInfo;
+        public Action PiShockDeviceUpdated;
 
         public string ManagerName() => nameof(PiShockManager);
 
@@ -59,7 +73,7 @@ namespace TotallyWholesome.Managers
         private GameObject cubeShow;
         private object _piShockHeightCoroutineToken;
 
-        private PiShockUpdate lastPacket;
+        internal PiShockUpdate lastPacket;
 
         private int heightState = -1;
         
@@ -140,6 +154,8 @@ namespace TotallyWholesome.Managers
             }
 
             shocker.Enabled = state;
+            
+            PiShockDeviceUpdated?.Invoke();
         }
 
         private static string lastShockerId = "";
@@ -171,6 +187,7 @@ namespace TotallyWholesome.Managers
                     {
                         Configuration.JSONConfig.PiShockShockers.Remove(shocker);
                         Configuration.SaveConfig();
+                        Instance.PiShockDeviceUpdated?.Invoke();
                         Instance.OnOpenedPage("ShockerManagement", null);
                     });
                     break;
@@ -267,7 +284,7 @@ namespace TotallyWholesome.Managers
             leadPair.ShockOperation = ShockOperation.Vibrate;
             TWNetSendHelpers.SendPiShockUpdate(leadPair);
             
-            UIUtils.ShowToast($"Sent PiShock Vibrate to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds at %{leadPair.ShockStrength}!");
+            UIUtils.ShowToast($"Sent PiShock Vibrate to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds at {leadPair.ShockStrength}%!");
         }
 
         [UIEventHandler("pishockShockIPC")]
@@ -281,7 +298,7 @@ namespace TotallyWholesome.Managers
             leadPair.ShockOperation = ShockOperation.Shock;
             TWNetSendHelpers.SendPiShockUpdate(leadPair);
             
-            UIUtils.ShowToast($"Sent PiShock Shock to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds at %{leadPair.ShockStrength}!");
+            UIUtils.ShowToast($"Sent PiShock Shock to {leadPair.Pet.Username} for {leadPair.ShockDuration} seconds at {leadPair.ShockStrength}%!");
         }
 
         [UIEventHandler("AddShocker")]
@@ -403,6 +420,7 @@ namespace TotallyWholesome.Managers
                     Configuration.JSONConfig.PiShockShockers.Add(new PiShockShocker(key.Key, key.ShockerName));
                     Configuration.SaveConfig();
                     Con.Debug("Saved key");
+                    PiShockDeviceUpdated?.Invoke();
 
                     //Successful
                     Main.Instance.MainThreadQueue.Enqueue(() => onCompleted?.Invoke(key.Key, key.ShockerName));
@@ -482,16 +500,24 @@ namespace TotallyWholesome.Managers
                     var command = new PiShockJsonCommand()
                     {
                         Apikey = shocker.Key,
-                        Name = LeadManager.Instance?.FollowerPair?.Master?.Username ?? PiShockName,
+                        Name = LeadManager.Instance?.MasterPair?.Master?.Username ?? PiShockName,
                         Op = op
                     };
 
+                    LastOperationPet = op;
+                    LastOperationFiredPet = DateTime.Now;
+
                     command.Duration = (int)Math.Ceiling(duration / 15f * shockerInfo.MaxDuration);
+                    LastDurationPet = command.Duration.Value;
                     if (op == ShockOperation.Shock || op == ShockOperation.Vibrate)
                     {
                         command.Intensity = (int)Math.Ceiling(strength / 100f * shockerInfo.MaxIntensity);
+                        LastStrengthPet = command.Intensity.Value;
                     }
                     var commandsJson = JsonConvert.SerializeObject(command, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                    
+                    if(op == ShockOperation.Shock)
+                        AvatarParameterManager.Instance.TrySetTemporaryParameter("TWShockerShock", 1f, 0f, command.Duration.Value, 1.5f); //Wait 1.5 seconds before applying? Is that enough for fedacks api?
 
                     await httpClient.PostAsync(PiShockApiOperate, new StringContent(commandsJson, Encoding.UTF8, "application/json"));
                 }
@@ -517,8 +543,19 @@ namespace TotallyWholesome.Managers
                 var response = await httpClient.PostAsync(PiShockApiInfo, new StringContent(authJson, Encoding.UTF8, "application/json"));
 
                 response.EnsureSuccessStatusCode();
+                
+                var info = JsonConvert.DeserializeObject<PiShockerInfo>(await response.Content.ReadAsStringAsync());
 
-                return JsonConvert.DeserializeObject<PiShockerInfo>(await response.Content.ReadAsStringAsync());
+                if (LastShockerInfo != null)
+                {
+                    if (Monitor.TryEnter(LastShockerInfo, 0))
+                    {
+                        LastShockerInfo = info;
+                        Monitor.Exit(LastShockerInfo);
+                    }
+                }
+
+                return info;
             }
             catch (Exception e)
             {
@@ -570,13 +607,13 @@ namespace TotallyWholesome.Managers
 
         private void ReceivePiShockEvent(PiShockUpdate packet)
         {
-            if (LeadManager.Instance.FollowerPair == null) return;
-            if (LeadManager.Instance.FollowerPair.Key != packet.Key) return;
+            if (LeadManager.Instance.MasterPair == null) return;
+            if (LeadManager.Instance.MasterPair.Key != packet.Key) return;
             if (!ConfigManager.Instance.IsActive(AccessType.AllowShockControl, LeadManager.Instance.MasterId)) return;
 
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                if (!LeadManager.Instance.FollowerPair.AreWeFollower()) return;
+                if (!LeadManager.Instance.MasterPair.AreWeFollower()) return;
 
                 if (ConfigManager.Instance.IsActive(AccessType.AllowHeightControl, LeadManager.Instance.MasterId))
                     lastPacket = packet;
@@ -645,10 +682,10 @@ namespace TotallyWholesome.Managers
             {
                 yield return new WaitForSeconds(1);
 
-                if (!ConfigManager.Instance.IsActive(AccessType.AllowHeightControl, LeadManager.Instance.MasterId) || LeadManager.Instance.FollowerPair == null)
+                if (!ConfigManager.Instance.IsActive(AccessType.AllowHeightControl, LeadManager.Instance.MasterId) || LeadManager.Instance.MasterPair == null)
                     continue;
 
-                if (!LeadManager.Instance.FollowerPair.AreWeFollower())
+                if (!LeadManager.Instance.MasterPair.AreWeFollower())
                     continue;
 
                 if (cubeShow == null || lastPacket == null || !lastPacket.ShockHeightEnabled)

@@ -100,6 +100,16 @@ namespace TotallyWholesome.Notification
             _notificationRect.localPosition = MetaPort.Instance.isUsingVr ? new Vector3(-3, 0, 0) : Vector3.zero;
         }
 
+        public static void EnqueueAchievement(string description, Sprite icon = null)
+        {
+            var notif = new NotificationObject("Achievement Unlocked!", description, icon, 5f, Color.blue, true);
+            
+            if(_controllerInstance == null)
+                SetupNotifications();
+            
+            _controllerInstance.EnqueueNotification(notif);
+        }
+
         /// <summary>
         /// Enqueue a new notification
         /// </summary>

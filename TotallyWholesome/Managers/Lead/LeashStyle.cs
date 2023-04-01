@@ -6,6 +6,7 @@
         Gradient,
         Magic,
         Chain,
-        Leather
+        Leather,
+        Custom,
     }
 }

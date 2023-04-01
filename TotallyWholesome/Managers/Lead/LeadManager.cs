@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using ABI_RC.Core.UI;
 using ABI_RC.Core.Util;
 using ABI.CCK.Components;
 using cohtml;
-using DarkRift.Server.Plugins.Chat;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead.LeadComponents;
 using TotallyWholesome.Network;
@@ -41,9 +37,15 @@ namespace TotallyWholesome.Managers.Lead
 
         public string LastKey;
         public bool FollowerRequest;
-        public LeadPair FollowerPair;
+        //LeadPair for the connection from this user to a master
+        public LeadPair MasterPair;
+        //LeadPairs for the connections from this user to their pets
+        public LeadPair TugOfWarPair;
+        public List<LeadPair> PetPairs = new();
+        public bool ClearLeashWhileLeashed;
+        public DateTime RecreatedLeashFromLastInstance;
 
-        public string MasterId => FollowerPair?.MasterID;
+        public string MasterId => MasterPair?.MasterID;
 
         public Dictionary<string, LeadPair> ActiveLeadPairs;
         public List<string> LastPairKeys; //Used for world change
@@ -57,6 +59,8 @@ namespace TotallyWholesome.Managers.Lead
         public bool DisableFlight = false;
         public bool LockToProp = false;
         public bool LockToWorld = false;
+        public bool Blindfold = false;
+        public bool Deafen = false;
         public SliderFloat TetherRange;
         public SliderFloat TetherRangeIPC;
         public Vector3 LeashPinPosition = Vector3.zero;
@@ -203,9 +207,11 @@ namespace TotallyWholesome.Managers.Lead
             ActiveLeadPairs.Clear();
             LastKey = null;
             FollowerRequest = false;
-            FollowerPair = null;
+            MasterPair = null;
+            PetPairs.Clear();
             ForcedMute = false;
             TempUnlockLeash = false;
+            LastMasterPairKey = null;
             Patches.Patches.IsForceMuted = false;
             _props.Clear();
         }
@@ -286,6 +292,13 @@ namespace TotallyWholesome.Managers.Lead
             {
                 //Reset IsForceMuted on clear all leads
                 Patches.Patches.IsForceMuted = false;
+
+                if (Instance.MasterPair != null)
+                {
+                    //Cleared leash while leashed
+                    Instance.ClearLeashWhileLeashed = true;
+                }
+                
                 TWNetClient.Instance.Send(new LeadAccept()
                 {
                     LeadRemove = true
@@ -467,37 +480,37 @@ namespace TotallyWholesome.Managers.Lead
 
         private void OnMasterRemoteControl(MasterRemoteControl packet)
         {
-            if (FollowerPair == null || !FollowerPair.Key.Equals(packet.Key))
+            if (MasterPair == null || !MasterPair.Key.Equals(packet.Key))
                 return;
 
-            FollowerPair.ForcedMute = packet.GagPet;
+            MasterPair.ForcedMute = packet.GagPet;
 
             ApplyForcedMute(packet.GagPet);
 
             bool shouldUpdate = false;
             
-            if (FollowerPair.PropTarget != packet.PropTarget && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, FollowerPair.MasterID))
+            if (MasterPair.PropTarget != packet.PropTarget && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, MasterPair.MasterID))
             {
                 Con.Debug("PropTarget was updated! Setting FollowerPair and marking for update!");
                 var lockCheck = !string.IsNullOrWhiteSpace(packet.PropTarget);
-                shouldUpdate = lockCheck != FollowerPair.LockToProp || (lockCheck && FollowerPair.PropTarget != packet.PropTarget);
-                FollowerPair.LockToProp = lockCheck;
-                FollowerPair.PropTarget = packet.PropTarget;
+                shouldUpdate = lockCheck != MasterPair.LockToProp || (lockCheck && MasterPair.PropTarget != packet.PropTarget);
+                MasterPair.LockToProp = lockCheck;
+                MasterPair.PropTarget = packet.PropTarget;
             }
 
             var vectorFromNetwork = packet.LeashPinPosition.ToVector3();
 
-            if (!FollowerPair.LockToProp && FollowerPair.LeashPinPosition != vectorFromNetwork && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, FollowerPair.MasterID))
+            if (!MasterPair.LockToProp && MasterPair.LeashPinPosition != vectorFromNetwork && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, MasterPair.MasterID))
             {
                 Con.Debug("LeashPinPosition was updated! Setting FollowerPair and marking for update!");
                 var lockCheck = !Equals(packet.LeashPinPosition, TWVector3.Zero);
-                shouldUpdate = lockCheck != FollowerPair.LockToWorld || (lockCheck && FollowerPair.LeashPinPosition != vectorFromNetwork);
-                FollowerPair.LeashPinPosition = vectorFromNetwork;
-                FollowerPair.LockToWorld = lockCheck;
+                shouldUpdate = lockCheck != MasterPair.LockToWorld || (lockCheck && MasterPair.LeashPinPosition != vectorFromNetwork);
+                MasterPair.LeashPinPosition = vectorFromNetwork;
+                MasterPair.LockToWorld = lockCheck;
             }
             
             if(shouldUpdate)
-                TWNetSendHelpers.SendLeashConfigUpdate(FollowerPair);
+                TWNetSendHelpers.SendLeashConfigUpdate(MasterPair);
         }
 
         private void ApplyForcedMute(bool mute)
@@ -583,6 +596,9 @@ namespace TotallyWholesome.Managers.Lead
                         return;
                     }
 
+                    if (LastPairKeys.Contains(packet.Key))
+                        RecreatedLeashFromLastInstance = DateTime.Now;
+
                     StatusManager.Instance.UpdatePetMasterMark(packet.MasterID, false, true);
 
                     if(!_pairKeys.Contains(packet.Key))
@@ -601,6 +617,9 @@ namespace TotallyWholesome.Managers.Lead
                         Con.Error("A master accept was sent but we are not expecting a master accept, or the key is wrong!");
                         return;
                     }
+                    
+                    if (LastPairKeys.Contains(packet.Key))
+                        RecreatedLeashFromLastInstance = DateTime.Now;
 
                     StatusManager.Instance.UpdatePetMasterMark(packet.FollowerID, true, false);
                     
@@ -647,7 +666,7 @@ namespace TotallyWholesome.Managers.Lead
                     }
                 }
 
-                if (!string.IsNullOrWhiteSpace(packet.PropTarget) && ((FollowerPair == leadPair && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID)) || FollowerPair != leadPair))
+                if (!string.IsNullOrWhiteSpace(packet.PropTarget) && ((MasterPair == leadPair && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID)) || MasterPair != leadPair))
                 {
                     leadPair.PropTarget = packet.PropTarget;
                     leadPair.LockToProp = true;
@@ -677,12 +696,40 @@ namespace TotallyWholesome.Managers.Lead
 
                     if (leadPair.LineController != null)
                     {
+                        //Apply line renderer Mat
                         var matinfo = TWUtils.GetStyleMat(leadPair.LeashStyle);
-                        leadPair.LineController.UpdateLineMaterial(matinfo.Item1, matinfo.Item2);
+
+                        if (matinfo.Item1 == null)
+                        {
+                            if (ConfigManager.Instance.IsActive(AccessType.HideCustomLeashStyle, leadPair.MasterID))
+                            {
+                                leadPair.LineController.UpdateLineMaterial(TWAssets.Classic, matinfo.Item2);
+                    
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    Transform matTransfrom = TWUtils.GetRootGameObject(leadPair.Master.AvatarObject, "TWLCustomLeadMat");
+                                    Material customMat = matTransfrom.GetComponent<MeshRenderer>().materials[0];
+                                    leadPair.LineController.UpdateLineMaterial(customMat, matinfo.Item2);
+                                    Con.Debug("Applied custom lead mat");
+                                }
+                                catch
+                                {
+                                    leadPair.LineController.UpdateLineMaterial(TWAssets.Classic, matinfo.Item2);
+                                    Con.Debug("Failed to apply custom lead mat");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            leadPair.LineController.UpdateLineMaterial(matinfo.Item1, matinfo.Item2);
+                        }
                     }
                 }
 
-                if (!Equals(packet.LeashPinPosition, TWVector3.Zero) && ((FollowerPair == leadPair && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID)) || FollowerPair != leadPair))
+                if (!Equals(packet.LeashPinPosition, TWVector3.Zero) && ((MasterPair == leadPair && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID)) || MasterPair != leadPair))
                 {
                     leadPair.LeashPinPosition = packet.LeashPinPosition.ToVector3();
                     leadPair.LockToWorld = true;
@@ -713,7 +760,7 @@ namespace TotallyWholesome.Managers.Lead
             if (Equals(pair.Pet, TWUtils.GetOurPlayer()))
             {
                 pair.LineController.gameObject.layer = LayerMask.NameToLayer("PlayerLocal");
-                FollowerPair = null;
+                MasterPair = null;
                 OnFollowerPairDestroyed?.Invoke(pair);
                 AvatarParameterManager.Instance.TrySetParameter("TWCollar", 0);
 
@@ -729,6 +776,12 @@ namespace TotallyWholesome.Managers.Lead
 
             if (pair.Master.Uuid.Equals(MetaPort.Instance.ownerId))
             {
+                if(PetPairs.Contains(pair))
+                    PetPairs.Remove(pair);
+
+                if (TugOfWarPair == pair)
+                    TugOfWarPair = null;
+                
                 CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePet", pair.Pet.Uuid);
                 StatusManager.Instance.UpdatePetMasterMark(pair.Pet.Uuid, false, false);
             }
@@ -745,11 +798,17 @@ namespace TotallyWholesome.Managers.Lead
                 ActiveLeadPairs.Remove(pair.Key);
                 OnLeadPairDestroyed?.Invoke(pair.Value);
 
-                if (FollowerPair != null && pair.Value.Key == FollowerPair.Key)
+                if (MasterPair != null && pair.Value.Key == MasterPair.Key)
                 {
-                    FollowerPair = null;
+                    MasterPair = null;
                     OnFollowerPairDestroyed?.Invoke(pair.Value);
                 }
+
+                if (PetPairs.Contains(pair.Value))
+                    PetPairs.Remove(pair.Value);
+
+                if (TugOfWarPair == pair.Value)
+                    TugOfWarPair = null;
                 
                 if (pair.Value.AreWeMaster())
                 {
@@ -907,9 +966,38 @@ namespace TotallyWholesome.Managers.Lead
             //Enable and setup renderer if a valid leader is known
             followerController.SetupRenderer(masterBone, leadPair.AreWeFollower() ? leadPair.Pet : null, leadPair.Master, lineRenderer, 20f, 20, leadLength, 0.5f, leadPair.NoVisibleLeash, colours.Item1, colours.Item2);
             
-            var matinfo = TWUtils.GetStyleMat(leadPair.LeashStyle);
-            followerController.UpdateLineMaterial(matinfo.Item1, matinfo.Item2);
             
+            //Apply line renderer Mat
+            var matinfo = TWUtils.GetStyleMat(leadPair.LeashStyle);
+
+            if (matinfo.Item1 == null)
+            {
+                if (ConfigManager.Instance.IsActive(AccessType.HideCustomLeashStyle, leadPair.MasterID))
+                {
+                    followerController.UpdateLineMaterial(TWAssets.Classic, matinfo.Item2);
+                    
+                }
+                else
+                {
+                    try
+                    {
+                        Transform matTransfrom = TWUtils.GetRootGameObject(leadPair.Master.AvatarObject, "TWLCustomLeadMat");
+                        Material customMat = matTransfrom.GetComponent<MeshRenderer>().materials[0];
+                        followerController.UpdateLineMaterial(customMat, matinfo.Item2);
+                        Con.Debug("Applied custom lead mat");
+                    }
+                    catch
+                    {
+                        followerController.UpdateLineMaterial(TWAssets.Classic, matinfo.Item2);
+                        Con.Debug("Failed to apply custom lead mat");
+                    }  
+                }
+            }
+            else
+            {
+                followerController.UpdateLineMaterial(matinfo.Item1, matinfo.Item2);
+            }
+
             //Set the prop target if the prop exists
             var prop = CVRSyncHelper.Props.FirstOrDefault(x => x.InstanceId.Equals(leadPair.PropTarget));
 
@@ -929,11 +1017,23 @@ namespace TotallyWholesome.Managers.Lead
             followerController.SetTempUnlockLeash(leadPair.TempUnlockLeash);
 
             leadPair.LineController = followerController;
+            
+            if (leadPair.AreWeMaster() && !PetPairs.Contains(leadPair))
+            {
+                PetPairs.Add(leadPair);
+
+                if (MasterPair != null && Equals(leadPair.Pet, MasterPair.Master))
+                    TugOfWarPair = leadPair;
+            }
 
             if (!leadPair.AreWeFollower()) return;
 
+            var inversePair = PetPairs.FirstOrDefault(x => Equals(x.Pet, leadPair.Master) && Equals(x.Master, leadPair.Pet));
+            if (inversePair != null)
+                TugOfWarPair = inversePair;
+
             petBone.gameObject.layer = LayerMask.NameToLayer("PlayerNetwork");
-            FollowerPair = leadPair;
+            MasterPair = leadPair;
 
             if(!leadPair.InitialPairCreationComplete)
                 OnFollowerPairCreated?.Invoke(leadPair);

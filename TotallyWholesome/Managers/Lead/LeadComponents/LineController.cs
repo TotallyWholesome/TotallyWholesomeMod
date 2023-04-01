@@ -18,6 +18,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         public Transform targetOverride;
         public Vector3 targetOverrideVector;
         public LineRenderer line;
+        public bool IsAtMaxLeashLimit;
         private TWPlayerObject _ourPlayer;
         private TWPlayerObject _targetPlayer;
         private float _maxDistance;
@@ -218,6 +219,8 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                         line.SetPosition(i, currentPointsPosition);
                     }
                 }
+
+                IsAtMaxLeashLimit = !_leashBroken && !_tempUnlockLeash && MovementSystem.Instance.canMove && currentDistance > _maxDistance;
 
                 CheckLeashBreakDistance(currentDistance);
 

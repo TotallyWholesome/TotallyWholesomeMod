@@ -174,8 +174,8 @@ namespace TotallyWholesome.Network
 
         public override void OnSerializationException(MessagePackSerializationException exception, int packetID)
         {
-            Con.Debug($"A serialization exception was triggered in packet - {Enum.GetName(typeof(TWNetMessageTypes), packetID)}");
-            Con.Debug(exception);
+            Con.Error($"A serialization exception was triggered in packet - {packetID} - PLEASE REPORT THIS LOG IN BETA BUG REPORTS!");
+            Con.Error(exception);
         }
 
         public override void OnMasterRemoteControl(MasterRemoteControl packet, TWNetClient conn)
@@ -223,6 +223,8 @@ namespace TotallyWholesome.Network
         public override void OnSystemNotice(MessageResponse packet, TWNetClient conn)
         {
             if (packet.Message == null) return;
+
+            conn.HasBeenRatelimited = packet.Message.Contains("You are being ratelimited!");
             
             Con.Msg($"System Notice - {packet.Message}");
             NotificationSystem.EnqueueNotification("TWNet Notice", packet.Message, 10f, TWAssets.Megaphone);
@@ -275,6 +277,12 @@ namespace TotallyWholesome.Network
                 Con.Error("An error occured with OnLeashConfigUpdate!");
                 Con.Error(e);
             }
+        }
+
+        public override void OnPacketHandlerException(Exception exception, int packetID)
+        {
+            Con.Error($"An exception occured within Packet Handler! Packet ID:{packetID} - PLEASE REPORT THIS LOG IN BETA BUG REPORTS!");
+            Con.Error(exception);
         }
     }
 }

@@ -17,6 +17,8 @@ using ABI.CCK.Scripts;
 using DarkRift.Client;
 using Dissonance.Audio.Capture;
 using HarmonyLib;
+using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using UnityEngine;
@@ -182,7 +184,7 @@ namespace TotallyWholesome.Patches
             return output;
         }
     }
-    
+
     [HarmonyPatch(typeof(AuthUIManager))]
     class AuthManagerPatches
     {

@@ -5,13 +5,17 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ABI_RC.Core;
+using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Player;
 using ABI.CCK.Scripts;
 using cohtml;
+using Dissonance;
 using MelonLoader;
 using MelonLoader.ICSharpCode.SharpZipLib.Zip;
 using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.Achievements;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Status;
@@ -153,6 +157,8 @@ namespace TotallyWholesome.TWUI
             UIUtils.SetToggleState("EnableStatus", Configuration.JSONConfig.EnableStatus);
             UIUtils.SetToggleState("DisplaySpecialBadge", Configuration.JSONConfig.DisplaySpecialStatus);
             UIUtils.SetToggleState("HideInPublics", Configuration.JSONConfig.HideInPublicWorlds);
+            UIUtils.SetToggleState("ShowAutoAccept", Configuration.JSONConfig.ShowAutoAccept);
+            UIUtils.SetToggleState("ShowDeviceStatus", Configuration.JSONConfig.ShowDeviceStatus);
             
             CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateSelectedBone", "master", Configuration.JSONConfig.MasterBoneTarget.ToString());
             CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateSelectedBone", "pet", Configuration.JSONConfig.PetBoneTarget.ToString());
@@ -300,8 +306,24 @@ namespace TotallyWholesome.TWUI
                 UpdateIPCPage();
                 SelectedLeadPair.GlobalValuesUpdate = false;
             }
+
+            if (targetPage.Equals("MyAchievements") && AchievementManager.Instance.AchievementsUpdated)
+            {
+                AchievementManager.Instance.AchievementsUpdated = false;
+                UpdateAchievementPage();
+            }
             
             OnOpenedPage?.Invoke(targetPage, lastPage);
+        }
+
+        private void UpdateAchievementPage()
+        {
+            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twClearAchievementList");
+
+            foreach (var achievement in AchievementManager.Instance.LoadedAchievements)
+            {
+                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateAchievementButton", achievement.AchievementAwarded ? achievement.AchievementName : "???", achievement.AchievementAwarded ? achievement.AchievementDescription : "You must unlock this achievement before you can see the description!", Enum.GetName(typeof(AchievementRank), achievement.AchievementRank), !achievement.AchievementAwarded);
+            }
         }
 
         public void UpdateAvatarRemoteConfig()
@@ -416,7 +438,7 @@ namespace TotallyWholesome.TWUI
                 return;
             }
 
-            if (Configuration.JSONConfig.ShownUpdateNotice != 6)
+            if (Configuration.JSONConfig.ShownUpdateNotice != 8)
             {
                 MelonCoroutines.Start(WaitBeforeShowUpdateNotice());
                 return;
@@ -457,10 +479,10 @@ namespace TotallyWholesome.TWUI
         {
             yield return new WaitForSeconds(.2f);
 
-            UIUtils.ShowNotice("Welcome to TW for ChilloutVR!", "<p>Welcome to the Totally Wholesome v3.3! This update adds in a suite of new functionality, plus a host of mod compatibility fixes and integrations!</p><p>Changes:<p> - Mod Compatibility</p><p> - World/Prop Pinning</p><p> - New Leash Styles</p><p> - Avatar Profile Support</p><p> - And more!</p><p>Check the TW Discord for more information!</p>", "OK",
+            UIUtils.ShowNotice("Welcome to TW 3.4!", "<p>Welcome to Totally Wholesome v3.4! Happy April Fools!</p><p>This update brings about many a new changes to Totally Wholesome! One big one is our (totally not jank) Achievement system! Have you ever wanted to earn achievements for doing random stuff in a lewd mod? No? Too bad! Now you can!</p><p>Changes:</p><p> - Achievements</p><p> - Status Rework</p><p> - Custom Leash Material</p><p> - Blindfolding/Deafening</p><p> - And more!</p><p>Check the TW Discord for more information!</p>", "OK",
                 () =>
                 {
-                    Configuration.JSONConfig.ShownUpdateNotice = 6;
+                    Configuration.JSONConfig.ShownUpdateNotice = 8;
                     Configuration.SaveConfig();
                 });
         }
@@ -622,6 +644,18 @@ namespace TotallyWholesome.TWUI
                     
                     StatusManager.Instance.SendStatusUpdate();
                     break;
+                case "ShowAutoAccept":
+                    Configuration.JSONConfig.ShowAutoAccept = state;
+                    Configuration.SaveConfig();
+                    
+                    StatusManager.Instance.SendStatusUpdate();
+                    break;
+                case "ShowDeviceStatus":
+                    Configuration.JSONConfig.ShowDeviceStatus = state;
+                    Configuration.SaveConfig();
+                    
+                    StatusManager.Instance.SendStatusUpdate();
+                    break;
                 case "HeightControl":
                     PiShockManager.UpdateShockHeightControl(state);
                     break;
@@ -666,6 +700,14 @@ namespace TotallyWholesome.TWUI
                     LeadManager.Instance.DisableSeats = state;
                     TWNetSendHelpers.SendMasterRemoteSettingsAsync();
                     break;
+                case "Blindfold":
+                    LeadManager.Instance.Blindfold = state;
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
+                    break;
+                case "Deafen":
+                    LeadManager.Instance.Deafen = state;
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync();
+                    break;
                 case "LockToPropIPC":
                     if (SelectedLeadPair == null)
                         break;
@@ -688,6 +730,18 @@ namespace TotallyWholesome.TWUI
                     if (SelectedLeadPair == null)
                         break;
                     SelectedLeadPair.DisableSeats = state;
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    break;
+                case "BlindfoldIPC":
+                    if (SelectedLeadPair == null)
+                        break;
+                    SelectedLeadPair.Blindfold = state;
+                    TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
+                    break;
+                case "DeafenIPC":
+                    if (SelectedLeadPair == null)
+                        break;
+                    SelectedLeadPair.Deafen = state;
                     TWNetSendHelpers.SendMasterRemoteSettingsAsync(SelectedLeadPair);
                     break;
             }

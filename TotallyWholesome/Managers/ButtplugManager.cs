@@ -28,12 +28,18 @@ namespace TotallyWholesome.Managers
 
         public static ButtplugManager Instance;
         public ButtplugClient buttplugClient;
+
+        public Action ButtplugDeviceAdded;
+        public Action ButtplugDeviceRemoved;
+        
         private Process intifaceProcess;
         private int port = 12344;
         private string buttplugCLIPath;
 
+        private bool isUsingExternalInstance = false;
+
         private HashSet<LeadPair> queue = new HashSet<LeadPair>();
-        
+
         private bool VibeGoBrrCompatMode = false;
 
         //forallpets
@@ -45,6 +51,18 @@ namespace TotallyWholesome.Managers
         private MelonMod vgb;
         private FieldInfo mIdleIntensity;
         private FieldInfo mIdleEnabled;
+        private FieldInfo mMaxSeenDevices;
+        
+        //Achievement data stuff
+        public float ActiveVibrationStrength;
+        public int ButtplugDeviceCount
+        {
+            get
+            {
+                if (buttplugClient == null) return 0;
+                return (int)(VibeGoBrrCompatMode ? mMaxSeenDevices.GetValue(vgb) : buttplugClient.Devices.Length);
+            }
+        }
 
         public string ManagerName() => nameof(ButtplugManager);
         public int Priority() => 1;
@@ -59,14 +77,14 @@ namespace TotallyWholesome.Managers
             ToyStrengthIPC.OnValueUpdated += f =>
             {
                 var leadPair = UserInterface.Instance.SelectedLeadPair;
-                
+
                 if (leadPair == null)
                     return;
 
                 leadPair.ToyStrength = f;
                 TWNetSendHelpers.SendButtplugUpdate(leadPair);
             };
-            
+
 
             //ToChange
             if (!ConfigManager.Instance.IsActive(AccessType.EnableToyControl))
@@ -82,20 +100,8 @@ namespace TotallyWholesome.Managers
                 return;
             }
 
-            buttplugCLIPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IntifaceDesktop", "engine", "IntifaceCLI.exe");
-            var buttplugConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IntifaceDesktop", "intiface.config.json");
-            if (!File.Exists(buttplugCLIPath))
-            {
-                Con.Msg("Intiface Desktop is not installed");
-                // download it from https://github.com/intiface/intiface-cli-rs/releases/latest/download/intiface-cli-rs-win-x64-Release.zip
-                DownloadButtplugCLI();
-            }
-            else
-            {
-                Con.Msg("Intiface Desktop located using installed version");
-                port = (int)JObject.Parse(File.ReadAllText(buttplugConfigPath)).GetValue("websocketServerInsecurePort");
-                Con.Msg($"Using port {port} of Intiface installation");
-            }
+            DownloadButtplugCLI();
+
 
             try
             {
@@ -103,12 +109,12 @@ namespace TotallyWholesome.Managers
             }
             catch (Exception e)
             {
-                Con.Error("Failed to start Buttplug CLI");
+                Con.Error("Failed to start Buttplug Engine");
                 Con.Error(e);
             }
         }
-        
-        public void LateSetup(){}
+
+        public void LateSetup() { }
 
         private void OnLeadRemoveEvent(LeadAccept packet)
         {
@@ -132,28 +138,28 @@ namespace TotallyWholesome.Managers
                 }
             };
 
-            if (CheckForIntifaceUpdate(wc) || !File.Exists("Executables/IntifaceCLI.exe"))
+            if (CheckForIntifaceUpdate(wc) || !File.Exists("Executables/intiface-engine.exe"))
             {
-                Con.Msg("New Intiface version detected! Downloading to Executables/IntifaceCLI.exe!");
+                Con.Msg("New Intiface version detected! Downloading to Executables/intiface-engine.exe!");
 
                 try
                 {
-                    byte[] bytes = wc.DownloadData("https://github.com/intiface/intiface-cli-rs/releases/latest/download/intiface-cli-rs-win-x64-Release.zip");
+                    byte[] bytes = wc.DownloadData("https://github.com/intiface/intiface-engine/releases/latest/download/intiface-engine-win-x64-Release.zip");
                     using var stream = new MemoryStream(bytes);
 
-                    using var intifacestream = new ZipArchive(stream).GetEntry("IntifaceCLI.exe").Open();
+                    using var intifacestream = new ZipArchive(stream).GetEntry("intiface-engine.exe").Open();
                     Directory.CreateDirectory("Executables");
-                    using var file = new FileStream("Executables/IntifaceCLI.exe", FileMode.Create, FileAccess.Write);
+                    using var file = new FileStream("Executables/intiface-engine.exe", FileMode.Create, FileAccess.Write);
                     intifacestream.CopyTo(file);
                 }
                 catch (Exception e)
                 {
-                    Con.Error("Failed to download Buttplug CLI. If you start multiple instances of VRC this might occur");
+                    Con.Error("Failed to download Buttplug Engine. If you start multiple instances of VRC this might occur");
                     Con.Error(e);
                 }
             }
 
-            buttplugCLIPath = "Executables/IntifaceCLI.exe";
+            buttplugCLIPath = "Executables/intiface-engine.exe";
         }
 
         private async Task ConnectButtplug()
@@ -185,6 +191,8 @@ namespace TotallyWholesome.Managers
         public static void RestartButtplug()
         {
             Instance.intifaceProcess?.Kill();
+            if (Instance.isUsingExternalInstance)
+                Instance.StartButtplugInstance();
         }
 
         public void StartButtplugInstance()
@@ -192,38 +200,31 @@ namespace TotallyWholesome.Managers
             if (Main.Instance.Quitting) return;
             try
             {
-
-                Process found = null;
                 foreach (var item in Process.GetProcesses())
                 {
                     try
                     {
-                        if (item.ProcessName == "IntifaceCLI")
-                            found = item;
+                        //what todo in this case. Central is diffrent
+                        if (item.ProcessName == "intiface_central.exe")
+                        {
+                            Con.Msg("Intiface Central running. Using running instance");
+                            isUsingExternalInstance = true;
+                            new Task(async () => await ConnectButtplug()).Start();
+                            return;
+                        }
                     }
                     catch (Exception)
                     {
                         Con.Error("Error while retrieving Processname of running application");
                     }
-                    
-                } 
-                if (found != null)
-                {
-                    Con.Msg("Intiface already running. Not starting again");
-                    intifaceProcess = found;
-                    intifaceProcess.EnableRaisingEvents = true;
-                    intifaceProcess.Exited += (_, _2) => StartButtplugInstance();
 
-                    new Task(async () => await ConnectButtplug()).Start();
-
-                    return;
                 }
 
                 FileInfo target = new FileInfo(buttplugCLIPath);
 
                 //TODO: Find a better way to handle Intiface, this is still scuffed... WHY CAN'T WE GET THE DATA AND HAVE IT WORK
 
-                var startInfo = new ProcessStartInfo(target.FullName, $"--with-lovense-connect --wsinsecureport {port} --log error");
+                var startInfo = new ProcessStartInfo(target.FullName, $"--use-lovense-connect --use-bluetooth-le --websocket-port {port}");
                 startInfo.UseShellExecute = true;
                 startInfo.WorkingDirectory = Environment.CurrentDirectory;
                 //startInfo.RedirectStandardError = true;
@@ -241,7 +242,7 @@ namespace TotallyWholesome.Managers
             catch (Exception ex)
             {
                 //NotificationSystem.EnqueueNotification("Error", "Error starting intiface. Check log and try again", 5);
-                Con.Error("Error starting intiface. Check log and try again");
+                Con.Error("Error starting intiface engine. Check log and try again");
                 Con.Error(ex);
             }
         }
@@ -263,6 +264,7 @@ namespace TotallyWholesome.Managers
         private void ButtplugClient_DeviceRemoved(object sender, DeviceRemovedEventArgs e)
         {
             Con.Msg("Toy disconnected: " + e.Device.Name);
+            ButtplugDeviceRemoved?.Invoke();
             NotificationSystem.EnqueueNotification("Toy removed", e.Device.Name, 3, null);
         }
 
@@ -270,6 +272,7 @@ namespace TotallyWholesome.Managers
         {
             Con.Msg("Toy connected: " + e.Device.Name);
             e.Device.SendStopDeviceCmd();
+            ButtplugDeviceAdded?.Invoke();
             NotificationSystem.EnqueueNotification("Toy added", e.Device.Name, 3);
         }
 
@@ -289,12 +292,14 @@ namespace TotallyWholesome.Managers
         {
             if (VibeGoBrrCompatMode)
             {
+                ActiveVibrationStrength = strength;
                 mIdleEnabled.SetValue(vgb, true);
                 mIdleIntensity.SetValue(vgb, strength);
                 return;
             }
             if (buttplugClient == null || !buttplugClient.Connected)
                 return;
+            ActiveVibrationStrength = strength;
             foreach (var toy in buttplugClient.Devices)
             {
                 if (toy.AllowedMessages.TryGetValue(DeviceMessages.VibrateCmd, out var messagedetails))
@@ -310,14 +315,14 @@ namespace TotallyWholesome.Managers
                 return;
             if (!ConfigManager.Instance.IsActive(AccessType.AllowToyControl, LeadManager.Instance.MasterId))
                 return;
-            if (LeadManager.Instance.FollowerPair == null)
+            if (LeadManager.Instance.MasterPair == null)
                 return;
-            
+
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                if (!LeadManager.Instance.FollowerPair.AreWeFollower() || LeadManager.Instance.FollowerPair.Key != packet.Key)
+                if (!LeadManager.Instance.MasterPair.AreWeFollower() || LeadManager.Instance.MasterPair.Key != packet.Key)
                     return;
-                
+
                 VibrateAtStrength(packet.ToyStrength);
 
                 if (buttplugClient == null || !buttplugClient.Connected)
@@ -333,16 +338,17 @@ namespace TotallyWholesome.Managers
 
             mIdleIntensity = vgb.GetType().GetField("mIdleIntensity", BindingFlags.Instance | BindingFlags.NonPublic);
             mIdleEnabled = vgb.GetType().GetField("mIdleEnabled", BindingFlags.Instance | BindingFlags.NonPublic);
+            mMaxSeenDevices = vgb.GetType().GetField("mMaxSeenDevices", BindingFlags.Instance | BindingFlags.NonPublic);
 
             Con.Msg("Finished VibeGoBrrr Integration");
         }
-        
+
 
         private bool CheckForIntifaceUpdate(WebClient client)
         {
             try
             {
-                var request = client.DownloadString("https://api.github.com/repos/intiface/intiface-cli-rs/releases?per_page=1");
+                var request = client.DownloadString("https://api.github.com/repos/intiface/intiface-engine/releases?per_page=1");
                 var jsonArray = JsonConvert.DeserializeObject<JArray>(request);
 
                 if (jsonArray != null)

@@ -65,7 +65,8 @@ namespace WholesomeLoader
                 try {
                     Con.Msg(ConsoleColor.Yellow, "Loading Local Mod");
                     twAssembly = Assembly.LoadFile("TotallyWholesome.dll");
-                } catch {
+                } catch (Exception e) {
+                    Con.Error(e);
                     Con.Warn("Could not load Local Mod, loading TotallyWholesome from the server.");
                 }
             }
