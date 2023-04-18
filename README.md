@@ -37,8 +37,6 @@
 </details>
 
 
-<<<<<<< HEAD
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
@@ -111,10 +109,7 @@ There's alot more to TW than just leashes. A bit too much to go over in this usa
  - Suitable modern C# development environment (VS 2019 Build Tools required for ILMerge)
  - ChilloutVR
  - MelonLoader >= 0.5.7
-=======
-* Visual Studio 2022 or Jetbrain Rider (.net 6 support required for server)
-* MelonLoader >=0.5.7
->>>>>>> custom-lead
+ - Visual Studio 2022 or Jetbrain Rider (.NET 6 support required for server)
 
 ### Preparing a development environment
 
