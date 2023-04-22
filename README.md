@@ -131,6 +131,7 @@ mklink /j ml "C:\Program Files (x86)\Steam\steamapps\common\ChilloutVR\MelonLoad
 mklink /j Managed "C:\Program Files (x86)\Steam\steamapps\common\ChilloutVR\ChilloutVR_Data\Managed"
 mklink /j Mods "C:\Program Files (x86)\Steam\steamapps\common\ChilloutVR\Mods"
 ```
+* You should aquire the ActionMenu.dll by either installing the ActionMenu mod or if you prefer to not have that mod, replace the `Mods` junction inside the "3rdparty" folder with a "Mods" folder that contains the ActionMenu.dll.
 * You should now be configured to begin working on Totally Wholesome
 
 
