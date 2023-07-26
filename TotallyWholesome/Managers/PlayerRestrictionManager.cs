@@ -61,7 +61,7 @@ namespace TotallyWholesome.Managers
             TWNetListener.MasterRemoteControlEvent += MasterRemoteControlEvent;
             TWNetListener.LeadAcceptEvent += LeadAcceptEvent;
             LeadManager.OnFollowerPairDestroyed += OnFollowerPairDestroyed;
-            Patches.Patches.OnWorldLeave += OnWorldLeave;
+            Patches.OnWorldLeave += OnWorldLeave;
         }
 
         private void OnFollowerPairDestroyed(LeadPair obj)
@@ -163,26 +163,26 @@ namespace TotallyWholesome.Managers
 
         public void ChangeMovementOptions(bool disableFlight, bool disableSeats, bool silentSwitch = false)
         {
-            if (disableFlight && !Patches.Patches.IsFlightLocked)
+            if (disableFlight && !Patches.IsFlightLocked)
             {
-                Patches.Patches.IsFlightLocked = true;
+                Patches.IsFlightLocked = true;
                 MovementSystem.Instance.ChangeFlight(false);
                 
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has disabled flight!", 3f, TWAssets.Handcuffs);
             }
 
-            if (!disableFlight && Patches.Patches.IsFlightLocked)
+            if (!disableFlight && Patches.IsFlightLocked)
             {
-                Patches.Patches.IsFlightLocked = false;
+                Patches.IsFlightLocked = false;
                 
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has allowed flight!", 3f, TWAssets.Checkmark);
             }
 
-            if (disableSeats && !Patches.Patches.AreSeatsLocked)
+            if (disableSeats && !Patches.AreSeatsLocked)
             {
-                Patches.Patches.AreSeatsLocked = true;
+                Patches.AreSeatsLocked = true;
                 if(MovementSystem.Instance.lastSeat != null)
                     MovementSystem.Instance.lastSeat.ExitSeat();
                 
@@ -190,9 +190,9 @@ namespace TotallyWholesome.Managers
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has disabled seat usage!", 3f, TWAssets.Handcuffs);
             }
 
-            if (!disableSeats && Patches.Patches.AreSeatsLocked)
+            if (!disableSeats && Patches.AreSeatsLocked)
             {
-                Patches.Patches.AreSeatsLocked = false;
+                Patches.AreSeatsLocked = false;
                 
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has allowed seat usage!", 3f, TWAssets.Checkmark);

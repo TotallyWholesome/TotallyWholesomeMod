@@ -2,30 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using ABI_RC.Core;
-using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
-using ABI_RC.Core.IO;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
+using ABI_RC.Core.Savior;
 using ABI_RC.Core.UI;
+using ABI_RC.Systems.GameEventSystem;
 using ABI_RC.Systems.MovementSystem;
 using ABI.CCK.Components;
 using ABI.CCK.Scripts;
-using DarkRift.Client;
-using Dissonance.Audio.Capture;
 using HarmonyLib;
-using TotallyWholesome.Managers;
-using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
-using UnityEngine;
 using WholesomeLoader;
-using OpCodes = System.Reflection.Emit.OpCodes;
 
-namespace TotallyWholesome.Patches
+namespace TotallyWholesome
 {
     internal class Patches
     {
@@ -54,17 +47,9 @@ namespace TotallyWholesome.Patches
         public static string TargetWorldID;
         public static string TargetInstanceID;
         public static List<Invite_t> TWInvites = new();
-        //These 2 numbers are still magic, changing it too far from these breaks the filter entirely
-        public static float MagicFilterLevel = 433.1509f;
-        public static float QLevel = 0.003219661f;
 
         public static DateTime TimeSinceLastUnmute = DateTime.Now;
         public static DateTime TimeSinceKeyboardOpen = DateTime.Now;
-
-        private static float[] _a = new float[3];
-        private static float[] _b = new float[3];
-
-        private static float _in1, _in2, _out1, _out2;
 
         private static void ApplyPatches(Type type)
         {
@@ -81,192 +66,106 @@ namespace TotallyWholesome.Patches
             Con.Debug("Setting up Patches...");
             
             ApplyPatches(typeof(NameplatePatches));
-            ApplyPatches(typeof(CVRPlayerManagerJoin));
-            ApplyPatches(typeof(CVRPlayerEntityLeave));
             ApplyPatches(typeof(AuthManagerPatches));
-            ApplyPatches(typeof(NetworkManagerPatches));
             ApplyPatches(typeof(RichPresensePatch));
             ApplyPatches(typeof(InstancesPatches));
             ApplyPatches(typeof(CVRMenuManagerPatch));
             ApplyPatches(typeof(PuppetMasterPatch));
             ApplyPatches(typeof(ViewManagerPatches));
-            ApplyPatches(typeof(MicrophoneCapturePatch));
-            ApplyPatches(typeof(MicrophoneMutePatch));
-            ApplyPatches(typeof(CVRObjectLoaderPatch));
+            //ApplyPatches(typeof(MicrophoneCapturePatch));
             ApplyPatches(typeof(PlayerSetupPatches));
             ApplyPatches(typeof(AdvancedAvatarSettingsPatch));
             ApplyPatches(typeof(MovementSystemPatches));
             ApplyPatches(typeof(CVRSeatPatch));
             ApplyPatches(typeof(CVRSpawnablePatches));
 
-            RecalculateCoefficients();
+            CVRGameEventSystem.Instance.OnConnected.AddListener((message) =>
+            {
+                try
+                {
+                    OnGameNetworkConnected?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Con.Error("An error occured within OnGameNetworkConnected!");
+                    Con.Error(e);
+                }
+            });
+            
+            CVRGameEventSystem.Instance.OnDisconnected.AddListener((message) =>
+            {
+                try
+                {
+                    OnWorldLeave?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Con.Error("An error occured within OnWorldLeave!");
+                    Con.Error(e);
+                }
+            });
+
+            CVRGameEventSystem.Instance.OnConnectionLost.AddListener((message) =>
+            {
+                try
+                {
+                    OnWorldLeave?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Con.Error("An error occured within OnWorldLeave!");
+                    Con.Error(e);
+                }
+            });
+            
+            CVRGameEventSystem.Instance.OnConnectionRecovered.AddListener((message) =>
+            {
+                try
+                {
+                    OnGameNetworkConnected?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Con.Error("An error occured within OnGameNetworkConnected!");
+                    Con.Error(e);
+                }
+            });
+            
+            CVRGameEventSystem.World.OnLoad.AddListener((message) =>
+            {
+                try
+                {
+                    EarlyWorldJoin?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Con.Error("An error occured within EarlyWorldJoin!");
+                    Con.Error(e);
+                }
+            });
 
             Con.Debug("Finished with patching.");
         }
 
-        private static void WorldLoaded()
+        public static void LateStartupPatches()
         {
-            EarlyWorldJoin?.Invoke();
-        }
-
-        private static void UserJoinPatch(CVRPlayerEntity player)
-        {
-            try
-            {
-                UserJoin?.Invoke(player);                
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-        
-        private static void UserLeavePatch(CVRPlayerEntity player)
-        {
-            try
-            {
-                UserLeave?.Invoke(player);                
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-
-        public static void RecalculateCoefficients()
-        {
-            var omega = 2 * Math.PI * MagicFilterLevel;
-            var alpha = Math.Sin(omega) / (2 * QLevel);
-            var cosw = Math.Cos(omega);
-
-            _b[0] = (float)((1 - cosw) / 2);
-            _b[1] = (float)(1 - cosw);
-            _b[2] = _b[0];
-
-            _a[0] = (float)(1 + alpha);
-            _a[1] = (float)(-2 * cosw);
-            _a[2] = (float)(1 - alpha);
-            
-            Normalize();
-            
-            Con.Debug($"CoefficientUpdate {MagicFilterLevel}:{QLevel}");
-            
-            _in1 = _in2 = _out1 = _out2 = 0;
-        }
-        
-        public static void Normalize()
-        {
-            var a0 = _a[0];
-
-            if (Math.Abs(a0 - 1) < 1e-10f)
-            {
-                return;
-            }
-
-            if (Math.Abs(a0) < 1e-30f)
-            {
-                throw new ArgumentException("The coefficient a[0] can not be zero!");
-            }
-
-            for (var i = 0; i < _a.Length; _a[i++] /= a0) { }
-            for (var i = 0; i < _b.Length; _b[i++] /= a0) { }
-        }
-
-        public static float ProcessSample(float sample)
-        {
-            var output = _b[0] * sample + _b[1] * _in1 + _b[2] * _in2 - _a[1] * _out1 - _a[2] * _out2;
-            
-            _in2 = _in1;
-            _in1 = sample;
-            _out2 = _out1;
-            _out1 = output;
-            
-            return output;
+            ApplyPatches(typeof(MicrophoneMutePatch));
         }
     }
 
-    [HarmonyPatch(typeof(AuthUIManager))]
+    [HarmonyPatch]
     class AuthManagerPatches
     {
-        [HarmonyPatch("AuthResultHandle")]
-        [HarmonyPostfix]
-        private static void AuthResultPatch(AuthUIManager __instance, int __0, string __1, string __2)
+        static MethodBase TargetMethod()
         {
-            if (__0 != 1) return;
+            return typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetMethod("AuthResultHandle", BindingFlags.NonPublic | BindingFlags.Static);
+        }
+
+        private static void Postfix(AuthUIManager.AuthResultType type)
+        {
+            if (type != AuthUIManager.AuthResultType.LoggedInOk) return;
             
             Patches.OnUserLogin?.Invoke();
-        }
-    }
-
-    [HarmonyPatch(typeof(CVRObjectLoader))]
-    class CVRObjectLoaderPatch
-    {
-        private static readonly MethodInfo _worldLoadedMethod = typeof(Patches).GetMethod("WorldLoaded", BindingFlags.Static | BindingFlags.NonPublic);
-        private static readonly MethodInfo _targetMethod = typeof(AssetBundle).GetMethod(nameof(AssetBundle.Unload), BindingFlags.Public | BindingFlags.Instance);
-
-        [HarmonyPatch(nameof(CVRObjectLoader.LoadIntoWorld), MethodType.Enumerator)]
-        [HarmonyTranspiler]
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var code = new CodeMatcher(instructions)
-                .MatchForward(true, new CodeMatch(OpCodes.Ldc_I4_0), new CodeMatch(OpCodes.Callvirt, _targetMethod))
-                .Insert(
-                    new CodeInstruction(OpCodes.Call, _worldLoadedMethod)
-                )
-                .InstructionEnumeration();
-
-            return code;
-        }
-    }
-    
-    [HarmonyPatch]
-    class CVRPlayerManagerJoin
-    {
-        private static readonly MethodInfo _targetMethod = typeof(List<CVRPlayerEntity>).GetMethod("Add", BindingFlags.Public | BindingFlags.Instance);
-        private static readonly MethodInfo _userJoinMethod = typeof(Patches).GetMethod("UserJoinPatch", BindingFlags.Static | BindingFlags.NonPublic);
-        private static readonly FieldInfo _playerEntity = typeof(CVRPlayerManager).GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Instance).Single(t => t.GetField("p") != null).GetField("p");
-        
-        static MethodInfo TargetMethod()
-        {
-            return typeof(CVRPlayerManager).GetMethod(nameof(CVRPlayerManager.TryCreatePlayer), BindingFlags.Instance | BindingFlags.Public);
-        }
-        
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var code = new CodeMatcher(instructions)
-                .MatchForward(true, new CodeMatch(OpCodes.Callvirt, _targetMethod))
-                .Insert(
-                    new CodeInstruction(OpCodes.Ldloc_0),
-                    new CodeInstruction(OpCodes.Ldfld, _playerEntity),
-                    new CodeInstruction(OpCodes.Call, _userJoinMethod)
-                )
-                .InstructionEnumeration();
-
-            return code;
-        }
-    }
-
-    [HarmonyPatch]
-    class CVRPlayerEntityLeave
-    {
-        private static readonly MethodInfo _userLeaveMethod = typeof(Patches).GetMethod("UserLeavePatch", BindingFlags.Static | BindingFlags.NonPublic);
-        
-        static MethodInfo TargetMethod()
-        {
-            return typeof(CVRPlayerEntity).GetMethod(nameof(CVRPlayerEntity.Recycle), BindingFlags.Instance | BindingFlags.Public);
-        }
-        
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var code = new CodeMatcher(instructions)
-                .Advance(1)
-                .Insert(
-                    new CodeInstruction(OpCodes.Ldarg_0),
-                    new CodeInstruction(OpCodes.Call, _userLeaveMethod)
-                )
-                .InstructionEnumeration();
-            
-            return code;
         }
     }
 
@@ -360,7 +259,8 @@ namespace TotallyWholesome.Patches
             Patches.OnAvatarInstantiated?.Invoke(TWUtils.GetPlayerDescriptorFromPuppetMaster(__instance).ownerId);
         }
     }
-
+    
+    
     [HarmonyPatch(typeof(ViewManager))]
     class ViewManagerPatches
     {
@@ -441,33 +341,125 @@ namespace TotallyWholesome.Patches
         }
     }
 
-    [HarmonyPatch(typeof(BasicMicrophoneCapture))]
-    class MicrophoneCapturePatch
+    /*
+    [HarmonyPatch]
+    public class MicrophoneCapturePatch
     {
-        [HarmonyPatch("ConsumeSamples")]
-        [HarmonyPrefix]
-        static void ConsumeSamples(ArraySegment<float> samples)
-        {
-            if (samples.Array == null || !(Patches.IsForceMuted && Patches.IsMuffled))
-                return;
+        //These 2 numbers are still magic, changing it too far from these breaks the filter entirely
+        public static float MagicFilterLevel = 433.1509f;
+        public static float QLevel = 0.003219661f;
+        
+        private static float[] _a = new float[3];
+        private static float[] _b = new float[3];
 
-            for (int i = 0; i < samples.Count; i++)
+        private static float _in1, _in2, _out1, _out2;
+
+        public static StringWriter Writer;
+        
+        private delegate void vx_after_capture_audio_read_t(IntPtr callback_handle, IntPtr session_group_handle, IntPtr initial_target_uri, IntPtr pcm_frames, int pcm_frame_count, int audio_frame_rate, int channels_per_frame);
+
+        [MonoPInvokeCallback(typeof(vx_after_capture_audio_read_t))]
+        private static unsafe void vx_after_capture_audio_read(IntPtr callback_handle, IntPtr session_group_handle, IntPtr initial_target_uri, IntPtr pcm_frames, int pcm_frame_count, int audio_frame_rate, int channels_per_frame)
+        {
+            try
             {
-                samples.Array[i] = Patches.ProcessSample(samples.Array[i]);
+                if (session_group_handle == IntPtr.Zero || initial_target_uri == IntPtr.Zero || pcm_frames == IntPtr.Zero || !(Patches.IsForceMuted && Patches.IsMuffled)) return;
+
+                int pcmDataCount = pcm_frame_count * channels_per_frame;
+                
+                if(pcmDataCount <= 0) return;
+
+                short* pcmFrameData = (short*)pcm_frames;
+
+                for (int i = 0; i < pcmDataCount; i++)
+                {
+                    var data = pcmFrameData[i];
+                    var fixedFloat = (float)(data - short.MinValue) / (short.MaxValue - short.MinValue);
+                    var output = _b[0] * fixedFloat+ _b[1] * _in1 + _b[2] * _in2 - _a[1] * _out1 - _a[2] * _out2;
+            
+                    _in2 = _in1;
+                    _in1 = fixedFloat;
+                    _out2 = _out1;
+                    _out1 = output;
+                    
+                    pcmFrameData[i] = (short)(output * (short.MaxValue - short.MinValue) + short.MinValue);
+                    
+                   Writer.WriteLine("Data: Orig - " + fixedFloat + " Adj - " + output);
+                }
+            }
+            catch (Exception e)
+            {
+                Con.Error(e);
             }
         }
-    }
 
-    [HarmonyPatch(typeof(Audio))]
+        static MethodBase TargetMethod()
+        {
+            return typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Vivox.Internal.VivoxPCMReader").GetMethod("Initialize", BindingFlags.Static | BindingFlags.NonPublic);
+        }
+        static void Postfix(ref vx_sdk_config_t config)
+        {
+            config.pf_on_audio_unit_after_capture_audio_read = (SWIGTYPE_p_f_p_void_p_q_const__char_p_q_const__char_p_short_int_int_int__void)Activator.CreateInstance(typeof(SWIGTYPE_p_f_p_void_p_q_const__char_p_q_const__char_p_short_int_int_int__void), BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { Marshal.GetFunctionPointerForDelegate<vx_after_capture_audio_read_t>(new vx_after_capture_audio_read_t(vx_after_capture_audio_read)), true }, null, null);
+            Con.Debug("Created and set our after_capture_audio_read delegate");
+            
+            RecalculateCoefficients();
+            Writer = new StringWriter();
+        }
+        
+        public static void RecalculateCoefficients()
+        {
+            var omega = 2 * Math.PI * MagicFilterLevel;
+            var alpha = Math.Sin(omega) / (2 * QLevel);
+            var cosw = Math.Cos(omega);
+
+            _b[0] = (float)((1 - cosw) / 2);
+            _b[1] = (float)(1 - cosw);
+            _b[2] = _b[0];
+
+            _a[0] = (float)(1 + alpha);
+            _a[1] = (float)(-2 * cosw);
+            _a[2] = (float)(1 - alpha);
+            
+            Normalize();
+            
+            Con.Debug($"CoefficientUpdate {MagicFilterLevel}:{QLevel}");
+            
+            _in1 = _in2 = _out1 = _out2 = 0;
+        }
+        
+        public static void Normalize()
+        {
+            var a0 = _a[0];
+
+            if (Math.Abs(a0 - 1) < 1e-10f)
+            {
+                return;
+            }
+
+            if (Math.Abs(a0) < 1e-30f)
+            {
+                throw new ArgumentException("The coefficient a[0] can not be zero!");
+            }
+
+            for (var i = 0; i < _a.Length; _a[i++] /= a0) { }
+            for (var i = 0; i < _b.Length; _b[i++] /= a0) { }
+        }
+    }
+    */
+
+    [HarmonyPatch]
     class MicrophoneMutePatch
     {
-        [HarmonyPatch(nameof(Audio.SetMicrophoneActive))]
-        [HarmonyPrefix]
-        static void SetMicrophoneActive(ref bool muted)
+        static MethodBase TargetMethod()
         {
-            if (Patches.IsForceMuted && !Patches.IsMuffled)
+            return typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Vivox.VivoxDeviceHandler").GetProperty("InputMuted", BindingFlags.Static | BindingFlags.NonPublic)?.SetMethod;
+        }
+        
+        static void Prefix(ref bool __0)
+        {
+            if (Patches.IsForceMuted)// && !Patches.IsMuffled)
             {
-                muted = true;
+                __0 = true;
 
                 if (DateTime.Now.Subtract(Patches.TimeSinceLastUnmute).Seconds >= 20)
                 {
@@ -520,40 +512,6 @@ namespace TotallyWholesome.Patches
         }
     }
 
-    [HarmonyPatch(typeof(NetworkManager))]
-    class NetworkManagerPatches
-    {
-        [HarmonyPatch("OnGameNetworkConnected")]
-        [HarmonyPostfix]
-        static void OnGameNetworkConnected(NetworkManager __instance)
-        {
-            Con.Debug("Connected to Game Network");
-            try
-            {
-                Patches.OnGameNetworkConnected?.Invoke();
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-        
-        [HarmonyPatch("OnGameNetworkConnectionClosed")]
-        [HarmonyPostfix]
-        static void OnGameNetworkClosed(object __0, DisconnectedEventArgs __1)
-        {
-            Con.Debug("Disconnected from instance");
-            try
-            {
-                Patches.OnWorldLeave?.Invoke();
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-    }
-    
     [HarmonyPatch(typeof(CVRSpawnable))]
     class CVRSpawnablePatches
     {

@@ -7,10 +7,8 @@ using System.Threading;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using cohtml;
 using MelonLoader;
 using TotallyWholesome.Managers;
-using TotallyWholesome.Managers.Status;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using TotallyWholesome.TWUI;
@@ -24,8 +22,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.4.16";
-        public const string TWVersion = "3.4.16";
+        public const string AssemblyVersion = "3.4.19";
+        public const string TWVersion = "3.4.19";
         public const bool isBetaBuild = false;
         public const string DownloadLink = "https://totallywholeso.me/";
     }
@@ -43,7 +41,7 @@ namespace TotallyWholesome
         private TWNetClient _twNetClient;
         private Thread _mainThread;
         private bool _openedTosPopup;
-        private bool _firstMenuRegen;
+        private bool _firstWorldJoin;
         private List<ITWManager> _managers;
         
         //Temporary to allow updates to rollout for the new loader
@@ -57,14 +55,16 @@ namespace TotallyWholesome
             Instance = this;
 
             
+            Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
+            #endif
 
-            Patches.Patches.SetupPatches();
+            Patches.SetupPatches();
 
-            Patches.Patches.OnUserLogin += OnPlayerLoggedIn;
-            Patches.Patches.OnMarkMenuAsReady += OnRegenerateMenu;
-            Patches.Patches.OnWorldLeave += TWUtils.LeaveWorld;
-            Patches.Patches.EarlyWorldJoin += TWUtils.LeaveWorld;
-            Patches.Patches.UserLeave += TWUtils.UserLeave;
+            Patches.OnUserLogin += OnPlayerLoggedIn;
+            Patches.OnWorldLeave += TWUtils.LeaveWorld;
+            Patches.EarlyWorldJoin += TWUtils.LeaveWorld;
+            Patches.UserLeave += TWUtils.UserLeave;
+            Patches.EarlyWorldJoin += EarlyWorldJoin;
 
             _mainThread = Thread.CurrentThread;
             
@@ -132,19 +132,25 @@ namespace TotallyWholesome
 
             _openedTosPopup = true;
         }
-
-        private void OnRegenerateMenu(CVR_MenuManager obj)
+        
+        private void EarlyWorldJoin()
         {
-            if (!_firstMenuRegen)
+            if (!_firstWorldJoin)
             {
-                _firstMenuRegen = true;
+                _firstWorldJoin = true;
+                
+                Patches.LateStartupPatches();
 
                 NotificationSystem.UseCVRNotificationSystem = ConfigManager.Instance.IsActive(AccessType.UseOldHudMessage);
                 NotificationSystem.SetupNotifications();
                 
+                //Add our actions into CVRs join and leave
+                CVRPlayerManager.Instance.OnPlayerEntityCreated += entity => Patches.UserJoin.Invoke(entity);
+                CVRPlayerManager.Instance.OnPlayerEntityRecycled += entity => Patches.UserLeave.Invoke(entity); 
+                
                 PlayerSetup.Instance.avatarSetupCompleted.AddListener(() =>
                 {
-                    Patches.Patches.OnAvatarInstantiated?.Invoke(MetaPort.Instance.ownerId);
+                    Patches.OnAvatarInstantiated?.Invoke(MetaPort.Instance.ownerId);
                 });
                 
                 Con.Debug("Calling LateSetup on loaded managers");
@@ -165,13 +171,6 @@ namespace TotallyWholesome
                 if (Configuration.JSONConfig.AcceptedTOS < CurrentTOSLevel)
                     MelonCoroutines.Start(WaitForKeyPopup());
             }
-            
-
-            
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", _twNetClient.OnlineUsers.ToString());
-            
-            StatusManager.Instance.UpdateQuickMenuStatus();
-            UserInterface.Instance.MenuRegnerate();
         }
 
         public override void OnUpdate()

@@ -169,7 +169,7 @@ namespace TotallyWholesome.Managers
                     break;
                 case AccessType.EnableMuffledMode:
                     if (!value)
-                        Audio.SetMicrophoneActive(true);
+                        AudioManagement.SetMicrophoneActive(false);
                     break;
                 case AccessType.UseOldHudMessage:
                     NotificationSystem.UseCVRNotificationSystem = value;
@@ -192,6 +192,11 @@ namespace TotallyWholesome.Managers
                     break;
                 case AccessType.AllowDeafening:
                     PlayerRestrictionManager.Instance.ApplyDeafen(false, true);
+                    break;
+                case AccessType.AutoAcceptMasterRequest:
+                case AccessType.AutoAcceptPetRequest:
+                case AccessType.AutoAcceptFriendsOnly:
+                    StatusManager.Instance.SendStatusUpdate();
                     break;
                 default:
                     break;

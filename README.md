@@ -36,9 +36,6 @@
   </ol>
 </details>
 
-
-<<<<<<< HEAD
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
@@ -114,7 +111,6 @@ There's alot more to TW than just leashes. A bit too much to go over in this usa
 =======
 * Visual Studio 2022 or Jetbrain Rider (.net 6 support required for server)
 * MelonLoader >=0.5.7
->>>>>>> custom-lead
 
 ### Preparing a development environment
 
@@ -131,6 +127,10 @@ mklink /j ml "C:\Program Files (x86)\Steam\steamapps\common\ChilloutVR\MelonLoad
 mklink /j Managed "C:\Program Files (x86)\Steam\steamapps\common\ChilloutVR\ChilloutVR_Data\Managed"
 mklink /j Mods "C:\Program Files (x86)\Steam\steamapps\common\ChilloutVR\Mods"
 ```
+* Now you need to create a Libs folder in your project root, once that's done you'll need to copy 3 dlls from your dotnet targetting pack directory (Ex. C:\Program Files\dotnet\packs\NETStandard.Library.Ref\2.1.0\ref\netstandard2.1), the 3 dlls are:
+	* System.Reflection.Emit.dll
+	* System.Reflection.Emit.ILGeneration.dll
+	* System.Reflection.Emit.Lightweight.dll
 * You should now be configured to begin working on Totally Wholesome
 
 

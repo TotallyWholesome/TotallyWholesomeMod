@@ -44,10 +44,10 @@ namespace TotallyWholesome.Managers.Status
             ButtplugManager.Instance.ButtplugDeviceAdded += DeviceChangeStatusUpdate;
             PiShockManager.Instance.PiShockDeviceUpdated += DeviceChangeStatusUpdate;
             
-            Patches.Patches.OnNameplateRebuild += OnNameplateRebuild;
-            Patches.Patches.OnWorldLeave += OnWorldLeave;
-            Patches.Patches.UserLeave += OnPlayerLeave;
-            Patches.Patches.OnWorldJoin += OnInstanceJoin;
+            Patches.OnNameplateRebuild += OnNameplateRebuild;
+            Patches.OnWorldLeave += OnWorldLeave;
+            Patches.UserLeave += OnPlayerLeave;
+            Patches.OnWorldJoin += OnInstanceJoin;
             TWNetClient.OnTWNetAuthenticated += OnTWNetAuthenticated;
         }
         
@@ -181,6 +181,16 @@ namespace TotallyWholesome.Managers.Status
                 if (component.gameObject == null) return;
 
 
+                if (!packet.EnableStatus)
+                {
+                    component.ResetStatus();
+                    return;
+                }
+
+
+                component.specialMark.gameObject.SetActive(packet.DisplaySpecialRank); //Controlled by server
+                component.specialMarkText.text = packet.SpecialRank;
+#endif
 
                 //Status will be shown and updated
                 component.gameObject.SetActive(true);

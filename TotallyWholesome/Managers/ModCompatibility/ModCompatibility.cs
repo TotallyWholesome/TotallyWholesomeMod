@@ -50,7 +50,7 @@ namespace TotallyWholesome.Managers.ModCompatibility
         public void LateSetup()
         {
             _lastVRState = MetaPort.Instance.isUsingVr;
-            Patches.Patches.OnLocalAvatarReady += OnLocalAvatarReady;
+            Patches.OnLocalAvatarReady += OnLocalAvatarReady;
         }
     }
 }

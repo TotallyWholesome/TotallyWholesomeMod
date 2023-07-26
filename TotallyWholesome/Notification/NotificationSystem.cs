@@ -34,7 +34,7 @@ namespace TotallyWholesome.Notification
 
         public static void SetupNotifications()
         {
-            if (!XRDevice.isPresent)
+            if (!MetaPort.Instance.isUsingVr)
                 _hudContent = PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject;
             else
                 _hudContent = PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject;
@@ -75,7 +75,7 @@ namespace TotallyWholesome.Notification
             //Get the RectTransform for us to set the alignment
             _notificationRect = _notificationGO.GetComponent<RectTransform>();
             
-            _notificationRect.localPosition = XRDevice.isPresent ? new Vector3(-3, 0, 0) : Vector3.zero;
+            _notificationRect.localPosition = MetaPort.Instance.isUsingVr ? new Vector3(-3, 0, 0) : Vector3.zero;
             
             UpdateNotificationAlignment(null, null);
 

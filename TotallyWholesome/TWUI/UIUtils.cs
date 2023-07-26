@@ -1,7 +1,6 @@
 ﻿using System;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking.IO.Social;
-using cohtml;
 using TotallyWholesome.Managers;
 
 namespace TotallyWholesome.TWUI
@@ -22,7 +21,7 @@ namespace TotallyWholesome.TWUI
             cvrInvite.WorldName = inviteText;
             cvrInvite.InstanceName = inviteText;
             
-            Patches.Patches.TWInvites.Add(cvrInvite);
+            Patches.TWInvites.Add(cvrInvite);
 
             if (ViewManager.Instance == null || ViewManager.Instance.gameMenuView == null)
                 return;

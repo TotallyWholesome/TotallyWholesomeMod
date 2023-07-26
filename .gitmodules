@@ -7,3 +7,6 @@
 [submodule "TWNetCommon"]
 	path = TWNetCommon
 	url = https://github.com/TotallyWholesomeVRC/TWNetCommon.git
+[submodule "MessagePack-CSharp"]
+	path = MessagePack-CSharp
+	url = https://github.com/TotallyWholesome/MessagePack-CSharp.git

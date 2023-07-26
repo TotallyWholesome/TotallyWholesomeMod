@@ -24,7 +24,7 @@ using Yggdrasil.Extensions;
 
 namespace TotallyWholesome.Managers
 {
-    internal class PiShockManager : ITWManager
+    public class PiShockManager : ITWManager
     {
         public static PiShockManager Instance;
 
@@ -827,30 +827,30 @@ namespace TotallyWholesome.Managers
         }
     }
 
-    class PiShockJsonAuth
+    public class PiShockJsonAuth
     {
         public string Apikey { get; set; } = null;
     }
 
-    class PiShockJsonLog
+    public class PiShockJsonLog
     {
         public string Code { get; set; }
         public int Page = 0;
     }
 
-    class PiShockGetToken
+    public class PiShockGetToken
     {
         public string Name { get; set; } = null;
         public string Code { get; set; } = null;
     }
 
-    class PiShockShortCodeResp
+    public class PiShockShortCodeResp
     {
         public string Key { get; set; }
         public string ShockerName { get; set; }
     }
 
-    class PiShockJsonCommand : PiShockJsonAuth
+    public class PiShockJsonCommand : PiShockJsonAuth
     {
         public string Name { get; set; } = null;
         public ShockOperation? Op { get; set; } = null;
@@ -858,7 +858,7 @@ namespace TotallyWholesome.Managers
         public int? Intensity { get; set; } = null;
     }
 
-    class PiShockerInfo
+    public class PiShockerInfo
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -868,7 +868,7 @@ namespace TotallyWholesome.Managers
         public bool Online { get; set; }
     }
 
-    class PiShockerLog
+    public class PiShockerLog
     {
         public string Username { get; set; }
         public string Tm { get; set; }

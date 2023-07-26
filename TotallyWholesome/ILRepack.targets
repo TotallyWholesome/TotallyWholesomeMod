@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Target Name="NotILRepack" AfterTargets="Build">
+        <PropertyGroup>
+            <WorkingDirectory>$(OutputPath)</WorkingDirectory>
+        </PropertyGroup>
+        <ItemGroup>
+            <InputAssemblies Include="$(OutputPath)/$(AssemblyName).dll" />
+            <InputAssemblies Include="$(OutputPath)/MessagePack.Annotations.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Numerics.Vectors.dll" />
+            <InputAssemblies Include="$(OutputPath)/MessagePack.dll" />
+            <InputAssemblies Include="$(OutputPath)/Yggdrasil.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Collections.Immutable.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Runtime.CompilerServices.Unsafe.dll" />
+            <InputAssemblies Include="$(OutputPath)/Microsoft.Bcl.AsyncInterfaces.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Threading.Tasks.Extensions.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Memory.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Buffers.dll" />
+            <InputAssemblies Include="$(OutputPath)/ButtplugManaged.dll" />
+            <InputAssemblies Include="$(OutputPath)/TWNetCommon.dll" />
+            <InputAssemblies Include="$(OutputPath)/Microsoft.NET.StringTools.dll" />
+            <InputAssemblies Include="$(OutputPath)/websocket-sharp.dll" />
+            <InputAssemblies Include="..\Libs\System.Reflection.Emit.dll" />
+            <InputAssemblies Include="..\Libs\System.Reflection.Emit.Lightweight.dll" />
+            <InputAssemblies Include="..\Libs\System.Reflection.Emit.ILGeneration.dll" />
+            <IlRepackLibs Include="$(OutputPath)" />
+        </ItemGroup>
+        <Message Text="MERGING: @(InputAssemblies->'%(Filename)') into $(OutputAssembly)" Importance="High" />
+        <ILRepack Internalize="false" LibraryPath="@(IlRepackLibs)" OutputFile="$(OutputPath)/merged/$(AssemblyName).dll" InputAssemblies="@(InputAssemblies)" />
+    </Target>
+</Project>

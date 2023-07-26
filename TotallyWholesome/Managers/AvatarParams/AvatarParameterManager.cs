@@ -42,7 +42,7 @@ namespace TotallyWholesome.Managers.AvatarParams
         {
             Instance = this;
             
-            Patches.Patches.OnLocalAvatarReady += OnLocalAvatarReady;
+            Patches.OnLocalAvatarReady += OnLocalAvatarReady;
             TWNetListener.MasterRemoteControlEvent += MasterRemoteControlEvent;
             UserInterface.Instance.OnBackAction += ShouldUpdate;
             UserInterface.Instance.OnOpenedPage += ShouldUpdate;

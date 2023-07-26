@@ -53,11 +53,13 @@ namespace TotallyWholesome.Managers.ModCompatibility
         }
     }
 
-    public class ActionMenuIntegration
+    internal class ActionMenuIntegration
     {
-        ActionMenuMod.Lib ActionMenuLib = new ActionMenuMod.Lib();
-        public ActionMenuIntegration()
+        object ActionMenuLib;
+
+        public void LoadAMLib()
         {
+            ActionMenuLib = new ActionMenuMod.Lib();
             API.OnGlobalMenuLoaded += API_OnGlobalMenuLoaded;
         }
 
@@ -199,20 +201,19 @@ namespace TotallyWholesome.Managers.ModCompatibility
 
         public MenuItem MenuButtonWrapper(string name, Action action, string icon = null)
         {
-            
-            return new MenuItem() { name = name, action = ActionMenuLib.BuildButtonItem(name.Replace(" ", ""), action), icon = icon };
+            return new MenuItem() { name = name, action = ((ActionMenuMod.Lib)ActionMenuLib).BuildButtonItem(name.Replace(" ", ""), action), icon = icon };
         }
         public MenuItem MenuRadialWrapper(string name, Action<float> action, string icon = null, float defaultValue = 0, float minValue = 0, float maxValue = 1)
         {
-            return new MenuItem() { name = name, action = ActionMenuLib.BuildRadialItem(name.Replace(" ", ""), action, minValue, maxValue, defaultValue), icon = icon };
+            return new MenuItem() { name = name, action = ((ActionMenuMod.Lib)ActionMenuLib).BuildRadialItem(name.Replace(" ", ""), action, minValue, maxValue, defaultValue), icon = icon };
         }
         public MenuItem MenuToggleWrapper(string name, Action<bool> action, string icon = null, bool defaultValue = false)
         {
-            return new MenuItem() { name = name, action = ActionMenuLib.BuildToggleItem(name.Replace(" ", ""), action), icon = icon, enabled = defaultValue };
+            return new MenuItem() { name = name, action = ((ActionMenuMod.Lib)ActionMenuLib).BuildToggleItem(name.Replace(" ", ""), action), icon = icon, enabled = defaultValue };
         }
         public MenuItem DynamicMenuWrapper(string name, Func<List<MenuItem>> action, string icon = null)
         {
-            return new MenuItem() { name = name, action = ActionMenuLib.BuildCallbackMenu(name.Replace(" ", ""), action), icon = icon };
+            return new MenuItem() { name = name, action = ((ActionMenuMod.Lib)ActionMenuLib).BuildCallbackMenu(name.Replace(" ", ""), action), icon = icon };
         }
     }
 }

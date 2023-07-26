@@ -30,7 +30,7 @@ namespace TotallyWholesome.Managers.Achievements
             Instance = this;
             
             var interfaceType = typeof(IAchievement);
-            var achievements = Assembly.GetExecutingAssembly().GetTypes().Where(x => interfaceType.IsAssignableFrom(x) && x != interfaceType).ToArray();
+            var achievements = Assembly.GetExecutingAssembly().GetTypes().Where(x=> x.FullName != null && x.FullName.Contains("TotallyWholesome.Managers.Achievements.Achievements")).Where(x => interfaceType.IsAssignableFrom(x) && x != interfaceType).ToArray();
             
             //TODO: Switch this to be stored serverside
             try
@@ -74,7 +74,7 @@ namespace TotallyWholesome.Managers.Achievements
 
             AchievementsUpdated = true;
             
-            Patches.Patches.EarlyWorldJoin += () =>
+            Patches.EarlyWorldJoin += () =>
             {
                 //Start AchievementManagerCoroutine for processing conditions 
                 MelonCoroutines.Start(AchievementManagerCoroutine());

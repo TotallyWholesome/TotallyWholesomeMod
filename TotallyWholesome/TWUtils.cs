@@ -11,8 +11,11 @@ using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.IO.UserGeneratedContent;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using ABI_RC.Core.UI;
 using ABI.CCK.Components;
 using ABI.CCK.Scripts;
+using cohtml;
+using cohtml.Net;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Objects;
 using TWNetCommon.Data.NestedObjects;
@@ -32,6 +35,7 @@ namespace TotallyWholesome
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
         private static FieldInfo _mlVersionGetter = typeof(MelonLoader.BuildInfo).GetField(nameof(MelonLoader.BuildInfo.Version), BindingFlags.Public | BindingFlags.Static);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetField("username", BindingFlags.Static | BindingFlags.NonPublic);
         private static Dictionary<string, TWPlayerObject> _players = new();
         private static TWPlayerObject _ourPlayer;
 
@@ -66,6 +70,11 @@ namespace TotallyWholesome
             return _richPresenceLastMsgGetter.GetValue(null) as RichPresenceInstance_t;
         }
 
+        public static string GetSelfUsername()
+        {
+            return (string)_selfUsername.GetValue(null);
+        }
+
         public static string GetMelonLoaderVersion()
         {
             return (string)_mlVersionGetter.GetValue(null);
@@ -87,8 +96,8 @@ namespace TotallyWholesome
 
         public static void OpenKeyboard(string currentValue, Action<string> callback)
         {
-            Patches.Patches.OnKeyboardSubmitted = callback;
-            Patches.Patches.TimeSinceKeyboardOpen = DateTime.Now;
+            Patches.OnKeyboardSubmitted = callback;
+            Patches.TimeSinceKeyboardOpen = DateTime.Now;
             ViewManager.Instance.openMenuKeyboard(currentValue);
         }
 

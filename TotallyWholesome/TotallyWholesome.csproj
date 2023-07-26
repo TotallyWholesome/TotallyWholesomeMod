@@ -1,385 +1,176 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\ILMerge.3.0.41\build\ILMerge.props" Condition="Exists('..\packages\ILMerge.3.0.41\build\ILMerge.props')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4CF83602-1022-4ED0-95E2-30566CF1C5D3}</ProjectGuid>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TotallyWholesome</RootNamespace>
-    <AssemblyName>TotallyWholesome</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <LangVersion>latest</LangVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;ADMIN</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>false</UseWPF>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <Configurations>Debug;Release;Admin</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>false</DebugSymbols>
     <OutputPath>bin\Admin\</OutputPath>
-    <DefineConstants>TRACE;ADMIN</DefineConstants>
+    <DefineConstants>ADMIN</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>latest</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>..\3rdparty\ml\0Harmony.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="ActionMenu">
       <HintPath>..\3rdparty\Mods\ActionMenu.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\3rdparty\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>..\3rdparty\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="cohtml.Net">
       <HintPath>..\3rdparty\Managed\cohtml.Net.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Cohtml.Runtime">
       <HintPath>..\3rdparty\Managed\Cohtml.Runtime.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="DarkRift">
       <HintPath>..\3rdparty\Managed\DarkRift.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="DarkRift.Client">
       <HintPath>..\3rdparty\Managed\DarkRift.Client.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="DarkRift.Server">
-      <HintPath>..\3rdparty\Managed\DarkRift.Server.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="DissonanceVoip">
-      <HintPath>..\3rdparty\Managed\DissonanceVoip.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="MelonLoader">
       <HintPath>..\3rdparty\ml\MelonLoader.dll</HintPath>
-      <Private>False</Private>
     </Reference>
-    <Reference Include="MessagePack, Version=2.4.0.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
-      <HintPath>..\packages\MessagePack.2.4.35\lib\netstandard2.0\MessagePack.dll</HintPath>
-    </Reference>
-    <Reference Include="MessagePack.Annotations, Version=2.4.0.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
-      <HintPath>..\packages\MessagePack.Annotations.2.4.35\lib\netstandard2.0\MessagePack.Annotations.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Build.Framework, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>..\packages\Microsoft.Build.Framework.15.9.20\lib\net46\Microsoft.Build.Framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Build.Utilities.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>..\packages\Microsoft.Build.Utilities.Core.15.9.20\lib\net46\Microsoft.Build.Utilities.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.NET.StringTools, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.NET.StringTools.17.3.1\lib\net472\Microsoft.NET.StringTools.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.Setup.Configuration.Interop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>..\packages\Microsoft.VisualStudio.Setup.Configuration.Interop.1.16.30\lib\net35\Microsoft.VisualStudio.Setup.Configuration.Interop.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="mscorlib" />
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Collections.Immutable, Version=1.2.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Collections.Immutable.1.7.1\lib\net461\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
     <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\3rdparty\Managed\Unity.TextMeshPro.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\3rdparty\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\3rdparty\Managed\UnityEngine.AnimationModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.AudioModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.IMGUIModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.InputModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.InputModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.JSONSerializeModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.Physics2DModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.Physics2DModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.PhysicsModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.TextCoreModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.TextCoreModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\3rdparty\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UIElementsModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.UIElementsModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.UIModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestTextureModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestWWWModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.VFXModule">
       <HintPath>..\3rdparty\Managed\UnityEngine.VFXModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.VRModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\3rdparty\Managed\UnityEngine.VRModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
     </Reference>
     <Reference Include="UnityEngine.XRModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\3rdparty\Managed\UnityEngine.XRModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="VivoxUnity">
+      <HintPath>..\3rdparty\Managed\VivoxUnity.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration.cs" />
-    <Compile Include="Main.cs" />
-    <Compile Include="Managers\Achievements\Achievements\AprilFools.cs" />
-    <Compile Include="Managers\Achievements\Achievements\BetaTester.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Brrr.cs" />
-    <Compile Include="Managers\Achievements\Achievements\BrrrMax.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Capacitor.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Chernobyl.cs" />
-    <Compile Include="Managers\Achievements\Achievements\ChokedUp.cs" />
-    <Compile Include="Managers\Achievements\Achievements\DontLeaveMeHere.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Freedom.cs" />
-    <Compile Include="Managers\Achievements\Achievements\GetOverHere.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Goodbye.cs" />
-    <Compile Include="Managers\Achievements\Achievements\GottaCatchEmAll.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Horni.cs" />
-    <Compile Include="Managers\Achievements\Achievements\HowDareYou.cs" />
-    <Compile Include="Managers\Achievements\Achievements\InfinitePower.cs" />
-    <Compile Include="Managers\Achievements\Achievements\JoinTheDegeneracy.cs" />
-    <Compile Include="Managers\Achievements\Achievements\LeashStaff.cs" />
-    <Compile Include="Managers\Achievements\Achievements\LimitTesting.cs" />
-    <Compile Include="Managers\Achievements\Achievements\GettingAttached.cs" />
-    <Compile Include="Managers\Achievements\Achievements\MaxedOut.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Nerd.cs" />
-    <Compile Include="Managers\Achievements\Achievements\OooWhatsThisSetting.cs" />
-    <Compile Include="Managers\Achievements\Achievements\PortalMagic.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Sit.cs" />
-    <Compile Include="Managers\Achievements\Achievements\Slowdown.cs" />
-    <Compile Include="Managers\Achievements\Achievements\SuperCapacitor.cs" />
-    <Compile Include="Managers\Achievements\Achievements\TeslaCoil.cs" />
-    <Compile Include="Managers\Achievements\Achievements\TugOfWar.cs" />
-    <Compile Include="Managers\Achievements\Achievements\WaitShouldThatHappen.cs" />
-    <Compile Include="Managers\Achievements\Achievements\WelcomeBack.cs" />
-    <Compile Include="Managers\Achievements\Achievements\WhatAreLimits.cs" />
-    <Compile Include="Managers\Achievements\AchievementManager.cs" />
-    <Compile Include="Managers\Achievements\Achievements\WhoKilledTheLights.cs" />
-    <Compile Include="Managers\Achievements\Achievements\WomboCombo.cs" />
-    <Compile Include="Managers\Achievements\Conditions\ButtplugDeviceCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\ConfigManagerCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\DateCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\DisconnectCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\ForceDisconnectCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\LeashDistanceCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\LeashStaffCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\LoginCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\MasterRestrictionCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\PetCountCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\PiShockLimitCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\PiShockOperationGlobalCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\PiShockOperationMasterCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\PiShockOperationPetCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\PetRestrictionCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\RatelimitedCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\RecreatedLeashCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\RemoteParamCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\SitCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\TugOfWarCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\TugOfWarPullCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\UserExistsCondition.cs" />
-    <Compile Include="Managers\Achievements\Conditions\VibrationDurationCondition.cs" />
-    <Compile Include="Managers\Achievements\IAchievement.cs" />
-    <Compile Include="Managers\Achievements\ICondition.cs" />
-    <Compile Include="Managers\AvatarParams\AvatarParameter.cs" />
-    <Compile Include="Managers\AvatarParams\AvatarParameterManager.cs" />
-    <Compile Include="Managers\Extensions.cs" />
-    <Compile Include="Managers\ITWManager.cs" />
-    <Compile Include="Managers\Lead\LeadComponents\LineController.cs" />
-    <Compile Include="Managers\Lead\LeadComponents\TWRaycaster.cs" />
-    <Compile Include="Managers\Lead\LeadManager.cs" />
-    <Compile Include="Managers\Lead\LeadPair.cs" />
-    <Compile Include="Managers\Lead\LeashStyle.cs" />
-    <Compile Include="Managers\ModCompatibility\CompatbilityReflections\NotificationAPIAdapter.cs" />
-    <Compile Include="Managers\ModCompatibility\CompatbilityReflections\UIXAdapter.cs" />
-    <Compile Include="Managers\ModCompatibility\CompatbilityReflections\VRCPlatesAdapter.cs" />
-    <Compile Include="Managers\ModCompatibility\ModCompatibility.cs" />
-    <Compile Include="Managers\PlayerRestrictionManager.cs" />
-    <Compile Include="Managers\PiShockManager.cs" />
-    <Compile Include="Managers\Status\StatusComponent.cs" />
-    <Compile Include="Managers\Status\StatusManager.cs" />
-    <Compile Include="Managers\ButtplugManager.cs" />
-    <Compile Include="Managers\ConfigManager.cs" />
-    <Compile Include="Network\TWNetSendHelpers.cs" />
-    <Compile Include="Network\TWNetClient.cs" />
-    <Compile Include="Network\TWNetListener.cs" />
-    <Compile Include="Notification\NotificationController.cs" />
-    <Compile Include="Notification\NotificationObject.cs" />
-    <Compile Include="Notification\NotificationSystem.cs" />
-    <Compile Include="Objects\Config.cs" />
-    <Compile Include="Objects\ConfigObjects\AvatarConfig.cs" />
-    <Compile Include="Objects\ConfigObjects\PiShockShocker.cs" />
-    <Compile Include="Objects\MasterActionPreset.cs" />
-    <Compile Include="Objects\TWPlayerObject.cs" />
-    <Compile Include="Patches.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TWAssets.cs" />
-    <Compile Include="Managers\ModCompatibility\ActionMenu.cs" />
-    <Compile Include="TWUI\ModerationUI.cs" />
-    <Compile Include="TWUI\MultiSelection.cs" />
-    <Compile Include="TWUI\SliderFloat.cs" />
-    <Compile Include="TWUI\UIUtils.cs" />
-    <Compile Include="TWUI\UserInterface.cs" />
-    <Compile Include="TWUtils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Loaderv2\WholesomeLoader-v2.csproj">
-      <Project>{b6f1f37d-8a64-4473-8484-6906f2dcbd13}</Project>
-      <Name>WholesomeLoader-v2</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ManagedButtplugIo\ButtplugCSharp\ManagedButtplugIo.csproj">
-      <Project>{e7f488ca-45ea-4388-847d-0da374bbe962}</Project>
-      <Name>ManagedButtplugIo</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TWNetCommon\TWNetCommon.csproj">
-      <Project>{0bbfd358-e229-4125-9202-38ad9a16c98d}</Project>
-      <Name>TWNetCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Yggdrasil\Yggdrasil\Yggdrasil.csproj">
-      <Project>{4bb8df19-7d20-429a-af5f-5d1232538e08}</Project>
-      <Name>Yggdrasil</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <ProjectReference Include="..\Loaderv2\WholesomeLoader-v2.csproj" />
+    <ProjectReference Include="..\ManagedButtplugIo\ButtplugCSharp\ManagedButtplugIo.csproj" />
+    <ProjectReference Include="..\TWNetCommon\TWNetCommon.csproj" />
+    <ProjectReference Include="..\Yggdrasil\Yggdrasil\Yggdrasil.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="twassets" />
@@ -391,15 +182,14 @@
     <EmbeddedResource Include="TWUI\TWUIBuildAdmin.zip" Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ILMergeConfig.json" />
-    <Content Include="Managers\Achievements\Achievements\AA-IfYoureLookingAtThisYoureACheaterAndShouldFeelBad.txt" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.2" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\ILMerge.MSBuild.Task.1.0.7\build\ILMerge.MSBuild.Task.targets" Condition="Exists('..\packages\ILMerge.MSBuild.Task.1.0.7\build\ILMerge.MSBuild.Task.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\ILMerge.MSBuild.Task.1.0.7\build\ILMerge.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILMerge.MSBuild.Task.1.0.7\build\ILMerge.MSBuild.Task.targets'))" />
-  </Target>
+  <ItemGroup>
+    <Compile Remove="Managers\LovenseManager.cs" />
+  </ItemGroup>
+  <ItemGroup Label="FilesToCopy">
+    <Content Include="LogFiles\*.config" Pack="true" PackagePath="contentFiles\LogFiles">
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+  </ItemGroup>
 </Project>

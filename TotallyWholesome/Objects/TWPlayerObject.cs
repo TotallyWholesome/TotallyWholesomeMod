@@ -46,7 +46,7 @@ namespace TotallyWholesome.Objects
             get
             {
                 if (!_isRemotePlayer)
-                    return MetaPort.Instance.username;
+                    return TWUtils.GetSelfUsername();
                 return ReferenceEquals(_playerEntity, null) ? null : _playerEntity.Username;
             }
         }
