@@ -52,10 +52,16 @@ namespace TWNetCommon.Data.ControlPackets
         /// /// </summary>
         [Key(8)]
         public float ShockHeightStrengthStep { get; set; }
+        
+        /// <summary>
+        /// Duration of a Shoker action in milliseconds
+        /// </summary>
+        [Key(9)]
+        public uint ShockDurationMillis { get; set; }
 
         public override string ToString()
         {
-            return $"PiShockUpdate - [Key: {Key}, ShockOperation: {ShockOperation}, ShockDuration: {ShockDuration}, ShockStrength: {ShockStrength}, ShockHeightEnabled: {ShockHeightEnabled}, ShockHeight: {ShockHeight}, ShockHeightStrengthMin: {ShockHeightStrengthMin}, ShockHeightStrengthMax: {ShockHeightStrengthMax}, ShockHeightStrengthStep: {ShockHeightStrengthStep}]";
+            return $"PiShockUpdate - [Key: {Key}, ShockOperation: {ShockOperation}, ShockDuration: {ShockDuration}, ShockDurationMillis: {ShockDurationMillis}, ShockStrength: {ShockStrength}, ShockHeightEnabled: {ShockHeightEnabled}, ShockHeight: {ShockHeight}, ShockHeightStrengthMin: {ShockHeightStrengthMin}, ShockHeightStrengthMax: {ShockHeightStrengthMax}, ShockHeightStrengthStep: {ShockHeightStrengthStep}]";
         }
     }
     

@@ -96,6 +96,7 @@ namespace TotallyWholesome.Network
                 {
                     packet.ShockOperation = pair.ShockOperation;
                     packet.ShockDuration = pair.ShockDuration;
+                    packet.ShockDurationMillis = (uint)(PiShockManager.Instance.Duration.SliderValue * 1000);
                     packet.ShockStrength = pair.ShockStrength;
                     packet.ShockHeightEnabled = pair.ShockHeightEnabled;
                     packet.ShockHeight = pair.ShockHeight;
@@ -112,6 +113,7 @@ namespace TotallyWholesome.Network
                 else
                 {
                     packet.ShockDuration = (int)Math.Ceiling(PiShockManager.Instance.Duration.SliderValue);
+                    packet.ShockDurationMillis = (uint)(PiShockManager.Instance.Duration.SliderValue * 1000);
                     packet.ShockStrength = (int)Math.Ceiling(PiShockManager.Instance.Strength.SliderValue);
                     packet.ShockOperation = PiShockManager.Instance.Operation;
                     packet.ShockHeightEnabled = PiShockManager.Instance.ShockHeightEnabled;
@@ -130,6 +132,7 @@ namespace TotallyWholesome.Network
                     foreach (var keyPair in LeadManager.Instance.ActiveLeadPairs.Where(x => x.Value.AreWeMaster()))
                     {
                         keyPair.Value.ShockDuration = packet.ShockDuration;
+                        keyPair.Value.ShockDurationMillis = packet.ShockDurationMillis;
                         keyPair.Value.ShockStrength = packet.ShockStrength;
                         keyPair.Value.ShockOperation = packet.ShockOperation;
                         keyPair.Value.ShockHeightEnabled = packet.ShockHeightEnabled;

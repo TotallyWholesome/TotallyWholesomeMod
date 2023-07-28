@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using ABI_RC.Core.InteractionSystem;
-using cohtml;
 using MessagePack;
 using TotallyWholesome.Managers;
 using TotallyWholesome.Managers.Status;

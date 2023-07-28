@@ -169,6 +169,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Loaderv2\WholesomeLoader-v2.csproj" />
     <ProjectReference Include="..\ManagedButtplugIo\ButtplugCSharp\ManagedButtplugIo.csproj" />
+    <ProjectReference Include="..\MessagePack-CSharp\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\TWNetCommon\TWNetCommon.csproj" />
     <ProjectReference Include="..\Yggdrasil\Yggdrasil\Yggdrasil.csproj" />
   </ItemGroup>
