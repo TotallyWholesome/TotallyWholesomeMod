@@ -7,7 +7,6 @@ using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using cohtml;
 using TotallyWholesome.Network;
 using TotallyWholesome.TWUI;
 using TWNetCommon;

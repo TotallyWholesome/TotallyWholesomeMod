@@ -20,9 +20,6 @@
             <InputAssemblies Include="$(OutputPath)/TWNetCommon.dll" />
             <InputAssemblies Include="$(OutputPath)/Microsoft.NET.StringTools.dll" />
             <InputAssemblies Include="$(OutputPath)/websocket-sharp.dll" />
-            <InputAssemblies Include="..\Libs\System.Reflection.Emit.dll" />
-            <InputAssemblies Include="..\Libs\System.Reflection.Emit.Lightweight.dll" />
-            <InputAssemblies Include="..\Libs\System.Reflection.Emit.ILGeneration.dll" />
             <IlRepackLibs Include="$(OutputPath)" />
         </ItemGroup>
         <Message Text="MERGING: @(InputAssemblies->'%(Filename)') into $(OutputAssembly)" Importance="High" />

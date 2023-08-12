@@ -12,10 +12,9 @@ namespace WholesomeLoader
         public readonly int? Patch;
         public readonly int? Experimental;
         public bool AllVersions;
+        public bool InvalidVersion;
 
         private static Regex _versionMatch = new Regex("^(?'year'\\d{4})r(?'release'\\d*)(?>ex(?'experimental'\\d*)|p(?'patch'\\d*))*", RegexOptions.Compiled);
-
-        private bool invalidVersion;
 
         public CVRVersion(string version)
         {
@@ -24,7 +23,7 @@ namespace WholesomeLoader
             if (version == "*" || version == "all" || version == null)
             {
                 AllVersions = true;
-                invalidVersion = true;
+                InvalidVersion = true;
                 return;
             }
             
@@ -34,7 +33,7 @@ namespace WholesomeLoader
 
             if (!match.Success)
             {
-                invalidVersion = true;
+                InvalidVersion = true;
                 return;
             }
 
@@ -56,18 +55,17 @@ namespace WholesomeLoader
         {
             if (AllVersions || target.AllVersions) return 0;
 
-            if (invalidVersion && !target.invalidVersion) return -1;
-            if (invalidVersion && target.invalidVersion) return 0;
-            if (!invalidVersion && target.invalidVersion) return 1;
+            if (InvalidVersion && !target.InvalidVersion) return -1;
+            if (InvalidVersion && target.InvalidVersion) return 0;
+            if (!InvalidVersion && target.InvalidVersion) return 1;
             
             if (Equals(target)) return 0;
-
             if (Year < target.Year) return -1;
             if (Release < target.Release) return -1;
-            if (Experimental.HasValue && !target.Experimental.HasValue) return -1;
-            if (Experimental.HasValue && target.Experimental.HasValue && Experimental.Value < target.Experimental.Value) return -1;
-            if (!Patch.HasValue && target.Patch.HasValue) return -1;
-            if (Patch.HasValue && target.Patch.HasValue && Patch.Value < target.Patch.Value) return -1;
+            if (Experimental.HasValue && !target.Experimental.HasValue && Release == target.Release && Year == target.Year) return -1;
+            if (Experimental.HasValue && target.Experimental.HasValue && Experimental.Value < target.Experimental.Value && Release == target.Release && Year == target.Year) return -1;
+            if (!Patch.HasValue && target.Patch.HasValue && Release == target.Release && Year == target.Year) return -1;
+            if (Patch.HasValue && target.Patch.HasValue && Patch.Value < target.Patch.Value && Release == target.Release && Year == target.Year) return -1;
 
             return 1;
         }
@@ -78,7 +76,7 @@ namespace WholesomeLoader
             if (target == null) return false;
 
             //Invalid versions will not ever be equal, all versions should have valid data
-            if (invalidVersion || target.invalidVersion) return false;
+            if (InvalidVersion || target.InvalidVersion) return false;
 
             if (Year != target.Year) return false;
             if (Release != target.Release) return false;

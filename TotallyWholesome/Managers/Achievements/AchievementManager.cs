@@ -73,22 +73,17 @@ namespace TotallyWholesome.Managers.Achievements
             }
 
             AchievementsUpdated = true;
-            
-            Patches.EarlyWorldJoin += () =>
-            {
-                //Start AchievementManagerCoroutine for processing conditions 
-                MelonCoroutines.Start(AchievementManagerCoroutine());
-                MelonCoroutines.Start(AchievementManagerCoroutineMinute());
-                MelonCoroutines.Start(AchievementManagerCoroutineHourly());
-                MelonCoroutines.Start(AchievementManagerCoroutineSecond());
-            };
-            
+
             Con.Debug($"AchievementManager has loaded {LoadedAchievements.Count} achievements and is ready!");
         }
         
         public void LateSetup()
         {
-            
+            //Start AchievementManagerCoroutine for processing conditions 
+            MelonCoroutines.Start(AchievementManagerCoroutine());
+            MelonCoroutines.Start(AchievementManagerCoroutineMinute());
+            MelonCoroutines.Start(AchievementManagerCoroutineHourly());
+            MelonCoroutines.Start(AchievementManagerCoroutineSecond());
         }
 
         private void AwardAchievement(IAchievement achievement)
