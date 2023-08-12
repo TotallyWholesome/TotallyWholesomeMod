@@ -4,14 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using MelonLoader;
 using TotallyWholesome.Managers;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
-using TotallyWholesome.TWUI;
 using UnityEngine;
 using WholesomeLoader;
 
@@ -22,8 +20,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.4.21";
-        public const string TWVersion = "3.4.21";
+        public const string AssemblyVersion = "3.4.22";
+        public const string TWVersion = "3.4.22";
         public const bool isBetaBuild = false;
         public const string DownloadLink = "https://totallywholeso.me/";
     }
