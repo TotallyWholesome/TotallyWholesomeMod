@@ -98,6 +98,7 @@ namespace TotallyWholesome.Notification
             _notificationGO.transform.parent = _hudContent.transform;
             
             _notificationRect.localPosition = MetaPort.Instance.isUsingVr ? new Vector3(-3, 0, 0) : Vector3.zero;
+            _notificationRect.localRotation = Quaternion.identity;
         }
 
         public static void EnqueueAchievement(string description, Sprite icon = null)
