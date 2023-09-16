@@ -1,0 +1,20 @@
+{
+    "General": {
+        "InputAssemblies": [
+          "TWNetCommon.dll",
+          "ButtplugManaged.dll",
+          "websocket-sharp.dll",
+		  "System.Buffers.dll",
+		  "System.Memory.dll",
+		  "System.Threading.Tasks.Extensions.dll",
+		  "Microsoft.Bcl.AsyncInterfaces.dll",
+		  "System.Runtime.CompilerServices.Unsafe.dll",
+		  "System.Collections.Immutable.dll",
+		  "Yggdrasil.dll",
+		  "MessagePack.dll",
+		  "MessagePack.Annotations.dll",
+		  "Microsoft.NET.StringTools.dll",
+		  "System.Numerics.Vectors.dll"
+        ]
+    }
+}
