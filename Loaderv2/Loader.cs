@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Harmony;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Semver;
+using UnityEngine;
 
 namespace WholesomeLoader
 {
@@ -20,7 +22,7 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.2.0";
+        public const string Version = "3.3.3";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 
@@ -33,18 +35,14 @@ namespace WholesomeLoader
         private const string RootConfigPath = "UserData/";
         private const string NewConfigRoot = "UserData/TotallyWholesome/";
         private const string ConfigFile = "TotallyWholesomeConfig.json";
-        private const string URL = "https://api.potato.moe/api-tw/v2/getAssembly"; // Mod DLL
-        private const string VersionsURL = "https://api.potato.moe/api-tw/v2/getAssyVersions"; //Versions endpoint
+        private const string URL = "https://api.potato.moe/api-tw/v3/getAssembly"; // Mod DLL
+        private const string VersionsURL = "https://api.potato.moe/api-tw/v3/getAssyVersions"; //Versions endpoint
         
         private string _currentVersion;
         private bool _paranoidMode;
-
-        private string _targetBranch = "live";
-        private string _targetBranchPrettyName = "Live";
-        private string _twVersionInfo = "No Name";
-        private string _newVersionName;
-        private string _newVersionHash;
+        
         private Config _configJson;
+        private TWAssemblyVersion _selectedVersion = new();
 
         public override void OnInitializeMelon()
         {
@@ -63,8 +61,18 @@ namespace WholesomeLoader
             if (Environment.CommandLine.Contains("--WholesomeDev"))
             {
                 try {
-                    Con.Msg(ConsoleColor.Yellow, "Loading Local Mod");
-                    twAssembly = Assembly.LoadFile("TotallyWholesome.dll");
+                    Con.Msg(System.ConsoleColor.DarkYellow, "Loading Local Mod");
+                    var assyFile = new FileInfo("TotallyWholesome.dll");
+                    if (assyFile.Exists)
+                    {
+                        Con.Msg("Found local TotallyWholesome.dll!");
+                        twAssembly = Assembly.LoadFile(assyFile.FullName);
+                    }
+                    else
+                    {
+                        Con.Error("No local TotallyWholesome.dll found! Skipping local load check.");
+                    }
+                        
                 } catch (Exception e) {
                     Con.Error(e);
                     Con.Warn("Could not load Local Mod, loading TotallyWholesome from the server.");
@@ -98,7 +106,11 @@ namespace WholesomeLoader
                 Con.Msg($"WholesomeLoader will attempt to load branch {_configJson.SelectedBranch}! If you find issues please report them in the appropriate channels!");
 
             var loadCached = CheckNewAssemblyVersion();
-            
+
+            if(twAssembly == null)
+                if (!CheckCompatibility())
+                    return;
+
             if (twAssembly == null)
             {
                 //We want to check assembly versions now
@@ -133,7 +145,59 @@ namespace WholesomeLoader
                 mod.OnInitializeMelon();
             }
         }
-        
+
+        private bool CheckCompatibility()
+        {
+            var mlVersion = SemVersion.Parse(BuildInfo.Version);
+            var cvrVersion = new CVRVersion(Application.version);
+
+            //Check all available branches for compatibility
+            foreach (var version in AvailableVersions)
+            {
+                if(!SemVersion.TryParse(version.MinMLVersion, out var minMLVersion))
+                    continue;
+                if(mlVersion.CompareByPrecedence(minMLVersion) < 0)
+                    continue;
+                version.IsMLCompatible = true;
+                if(cvrVersion.IsVersionNewer(version.MinVer) < 0 || cvrVersion.IsVersionNewer(version.MaxVer) > 0)
+                    continue;
+                version.IsCVRCompatible = true;
+                Con.Debug($"Version: {version.TWVersionInfo} | Branch: {version.BranchPrettyName} is compatible with this game/ml configuration");
+            }
+
+            if (!_selectedVersion.IsCVRCompatible || !_selectedVersion.IsMLCompatible)
+            {
+                //Selected version is not compatible, let's warn the user!
+                if (!_selectedVersion.IsMLCompatible)
+                    Con.Warn($"Selected branch {_selectedVersion.BranchPrettyName} with version {_selectedVersion.TWVersionInfo} is not listed as compatible with this version of MelonLoader! Minimum required version: {_selectedVersion.MinMLVersion}");
+                if (!_selectedVersion.IsCVRCompatible)
+                    Con.Warn($"Selected branch {_selectedVersion.BranchPrettyName} with version {_selectedVersion.TWVersionInfo} is not listed as compatible with this version of ChilloutVR! Expected minimum version: {_selectedVersion.ExpectedCVRVersion}");
+                
+                Con.Msg("Checking for available compatible versions...");
+                var compatibleVersions = AvailableVersions.Where(x => x.IsMLCompatible && x.IsCVRCompatible).ToArray();
+                if (compatibleVersions.Length > 1)
+                {
+                    Con.Msg("You have multiple branches that are compatible with this version, the first one will be selected.");
+                    foreach (var version in compatibleVersions) Con.Msg($"Compatible Branch: {version.BranchPrettyName} | TW Version: {version.TWVersionInfo}");
+                }
+
+                if (compatibleVersions.Length > 0)
+                {
+                    _selectedVersion = compatibleVersions[0];
+                    Con.Msg($"Selected branch {_selectedVersion.BranchPrettyName} with version {_selectedVersion.TWVersionInfo}!");
+                }
+                else
+                {
+                    //No compatible versions found, alert user and allow bypass to load incompatible version
+                    Con.Error("No versions of TotallyWholesome that are compatible with these MelonLoader/ChilloutVR versions could be found!");
+                    if (!ConsoleConfirmation("Would you like to launch anyways? This version may not work as intended!"))
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
         private void WriteVersionData(string newVersion)
         { 
             File.WriteAllBytes(NewConfigRoot + "\\version.dat", Encoding.UTF8.GetBytes(newVersion));
@@ -175,23 +239,16 @@ namespace WholesomeLoader
 
                         if (selectedBranch != null && selectedBranch.AssemblyHash != null && selectedBranch.AssemblyName != null)
                         {
-                            _targetBranch = selectedBranch.Branch;
-                            _targetBranchPrettyName = selectedBranch.BranchPrettyName;
-                            _newVersionName = selectedBranch.AssemblyName;
-                            _newVersionHash = selectedBranch.AssemblyHash;
-
-                            if (selectedBranch.TWVersionInfo != null)
-                                _twVersionInfo = selectedBranch.TWVersionInfo;
-                            
+                            _selectedVersion = selectedBranch;
                             Con.Msg($"Retrieved assembly information for {selectedBranch.BranchPrettyName}!");
                         }
 
-                        if (_newVersionName != null)
+                        if (_selectedVersion.TWVersionInfo != null)
                         {
-                            if (_currentVersion.Equals(_newVersionName))
+                            if (_currentVersion.Equals(_selectedVersion.TWVersionInfo))
                                 return true;
 
-                            _currentVersion = _newVersionName;
+                            _currentVersion = _selectedVersion.TWVersionInfo;
                             return false;
                         }
 
@@ -221,7 +278,7 @@ namespace WholesomeLoader
 
             if (loadCached && md5Sum != null)
             {
-                if (_newVersionHash != null && (md5Sum.Equals(_newVersionHash) || string.IsNullOrWhiteSpace(_newVersionHash)))
+                if (_selectedVersion.AssemblyHash != null && (md5Sum.Equals(_selectedVersion.AssemblyHash) || string.IsNullOrWhiteSpace(_selectedVersion.AssemblyHash)))
                 {
                     Con.Msg("\u001b[0m[\u001b[34mSUCCESS\u001b[0m] \u001b[36mLoaded cached TotallyWholesome assembly!\u001b[0m");
                     twAssy = Assembly.Load(File.ReadAllBytes(NewConfigRoot + "TotallyWholesome.dll"));
@@ -231,15 +288,15 @@ namespace WholesomeLoader
             
             if (_paranoidMode)
             {
-                Con.Warn($"[TWParanoidMode] Your Totally Wholesome is out of date or your local copy is missing/damaged! Local Hash: {md5Sum} | Expected Hash: {_newVersionHash}");
-                Con.Warn($"[TWParanoidMode] Would you like to update to the new version? Version Info: {_twVersionInfo} | Branch: {_targetBranchPrettyName}");
+                Con.Warn($"[TWParanoidMode] Your Totally Wholesome is out of date or your local copy is missing/damaged! Local Hash: {md5Sum} | Expected Hash: {_selectedVersion.AssemblyHash}");
+                Con.Warn($"[TWParanoidMode] Would you like to update to the new version? Version Info: {_selectedVersion.TWVersionInfo} | Branch: {_selectedVersion.BranchPrettyName}");
                 if (!ConsoleConfirmation("Would you like to update? (Enter yes or no): "))
                 {
                     Con.Warn("[TWParanoidMode] You have chosen to not update, do note that you WILL NOT receive support while on an outdated version of Totally Wholesome, you may also encounter issues connecting to and using TWNet while on an outdated version!");
 
                     if (!File.Exists(NewConfigRoot + "TotallyWholesome.dll")) return null;
                     
-                    _newVersionHash = md5Sum;
+                    _selectedVersion.AssemblyHash = md5Sum;
                     return getTW_Assy(true);
                 }
             }
@@ -253,7 +310,7 @@ namespace WholesomeLoader
                 string finalUrl = URL;
 
                 if(!string.IsNullOrWhiteSpace(_configJson.LoginKey) && !string.IsNullOrWhiteSpace(_configJson.SelectedBranch))
-                    finalUrl += $"/{_configJson.LoginKey}/{_targetBranch}";
+                    finalUrl += $"/{_configJson.LoginKey}/{_selectedVersion.Branch}";
 
                 Task<HttpResponseMessage> assyRequest = client.GetAsync(finalUrl);
                 assyRequest.Wait();
@@ -313,18 +370,42 @@ namespace WholesomeLoader
         {
             if (!_hasQuit) {
                 _hasQuit = true;
-                Con.Msg(ConsoleColor.Red, "TotallyWholesome says bye bye!");
+                Con.Msg(System.ConsoleColor.Red, "TotallyWholesome says bye bye!");
             }
         }
     }
 
     public class TWAssemblyVersion
     {
-        public string Branch;
-        public string BranchPrettyName;
-        public string TWVersionInfo;
+        public string Branch = "live";
+        public string BranchPrettyName = "Live";
+        public string TWVersionInfo = "No name";
         public string AssemblyName;
         public string AssemblyHash;
+        public string MinMLVersion;
+        public bool IsCVRCompatible = false;
+        public bool IsMLCompatible = false;
+        public CVRVersion MinVer;
+        public CVRVersion MaxVer;
+
+        public string ExpectedCVRVersion
+        {
+            set => MinVer = new CVRVersion(value);
+            get => MinVer?.VersionString;
+        }
+
+        public string MaxCVRVersion
+        {
+            set => MaxVer = new CVRVersion(value);
+            get => MaxVer?.VersionString;
+        }
+        
+        
+
+        public bool IsValid()
+        {
+            return !string.IsNullOrWhiteSpace(AssemblyHash) && !string.IsNullOrWhiteSpace(AssemblyName);
+        }
     }
     
     class Config

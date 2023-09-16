@@ -18,7 +18,7 @@ namespace TotallyWholesome.Managers.Achievements.Conditions
                 switch (restriction)
                 {
                     case Restrictions.Gagged:
-                        clear = Patches.Patches.IsForceMuted;
+                        clear = Patches.IsForceMuted;
                         break;
                     case Restrictions.Blindfolded:
                         clear = PlayerRestrictionManager.Instance.IsBlindfolded;
@@ -27,10 +27,10 @@ namespace TotallyWholesome.Managers.Achievements.Conditions
                         clear = PlayerRestrictionManager.Instance.IsDeafened;
                         break;
                     case Restrictions.NoFlight:
-                        clear = Patches.Patches.IsFlightLocked;
+                        clear = Patches.IsFlightLocked;
                         break;
                     case Restrictions.NoSeats:
-                        clear = Patches.Patches.AreSeatsLocked;
+                        clear = Patches.AreSeatsLocked;
                         break;
                     case Restrictions.PinWorld:
                         clear = LeadManager.Instance.MasterPair.LockToWorld;

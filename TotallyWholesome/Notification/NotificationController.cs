@@ -54,7 +54,7 @@ namespace TotallyWholesome.Notification
             }
         }
 
-        private void Start()
+        private void Awake()
         {
             _notificationQueue = new Queue<NotificationObject>();
             

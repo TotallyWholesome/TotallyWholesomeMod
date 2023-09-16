@@ -101,12 +101,12 @@ namespace TotallyWholesome.Managers.Lead
             ActiveLeadPairs = new Dictionary<string, LeadPair>();
             _props = new Dictionary<string, string>();
 
-            Patches.Patches.OnAvatarInstantiated += OnAvatarIsReady;
-            Patches.Patches.OnWorldLeave += OnWorldLeave;
-            Patches.Patches.UserLeave += OnPlayerLeave;
-            Patches.Patches.OnInviteAccepted += OnInviteAccepted;
-            Patches.Patches.OnPropSpawned += OnPropSpawned;
-            Patches.Patches.OnPropDelete += OnPropDelete;
+            Patches.OnAvatarInstantiated += OnAvatarIsReady;
+            Patches.OnWorldLeave += OnWorldLeave;
+            Patches.UserLeave += OnPlayerLeave;
+            Patches.OnInviteAccepted += OnInviteAccepted;
+            Patches.OnPropSpawned += OnPropSpawned;
+            Patches.OnPropDelete += OnPropDelete;
 
             TWNetListener.MasterSettingsEvent += OnMasterSettingsUpdate;
             TWNetListener.LeadAcceptEvent += OnAccept;
@@ -212,7 +212,7 @@ namespace TotallyWholesome.Managers.Lead
             ForcedMute = false;
             TempUnlockLeash = false;
             LastMasterPairKey = null;
-            Patches.Patches.IsForceMuted = false;
+            Patches.IsForceMuted = false;
             _props.Clear();
         }
         
@@ -291,7 +291,7 @@ namespace TotallyWholesome.Managers.Lead
             UIUtils.ShowConfirm("Clear All Leads?", "This will remove all leads associated with you, are you sure?", "Yes", () =>
             {
                 //Reset IsForceMuted on clear all leads
-                Patches.Patches.IsForceMuted = false;
+                Patches.IsForceMuted = false;
 
                 if (Instance.MasterPair != null)
                 {
@@ -517,23 +517,23 @@ namespace TotallyWholesome.Managers.Lead
         {
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                if (mute && !Patches.Patches.IsForceMuted && ConfigManager.Instance.IsActive(AccessType.AllowForceMute, MasterId))
+                if (mute && !Patches.IsForceMuted && ConfigManager.Instance.IsActive(AccessType.AllowForceMute, MasterId))
                 {
                     //Clear before sending to ensure the gag message appears on top
                     NotificationSystem.ClearNotification();
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "You have been gagged!", 3f, TWAssets.MicrophoneOff);
-                    if (!ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId))
-                        Audio.SetMicrophoneActive(true);
+                    //if (!ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId))
+                        AudioManagement.SetMicrophoneActive(false);
 
-                    Patches.Patches.IsForceMuted = true;
-                    Patches.Patches.IsMuffled = ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId);
+                    Patches.IsForceMuted = true;
+                    //Patches.IsMuffled = ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId);
                 }
-                else if (!mute && Patches.Patches.IsForceMuted)
+                else if (!mute && Patches.IsForceMuted)
                 {
                     NotificationSystem.ClearNotification();
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "You have been ungagged!", 3f, TWAssets.MicrophoneOff);
-                    Patches.Patches.IsForceMuted = false;
-                    Patches.Patches.IsMuffled = false;
+                    Patches.IsForceMuted = false;
+                    //Patches.IsMuffled = false;
                 }
                 
                 //Always reapply TWGag state

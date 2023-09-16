@@ -70,14 +70,14 @@ namespace TotallyWholesome.Network
             Listener = new TWNetListener();
             _framer.MessageReceived += FramerReceivedData;
 
-            Patches.Patches.EarlyWorldJoin += OnEarlyWorldJoin;
-            Patches.Patches.OnGameNetworkConnected += OnEarlyWorldJoin;
+            Patches.EarlyWorldJoin += OnEarlyWorldJoin;
+            Patches.OnGameNetworkConnected += OnEarlyWorldJoin;
             OnTWNetAuthenticated += OnAuthWorldCheck;
-            Patches.Patches.OnWorldLeave += AbortInstanceChange;
-            Patches.Patches.OnWorldLeave += OnGameNetworkDisconnected;
-            Patches.Patches.UserJoin += OnUserJoinPhoton;
-            Patches.Patches.OnChangingInstance += OnChangingInstance;
-            Patches.Patches.OnWorldJoin += MoveWaitingForGSToQueue;
+            Patches.OnWorldLeave += AbortInstanceChange;
+            Patches.OnWorldLeave += OnGameNetworkDisconnected;
+            Patches.UserJoin += OnUserJoinPhoton;
+            Patches.OnChangingInstance += OnChangingInstance;
+            Patches.OnWorldJoin += MoveWaitingForGSToQueue;
             Disconnected += OnDisconnected;
         }
 
@@ -96,7 +96,7 @@ namespace TotallyWholesome.Network
             
             _authPacket = new Auth()
             {
-                DisplayName = MetaPort.Instance.username,
+                DisplayName = TWUtils.GetSelfUsername(),
                 UserID = MetaPort.Instance.ownerId,
                 TWVersion = BuildInfo.TWVersion,
                 Key = Configuration.JSONConfig.LoginKey,
@@ -494,7 +494,7 @@ namespace TotallyWholesome.Network
 
         private void OnEarlyWorldJoin()
         {
-            if (string.IsNullOrWhiteSpace(Patches.Patches.TargetInstanceID))
+            if (string.IsNullOrWhiteSpace(Patches.TargetInstanceID))
                 return;
 
             if (_connectedToGS)
@@ -504,11 +504,11 @@ namespace TotallyWholesome.Network
 
             LastWorldJoinMessage = new InstanceInfo
             {
-                InstanceHash = TWUtils.CreateMD5(Patches.Patches.TargetInstanceID)
+                InstanceHash = TWUtils.CreateMD5(Patches.TargetInstanceID)
             };
 
             if (ConfigManager.Instance.IsActive(AccessType.AllowPetWorldChangeFollow, LeadManager.Instance.MasterId))
-                LastWorldJoinMessage.FullInstanceID = Patches.Patches.TargetInstanceID;
+                LastWorldJoinMessage.FullInstanceID = Patches.TargetInstanceID;
 
             if (!IsTWNetConnected()) return;
 

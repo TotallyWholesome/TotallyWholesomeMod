@@ -5,13 +5,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using ABI_RC.Core;
-using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Player;
 using ABI.CCK.Scripts;
 using cohtml;
-using Dissonance;
 using MelonLoader;
 using MelonLoader.ICSharpCode.SharpZipLib.Zip;
 using TotallyWholesome.Managers;
@@ -62,10 +59,11 @@ namespace TotallyWholesome.TWUI
         {
             Instance = this;
             
-            Patches.Patches.UserJoin += UserJoin;
-            Patches.Patches.UserLeave += UserLeave;
-            Patches.Patches.EarlyWorldJoin += WorldJoinLeave;
-            Patches.Patches.OnWorldLeave += WorldJoinLeave;
+            Patches.UserJoin += UserJoin;
+            Patches.UserLeave += UserLeave;
+            Patches.EarlyWorldJoin += WorldJoinLeave;
+            Patches.OnWorldLeave += WorldJoinLeave;
+            Patches.OnMarkMenuAsReady += MenuRegnerate;
             
             //Check for outdated UI
             Con.Msg("Checking if TWUI is updated...");
@@ -109,7 +107,7 @@ namespace TotallyWholesome.TWUI
         
         public void LateSetup(){}
 
-        public void MenuRegnerate()
+        public void MenuRegnerate(CVR_MenuManager mm)
         {
             Con.Debug("Registering callbacks");
             
@@ -132,7 +130,21 @@ namespace TotallyWholesome.TWUI
             CVR_MenuManager.Instance.quickMenu.View.BindCall("twUI-DropdownSelected", new Action<int>(DropdownSelected));
             CVR_MenuManager.Instance.quickMenu.View.BindCall("twUI-ShockerAction", new Action<string, string>(PiShockManager.OnShockerAction));
             CVR_MenuManager.Instance.quickMenu.View.BindCall("twUI-NumSubmit", new Action<string>(OnNumberInputSubmitted));
+            CVR_MenuManager.Instance.quickMenu.View.BindCall("twUI-UILoaded", new Action(OnTWUILoaded));
+        }
 
+        private void OnTWUILoaded()
+        {
+            Con.Debug("TWUI has fully loaded, setting up!");
+            
+
+            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twVersionUpdate", $"{BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
+
+            
+            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", TWNetClient.Instance.OnlineUsers.ToString());
+            
+            StatusManager.Instance.UpdateQuickMenuStatus();
+            
             //Rebuild settings menu
             foreach (var item in Enum.GetValues(typeof(AccessType)))
             {
@@ -162,6 +174,7 @@ namespace TotallyWholesome.TWUI
             
             CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateSelectedBone", "master", Configuration.JSONConfig.MasterBoneTarget.ToString());
             CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateSelectedBone", "pet", Configuration.JSONConfig.PetBoneTarget.ToString());
+            
 
             //Update slider states to match values
             Con.Debug("Update slider states");
@@ -173,7 +186,7 @@ namespace TotallyWholesome.TWUI
             UIUtils.SendModInit();
             LeadManager.Instance.OnColorChanged();
 
-            if (Patches.Patches.TWInvites.Count == 0 || ViewManager.Instance == null || ViewManager.Instance.gameMenuView == null)
+            if (Patches.TWInvites.Count == 0 || ViewManager.Instance == null || ViewManager.Instance.gameMenuView == null)
                 return;
             
             ViewManager.Instance.FlagForUpdate(ViewManager.UpdateTypes.Invites);
@@ -918,6 +931,8 @@ namespace TotallyWholesome.TWUI
             bool updateNeeded = true;
             string resourceHash;
             
+                
+            using (var uiResourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TotallyWholesome.TWUI.TWUIBuild.zip"))
                 
             {
                 if (uiResourceStream == null)

@@ -167,10 +167,11 @@ namespace TotallyWholesome.Managers
                     if (!value)
                         TWNetClient.Instance.AbortInstanceChange();
                     break;
-                case AccessType.EnableMuffledMode:
+                //TODO: MUFFLE
+                /*case AccessType.EnableMuffledMode:
                     if (!value)
-                        Audio.SetMicrophoneActive(true);
-                    break;
+                        AudioManagement.SetMicrophoneActive(false);
+                    break;*/
                 case AccessType.UseOldHudMessage:
                     NotificationSystem.UseCVRNotificationSystem = value;
                     break;
@@ -192,6 +193,11 @@ namespace TotallyWholesome.Managers
                     break;
                 case AccessType.AllowDeafening:
                     PlayerRestrictionManager.Instance.ApplyDeafen(false, true);
+                    break;
+                case AccessType.AutoAcceptMasterRequest:
+                case AccessType.AutoAcceptPetRequest:
+                case AccessType.AutoAcceptFriendsOnly:
+                    StatusManager.Instance.SendStatusUpdate();
                     break;
                 default:
                     break;
@@ -275,10 +281,11 @@ namespace TotallyWholesome.Managers
             DialogMessageUser = "Allowing Force Mute will allow your master to mute you at any time! You can disable this setting to unlock it.")]
         AllowForceMute = 0x1002,
 
-        [Access(Category = "Pet", Name = "Enable Muffled Mode",
+        //TODO: MAKE THIS WORK AGAIN AAAAA
+        /*[Access(Category = "Pet", Name = "Enable Muffled Mode",
             DescriptionGlobal = "Instead of muted you will be muffled",
             Global = true, User = false)]
-        EnableMuffledMode = 0x1003,
+        EnableMuffledMode = 0x1003,*/
 
         [Access(Category = "Pet", Name = "Enable Toy Control",
             DescriptionGlobal = "Enable Buttplug (Requires Restart)",

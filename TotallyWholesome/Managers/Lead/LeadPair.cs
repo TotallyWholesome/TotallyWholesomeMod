@@ -26,6 +26,7 @@ namespace TotallyWholesome.Managers.Lead
         public bool NoVisibleLeash;
         public bool TempUnlockLeash;
         public int ShockDuration = 0;
+        public uint ShockDurationMillis = 0;
         public int ShockStrength = 0;
         public ShockOperation ShockOperation = ShockOperation.NoOp;
         public bool ShockHeightEnabled = false;

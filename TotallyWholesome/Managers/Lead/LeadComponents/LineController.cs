@@ -1,4 +1,5 @@
 ﻿using System;
+using ABI_RC.Core.Savior;
 using ABI_RC.Systems.MovementSystem;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Objects;
@@ -230,7 +231,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                 if (currentDistance > _maxDistance && !_leashBroken && !_tempUnlockLeash && MovementSystem.Instance.canMove)
                 {
                     float maxSpeed = MovementSystem.Instance.baseMovementSpeed * MovementSystem.Instance.sprintMultiplier;
-                    if (XRDevice.isPresent && Input.GetKey(KeyCode.LeftShift))
+                    if (MetaPort.Instance.isUsingVr && Input.GetKey(KeyCode.LeftShift))
                         maxSpeed = MovementSystem.Instance.baseMovementSpeed;
 
                     float speed = Mathf.Clamp(2f * (currentDistance-_maxDistance), 1.5f, maxSpeed);
