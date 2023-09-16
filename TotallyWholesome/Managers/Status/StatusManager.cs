@@ -189,7 +189,7 @@ namespace TotallyWholesome.Managers.Status
 
                 component.specialMark.gameObject.SetActive(packet.DisplaySpecialRank); //Controlled by server
                 component.specialMarkText.text = packet.SpecialRank;
-#endif
+
 
                 //Status will be shown and updated
                 component.gameObject.SetActive(true);

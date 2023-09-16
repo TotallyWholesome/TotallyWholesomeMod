@@ -12,6 +12,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
     <Configurations>Debug;Release;Admin</Configurations>
     <Platforms>AnyCPU</Platforms>
+    <DoILRepack>false</DoILRepack>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'">
     <DebugSymbols>false</DebugSymbols>
@@ -183,7 +184,7 @@
     <EmbeddedResource Include="TWUI\TWUIBuildAdmin.zip" Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.2" />
+    <PackageReference Include="ILRepack.Lib.MSBuild" Version="2.1.18" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
   </ItemGroup>
@@ -194,8 +195,5 @@
     <Content Include="LogFiles\*.config" Pack="true" PackagePath="contentFiles\LogFiles">
       <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ReferencePathWithRefAssemblies Update="C:\Program Files\dotnet\packs\NETStandard.Library.Ref\2.1.0\ref\netstandard2.1\System.Reflection.Emit.dll" />
   </ItemGroup>
 </Project>

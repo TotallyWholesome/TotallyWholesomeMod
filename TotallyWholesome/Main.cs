@@ -54,7 +54,7 @@ namespace TotallyWholesome
 
             
             Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
-            #endif
+            
 
             Patches.SetupPatches();
 

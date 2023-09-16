@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Target Name="NotILRepack" AfterTargets="Build">
+    <Target Name="ILRepacker" AfterTargets="Build">
         <PropertyGroup>
             <WorkingDirectory>$(OutputPath)</WorkingDirectory>
         </PropertyGroup>
@@ -20,9 +20,9 @@
             <InputAssemblies Include="$(OutputPath)/TWNetCommon.dll" />
             <InputAssemblies Include="$(OutputPath)/Microsoft.NET.StringTools.dll" />
             <InputAssemblies Include="$(OutputPath)/websocket-sharp.dll" />
-            <InputAssemblies Include="..\Libs\System.Reflection.Emit.dll" />
-            <InputAssemblies Include="..\Libs\System.Reflection.Emit.Lightweight.dll" />
-            <InputAssemblies Include="..\Libs\System.Reflection.Emit.ILGeneration.dll" />
+            <InputAssemblies Include="..\3rdparty\System.Reflection.Emit.dll" />
+            <InputAssemblies Include="..\3rdparty\System.Reflection.Emit.Lightweight.dll" />
+            <InputAssemblies Include="..\3rdparty\System.Reflection.Emit.ILGeneration.dll" />
             <IlRepackLibs Include="$(OutputPath)" />
         </ItemGroup>
         <Message Text="MERGING: @(InputAssemblies->'%(Filename)') into $(OutputAssembly)" Importance="High" />

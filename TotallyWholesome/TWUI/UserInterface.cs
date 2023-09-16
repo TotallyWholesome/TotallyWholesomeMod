@@ -139,7 +139,7 @@ namespace TotallyWholesome.TWUI
             
 
             CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twVersionUpdate", $"{BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
-#endif
+
             
             CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", TWNetClient.Instance.OnlineUsers.ToString());
             
@@ -933,7 +933,7 @@ namespace TotallyWholesome.TWUI
             
                 
             using (var uiResourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TotallyWholesome.TWUI.TWUIBuild.zip"))
-            #endif    
+                
             {
                 if (uiResourceStream == null)
                 {
