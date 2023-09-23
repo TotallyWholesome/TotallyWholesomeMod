@@ -227,7 +227,7 @@ namespace TotallyWholesome.Managers.Lead
         {
             var color = new Color(_rSliderFloat.SliderValue, _gSliderFloat.SliderValue, _bSliderFloat.SliderValue);
             var colorhtml = ColorUtility.ToHtmlStringRGB(color);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twLeadColorChanged", colorhtml);
+            TWUtils.GetInternalView().TriggerEvent("twLeadColorChanged", colorhtml);
         }
 
         [UIEventHandler("selectWorldPosition")]
@@ -623,7 +623,7 @@ namespace TotallyWholesome.Managers.Lead
 
                     StatusManager.Instance.UpdatePetMasterMark(packet.FollowerID, true, false);
                     
-                    CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twAddPet", follower.Username, follower.Uuid);
+                    TWUtils.GetInternalView().TriggerEvent("twAddPet", follower.Username, follower.Uuid);
 
                     AvatarParameterManager.Instance.TrySetParameter("TWMaster", 1);
 
@@ -782,7 +782,7 @@ namespace TotallyWholesome.Managers.Lead
                 if (TugOfWarPair == pair)
                     TugOfWarPair = null;
                 
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePet", pair.Pet.Uuid);
+                TWUtils.GetInternalView().TriggerEvent("twRemovePet", pair.Pet.Uuid);
                 StatusManager.Instance.UpdatePetMasterMark(pair.Pet.Uuid, false, false);
             }
 
@@ -812,7 +812,7 @@ namespace TotallyWholesome.Managers.Lead
                 
                 if (pair.Value.AreWeMaster())
                 {
-                    CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePet", pair.Value.Pet.Uuid);
+                    TWUtils.GetInternalView().TriggerEvent("twRemovePet", pair.Value.Pet.Uuid);
                 }
             }
         }
@@ -862,7 +862,7 @@ namespace TotallyWholesome.Managers.Lead
 
                         StatusManager.Instance.UpdatePetMasterMark(pair.Value.PetID, true, false);
                         
-                        CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twAddPet", follower.Username, follower.Uuid);
+                        TWUtils.GetInternalView().TriggerEvent("twAddPet", follower.Username, follower.Uuid);
 
                         AvatarParameterManager.Instance.TrySetParameter("TWMaster", 1);
 

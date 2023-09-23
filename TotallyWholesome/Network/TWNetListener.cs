@@ -66,7 +66,7 @@ namespace TotallyWholesome.Network
             { 
                 if (!TWUtils.IsQMReady()) return;
 
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", conn.OnlineUsers);
+                TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", conn.OnlineUsers);
             });
 
             conn.AuthResponse(true, packet.RespMsg);
@@ -233,7 +233,7 @@ namespace TotallyWholesome.Network
                 { 
                     if (!TWUtils.IsQMReady()) return;
                 
-                    CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", userCount.ToString());
+                    TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", userCount.ToString());
                 });
             }
         }

@@ -18,12 +18,12 @@
     <ProjectReference Include="..\MessagePack-CSharp\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.4.59" />
-    <PackageReference Include="MessagePack.Annotations" Version="2.4.59" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.StringTools" Version="17.4.0" />
+    <PackageReference Include="MessagePack" Version="2.5.124" />
+    <PackageReference Include="MessagePack.Annotations" Version="2.5.124" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageReference Include="Microsoft.NET.StringTools" Version="17.7.0" />
     <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.5" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />

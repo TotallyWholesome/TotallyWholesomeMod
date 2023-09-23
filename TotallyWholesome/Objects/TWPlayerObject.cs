@@ -70,6 +70,22 @@ namespace TotallyWholesome.Objects
                 return ReferenceEquals(_playerEntity, null) ? null : _playerEntity.PlayerObject;
             }
         }
+        
+        public Vector3 PlayerPosition
+        {
+            get
+            {
+                if (!_isRemotePlayer)
+                    return PlayerSetup.Instance.GetPlayerPosition();
+                // remote players avatar root is stuck at their playspace center, game bug :)
+                return ReferenceEquals(_playerEntity, null)
+                    ? Vector3.zero
+                    : _playerEntity.PuppetMaster.GetViewWorldPosition() with
+                    {
+                        y = _playerEntity.PuppetMaster.transform.position.y
+                    };
+            }
+        }
 
         public string AvatarID
         {

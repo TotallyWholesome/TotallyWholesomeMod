@@ -18,6 +18,7 @@ using cohtml;
 using cohtml.Net;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Objects;
+using TotallyWholesome.TWUI;
 using TWNetCommon.Data.NestedObjects;
 using UnityEngine;
 using WholesomeLoader;
@@ -36,8 +37,20 @@ namespace TotallyWholesome
         private static FieldInfo _mlVersionGetter = typeof(MelonLoader.BuildInfo).GetField(nameof(MelonLoader.BuildInfo.Version), BindingFlags.Public | BindingFlags.Static);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
         private static FieldInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetField("username", BindingFlags.Static | BindingFlags.NonPublic);
+        private static FieldInfo _internalCohtmlView = typeof(CohtmlControlledViewWrapper).GetField("_view", BindingFlags.Instance | BindingFlags.NonPublic);
         private static Dictionary<string, TWPlayerObject> _players = new();
         private static TWPlayerObject _ourPlayer;
+        private static View _internalViewCache;
+
+        public static View GetInternalView()
+        {
+            if (CVR_MenuManager.Instance == null || CVR_MenuManager.Instance.quickMenu == null) return null;
+
+            if (_internalViewCache == null && _internalCohtmlView != null)
+                _internalViewCache = (View)_internalCohtmlView.GetValue(CVR_MenuManager.Instance.quickMenu.View);
+
+            return _internalViewCache;
+        }
 
         public static string CreateMD5(string input)
         {
@@ -88,10 +101,7 @@ namespace TotallyWholesome
 
         public static bool IsQMReady()
         {
-            if (CVR_MenuManager.Instance == null)
-                return false;
-
-            return (bool)_qmReady.GetValue(CVR_MenuManager.Instance);
+            return CVR_MenuManager.Instance != null && UserInterface.TWUIReady;
         }
 
         public static void OpenKeyboard(string currentValue, Action<string> callback)

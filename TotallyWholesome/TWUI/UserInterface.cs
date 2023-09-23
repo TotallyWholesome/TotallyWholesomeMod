@@ -42,6 +42,8 @@ namespace TotallyWholesome.TWUI
 
         public delegate void UIEventHandlerFunc();
 
+        internal static bool TWUIReady;
+
         private Dictionary<string, UIEventHandlerFunc> _handlers = new();
         private List<string> _generatedSettingsToggleIDs = new();
         private List<string> _generatedUserPermsToggleIDs = new();
@@ -136,12 +138,14 @@ namespace TotallyWholesome.TWUI
         private void OnTWUILoaded()
         {
             Con.Debug("TWUI has fully loaded, setting up!");
+
+            TWUIReady = true;
             
 
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twVersionUpdate", $"{BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
+            TWUtils.GetInternalView().TriggerEvent("twVersionUpdate", $"{BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
 
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", TWNetClient.Instance.OnlineUsers.ToString());
+            TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", TWNetClient.Instance.OnlineUsers.ToString());
             
             StatusManager.Instance.UpdateQuickMenuStatus();
             
@@ -152,13 +156,13 @@ namespace TotallyWholesome.TWUI
                 var attribute = accessType.GetAttributeOfType<AccessAttribute>();
                 if (attribute.Global)
                 {
-                    CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateToggle", attribute.Category, "Settings", attribute.Name, accessType.ToString(), attribute.DescriptionGlobal, ConfigManager.Instance.IsActive(accessType));
+                    TWUtils.GetInternalView().TriggerEvent("twCreateToggle", attribute.Category, "Settings", attribute.Name, accessType.ToString(), attribute.DescriptionGlobal, ConfigManager.Instance.IsActive(accessType));
                     _generatedSettingsToggleIDs.Add($"{attribute.Category}-Settings-{accessType.ToString()}");
                 }
 
                 if (attribute.User)
                 {
-                    CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateToggle", attribute.Category, "UserPerms", attribute.Name, accessType.ToString(), attribute.DescriptionUser, ConfigManager.Instance.IsActive(accessType));
+                    TWUtils.GetInternalView().TriggerEvent("twCreateToggle", attribute.Category, "UserPerms", attribute.Name, accessType.ToString(), attribute.DescriptionUser, ConfigManager.Instance.IsActive(accessType));
                     _generatedUserPermsToggleIDs.Add($"{attribute.Category}-UserPerms-{accessType.ToString()}");
                 }
             }
@@ -172,8 +176,8 @@ namespace TotallyWholesome.TWUI
             UIUtils.SetToggleState("ShowAutoAccept", Configuration.JSONConfig.ShowAutoAccept);
             UIUtils.SetToggleState("ShowDeviceStatus", Configuration.JSONConfig.ShowDeviceStatus);
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateSelectedBone", "master", Configuration.JSONConfig.MasterBoneTarget.ToString());
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateSelectedBone", "pet", Configuration.JSONConfig.PetBoneTarget.ToString());
+            TWUtils.GetInternalView().TriggerEvent("twUpdateSelectedBone", "master", Configuration.JSONConfig.MasterBoneTarget.ToString());
+            TWUtils.GetInternalView().TriggerEvent("twUpdateSelectedBone", "pet", Configuration.JSONConfig.PetBoneTarget.ToString());
             
 
             //Update slider states to match values
@@ -231,7 +235,7 @@ namespace TotallyWholesome.TWUI
             if (LastParamControlUserID != null && LastParamControlUserID.Equals(userID) && !leadPair.UpdatedEnabledParams)
             {
                 //Menu is already configured
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twOpenParamControl");
+                TWUtils.GetInternalView().TriggerEvent("twOpenParamControl");
                 return;
             }
 
@@ -252,7 +256,7 @@ namespace TotallyWholesome.TWUI
             _multiSelectionOptions.Clear();
             _generatedRemoteControlSingles.Clear();
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twClearParamControl");
+            TWUtils.GetInternalView().TriggerEvent("twClearParamControl");
         }
 
         private void RepopulateParamControl()
@@ -298,7 +302,7 @@ namespace TotallyWholesome.TWUI
                 }
             }
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twOpenParamControl");
+            TWUtils.GetInternalView().TriggerEvent("twOpenParamControl");
         }
 
         private void OnBackActionEvent(string targetPage, string lastPage)
@@ -331,17 +335,17 @@ namespace TotallyWholesome.TWUI
 
         private void UpdateAchievementPage()
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twClearAchievementList");
+            TWUtils.GetInternalView().TriggerEvent("twClearAchievementList");
 
             foreach (var achievement in AchievementManager.Instance.LoadedAchievements)
             {
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateAchievementButton", achievement.AchievementAwarded ? achievement.AchievementName : "???", achievement.AchievementAwarded ? achievement.AchievementDescription : "You must unlock this achievement before you can see the description!", Enum.GetName(typeof(AchievementRank), achievement.AchievementRank), !achievement.AchievementAwarded);
+                TWUtils.GetInternalView().TriggerEvent("twCreateAchievementButton", achievement.AchievementAwarded ? achievement.AchievementName : "???", achievement.AchievementAwarded ? achievement.AchievementDescription : "You must unlock this achievement before you can see the description!", Enum.GetName(typeof(AchievementRank), achievement.AchievementRank), !achievement.AchievementAwarded);
             }
         }
 
         public void UpdateAvatarRemoteConfig()
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twClearAvatarRemoteConfig");
+            TWUtils.GetInternalView().TriggerEvent("twClearAvatarRemoteConfig");
         }
 
         private void RepopulateAvatarRemoteConfigMenu()
@@ -359,7 +363,7 @@ namespace TotallyWholesome.TWUI
                     continue;
                 }
 
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateToggle", "FloatParams", "AvatarRemote", param.Name, param.Name, $"Enables {param.Name} to be controlled by your master", param.RemoteEnabled);
+                TWUtils.GetInternalView().TriggerEvent("twCreateToggle", "FloatParams", "AvatarRemote", param.Name, param.Name, $"Enables {param.Name} to be controlled by your master", param.RemoteEnabled);
 
                 if (param.RemoteEnabled)
                     count++;
@@ -367,7 +371,7 @@ namespace TotallyWholesome.TWUI
                 _generatedParameterToggles.Add(generatedID, param);
             }
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twAvatarRemoteUpdateHeader", count);
+            TWUtils.GetInternalView().TriggerEvent("twAvatarRemoteUpdateHeader", count);
         }
 
         private void OnSliderUpdated(string sliderID, string value)
@@ -397,7 +401,7 @@ namespace TotallyWholesome.TWUI
             if (petPlayer == null)
             {
                 Con.Error("Attempted to select a pet that doesn't exist!");
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePet", petID);
+                TWUtils.GetInternalView().TriggerEvent("twRemovePet", petID);
                 SelectedLeadPair = null;
                 SelectedPetID = "";
                 SelectedPetName = "";
@@ -409,7 +413,7 @@ namespace TotallyWholesome.TWUI
             if (leadPair == null)
             {
                 Con.Error("Selected LeadPair doesn't exist!");
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePet", petID);
+                TWUtils.GetInternalView().TriggerEvent("twRemovePet", petID);
                 SelectedLeadPair = null;
                 SelectedPetID = "";
                 SelectedPetName = "";
@@ -424,15 +428,15 @@ namespace TotallyWholesome.TWUI
         private void UpdateIPCPage()
         {
             //Update IndividualPetControls page
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "leashLengthSliderIPC", SelectedLeadPair.LeadLength);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "lovenseStrengthSliderIPC", SelectedLeadPair.ToyStrength);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "leashLengthSliderIPC", SelectedLeadPair.LeadLength);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "lovenseStrengthSliderIPC", SelectedLeadPair.ToyStrength);
             //PiShock
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "piShockStrengthSliderIPC", SelectedLeadPair.ShockStrength);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "piShockDurationSliderIPC", SelectedLeadPair.ShockDuration);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "piShockHeightSliderIPC", SelectedLeadPair.ShockHeight);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "piShockMaxStrengthSliderIPC", SelectedLeadPair.ShockHeightStrengthMax);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "piShockMinStrengthSliderIPC", SelectedLeadPair.ShockHeightStrengthMin);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", "piShockStepStrengthSliderIPC", SelectedLeadPair.ShockHeightStrengthStep);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "piShockStrengthSliderIPC", SelectedLeadPair.ShockStrength);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "piShockDurationSliderIPC", SelectedLeadPair.ShockDuration);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "piShockHeightSliderIPC", SelectedLeadPair.ShockHeight);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "piShockMaxStrengthSliderIPC", SelectedLeadPair.ShockHeightStrengthMax);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "piShockMinStrengthSliderIPC", SelectedLeadPair.ShockHeightStrengthMin);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", "piShockStepStrengthSliderIPC", SelectedLeadPair.ShockHeightStrengthStep);
 
             UIUtils.SetToggleState("GagPetIPC", SelectedLeadPair.ForcedMute);
             UIUtils.SetToggleState("TempLeashUnlockIPC", SelectedLeadPair.TempUnlockLeash);
@@ -563,7 +567,7 @@ namespace TotallyWholesome.TWUI
             
             Con.Debug("Updated UserManagePage toggle states, opening menu.");
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twOpenUserManage");
+            TWUtils.GetInternalView().TriggerEvent("twOpenUserManage");
         }
 
         private void BoneSelected(string bonePage, string bone)
@@ -882,18 +886,18 @@ namespace TotallyWholesome.TWUI
 
         private void WorldJoinLeave()
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twChangeWorld");
+            TWUtils.GetInternalView().TriggerEvent("twChangeWorld");
         }
 
         private void UserLeave(CVRPlayerEntity player)
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePet", player.Uuid);
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twRemovePlayer", player.Uuid);
+            TWUtils.GetInternalView().TriggerEvent("twRemovePet", player.Uuid);
+            TWUtils.GetInternalView().TriggerEvent("twRemovePlayer", player.Uuid);
         }
 
         private void UserJoin(CVRPlayerEntity player)
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twAddPlayer", player.Username, player.Uuid, player.PlayerDescriptor.profileImageUrl);
+            TWUtils.GetInternalView().TriggerEvent("twAddPlayer", player.Username, player.Uuid, player.PlayerDescriptor.profileImageUrl);
         }
 
         private void HandleButtonAction(string action)

@@ -213,7 +213,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                         Vector3 sagAtPoint = _sagDirection * Math.Max(0, amplitudeOverDistance);
 
                         Vector3 currentPointsPosition =
-                            transform.position +
+                            localUserPosition +
                             pointPosition +
                             (Vector3.ClampMagnitude(sagAtPoint, _sagAmplitude)) * effectAtPointMultiplier;
 
@@ -231,13 +231,13 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                 if (currentDistance > _maxDistance && !_leashBroken && !_tempUnlockLeash && MovementSystem.Instance.canMove)
                 {
                     float maxSpeed = MovementSystem.Instance.baseMovementSpeed * MovementSystem.Instance.sprintMultiplier;
-                    if (MetaPort.Instance.isUsingVr && Input.GetKey(KeyCode.LeftShift))
-                        maxSpeed = MovementSystem.Instance.baseMovementSpeed;
+                    // if (MetaPort.Instance.isUsingVr && Input.GetKey(KeyCode.LeftShift))
+                    //     maxSpeed = MovementSystem.Instance.baseMovementSpeed;
 
                     float speed = Mathf.Clamp(2f * (currentDistance-_maxDistance), 1.5f, maxSpeed);
 
                     var targetMixedPosition = targetPosition;
-                    var position = _ourPlayer.PlayerGameObject.transform.position;
+                    var position = _ourPlayer.PlayerPosition;
 
                     targetMixedPosition.y = position.y;
 

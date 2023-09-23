@@ -31,25 +31,25 @@ namespace TotallyWholesome.TWUI
 
         public static void SendModInit()
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twModInit", ConfigManager.Instance.IsActive(AccessType.HidePiShock), ConfigManager.Instance.IsActive(AccessType.HideToyIntegration), Configuration.JSONConfig.LogoPositionX, Configuration.JSONConfig.LogoPositionY);
+            TWUtils.GetInternalView().TriggerEvent("twModInit", ConfigManager.Instance.IsActive(AccessType.HidePiShock), ConfigManager.Instance.IsActive(AccessType.HideToyIntegration), Configuration.JSONConfig.LogoPositionX, Configuration.JSONConfig.LogoPositionY);
         }
 
         public static void ShowToast(string message, int delay = 5)
         {
             if (!TWUtils.IsQMReady()) return;
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twAlertToast", message, delay);
+            TWUtils.GetInternalView().TriggerEvent("twAlertToast", message, delay);
         }
 
         public static void ShowNotice(string title, string content, string okText = "OK", Action onOK = null)
         {
             NoticeOk = onOK;
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twShowNotice", title, content, okText);
+            TWUtils.GetInternalView().TriggerEvent("twShowNotice", title, content, okText);
         }
 
         public static void OpenMultiSelect(MultiSelection multiSelection)
         {
             UserInterface.Instance.SelectedMultiSelect = multiSelection;
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twOpenMultiSelect", multiSelection.Name, multiSelection.Options, multiSelection.SelectedOption);
+            TWUtils.GetInternalView().TriggerEvent("twOpenMultiSelect", multiSelection.Name, multiSelection.Options, multiSelection.SelectedOption);
         }
 
         public static void ShowConfirm(string title, string content, string yesText = "Yes", Action onYes = null, string noText = "No", Action onNo = null)
@@ -57,7 +57,7 @@ namespace TotallyWholesome.TWUI
             ConfirmYes = onYes;
             ConfirmNo = onNo;
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twShowConfirm", title, content, yesText, noText);
+            TWUtils.GetInternalView().TriggerEvent("twShowConfirm", title, content, yesText, noText);
         }
 
         public static void SetToggleState(string toggleID, bool state, string category = null, string pageID = null)
@@ -69,30 +69,30 @@ namespace TotallyWholesome.TWUI
                 target += $"{pageID}-";
             target += $"{toggleID}";
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSetToggleState", target, state);
+            TWUtils.GetInternalView().TriggerEvent("twSetToggleState", target, state);
         }
 
         public static string CreateToggle(string pageID, string settingsCategory, string toggleName, string toggleID, string tooltip, bool state)
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateToggle", settingsCategory, pageID, toggleName, toggleID, tooltip, state);
+            TWUtils.GetInternalView().TriggerEvent("twCreateToggle", settingsCategory, pageID, toggleName, toggleID, tooltip, state);
             return $"{settingsCategory}-{pageID}-{toggleID}";
         }
 
         public static SliderFloat CreateSlider(string parent, string sliderName, string sliderID, float currentValue, float minValue, float maxValue, string tooltip)
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateSlider", parent, sliderName, $"{sliderID}", currentValue, minValue, maxValue, tooltip);
+            TWUtils.GetInternalView().TriggerEvent("twCreateSlider", parent, sliderName, $"{sliderID}", currentValue, minValue, maxValue, tooltip);
             return new SliderFloat($"{sliderID}", currentValue);
         }
 
         public static void CreateButton(string parent, string buttonName, string buttonIcon, string tooltip, string buttonAction)
         {
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twCreateButton", parent, buttonName, buttonIcon, tooltip, buttonAction);
+            TWUtils.GetInternalView().TriggerEvent("twCreateButton", parent, buttonName, buttonIcon, tooltip, buttonAction);
         }
 
         public static void OpenNumberInput(string name, float input, Action<float> onCompleted)
         {
             NumberInputComplete = onCompleted;
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twOpenNumberInput", name, input);
+            TWUtils.GetInternalView().TriggerEvent("twOpenNumberInput", name, input);
         }
     }
 }

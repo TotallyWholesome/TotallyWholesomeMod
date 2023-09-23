@@ -193,7 +193,7 @@ namespace TotallyWholesome.Managers
                     break;
                 case "OpenLogs":
                     Con.Debug("Opening logs page");
-                    CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twOpenShockerLogs", shocker.Name);
+                    TWUtils.GetInternalView().TriggerEvent("twOpenShockerLogs", shocker.Name);
                     lastShockerId = shocker.Key;
                     OnShockerAction(shocker.Key, "GetLogs");
                     break;
@@ -205,7 +205,7 @@ namespace TotallyWholesome.Managers
                         try
                         {
                             logs = await GetShockerLog(shocker.Key);
-                            Main.Instance.MainThreadQueue.Enqueue(() => CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateLogPanel", logs));
+                            Main.Instance.MainThreadQueue.Enqueue(() => TWUtils.GetInternalView().TriggerEvent("twUpdateLogPanel", logs));
                         }
                         catch (Exception)
                         {
@@ -339,7 +339,7 @@ namespace TotallyWholesome.Managers
         {
             if (!arg1.Equals("ShockerManagement")) return;
             
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUpdateShockerManagement", Configuration.JSONConfig.PiShockShockers);
+            TWUtils.GetInternalView().TriggerEvent("twUpdateShockerManagement", Configuration.JSONConfig.PiShockShockers);
         }
 
         public static void UpdateShockHeightControl(bool? enable = null)

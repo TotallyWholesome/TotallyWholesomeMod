@@ -35,13 +35,13 @@ namespace TotallyWholesome.TWUI
             SliderValue = value;
             
             if (!TWUtils.IsQMReady()) return;
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", SliderID, value);     
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", SliderID, value);
         }
 
         public void UpdateSlider()
         {
             if (!TWUtils.IsQMReady()) return;
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twSliderSetValue", SliderID, SliderValue);
+            TWUtils.GetInternalView().TriggerEvent("twSliderSetValue", SliderID, SliderValue);
         }
     }
 }

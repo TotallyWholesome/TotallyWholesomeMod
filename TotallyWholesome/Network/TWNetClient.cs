@@ -443,7 +443,7 @@ namespace TotallyWholesome.Network
             {
                 if (!TWUtils.IsQMReady()) return;
                 
-                CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twUserCountUpdate", "Disconnected");
+                TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", "Disconnected");
             });
 
             OnTWNetDisconnected?.Invoke();

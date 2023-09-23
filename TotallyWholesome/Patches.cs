@@ -16,6 +16,7 @@ using ABI.CCK.Scripts;
 using HarmonyLib;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
+using TotallyWholesome.TWUI;
 using WholesomeLoader;
 
 namespace TotallyWholesome
@@ -234,7 +235,7 @@ namespace TotallyWholesome
     [HarmonyPatch(typeof(CVR_MenuManager))]
     class CVRMenuManagerPatch
     {
-        [HarmonyPatch("markMenuAsReady")]
+        [HarmonyPatch("RegisterEvents")]
         [HarmonyPostfix]
         static void MarkMenuAsReady(CVR_MenuManager __instance)
         {
@@ -246,6 +247,16 @@ namespace TotallyWholesome
             {
                 Con.Error(e);
             }
+        }
+
+        //We'll use this point to detect a menu reload/setup and ensure TWUIReady is false
+        [HarmonyPatch("UpdateModList")]
+        [HarmonyPrefix]
+        static bool UpdateModListPatch()
+        {
+            UserInterface.TWUIReady = false;
+
+            return true;
         }
     }
 

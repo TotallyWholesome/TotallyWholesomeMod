@@ -88,7 +88,7 @@ namespace TotallyWholesome.Managers.AvatarParams
             param.RemoteEnabled = state;
             _shouldUpdateParameters = true;
 
-            CVR_MenuManager.Instance.quickMenu.View.TriggerEvent("twAvatarRemoteUpdateHeader", count);
+            TWUtils.GetInternalView().TriggerEvent("twAvatarRemoteUpdateHeader", count);
         }
         
         public void SendUpdatedParameters(LeadPair pair)
