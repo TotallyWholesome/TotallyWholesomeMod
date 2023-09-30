@@ -76,7 +76,7 @@ namespace TotallyWholesome.Network
             Patches.OnWorldLeave += AbortInstanceChange;
             Patches.OnWorldLeave += OnGameNetworkDisconnected;
             Patches.UserJoin += OnUserJoinPhoton;
-            Patches.OnChangingInstance += OnChangingInstance;
+            Patches.OnChangingInstance += AbortInstanceChange;
             Patches.OnWorldJoin += MoveWaitingForGSToQueue;
             Disconnected += OnDisconnected;
         }
@@ -301,14 +301,6 @@ namespace TotallyWholesome.Network
         {
             return Status == ClientStatus.Connected;
         }
-        
-        private void OnChangingInstance()
-        {
-            if (_worldChangeToken == null)
-                return;
-            
-            MelonCoroutines.Stop(_worldChangeToken);
-        }
 
         public async void FollowMaster(string worldID)
         {
@@ -494,7 +486,7 @@ namespace TotallyWholesome.Network
 
         private void OnEarlyWorldJoin()
         {
-            if (string.IsNullOrWhiteSpace(Patches.TargetInstanceID))
+            if (string.IsNullOrWhiteSpace(Instances.RequestedInstance))
                 return;
 
             if (_connectedToGS)
@@ -504,11 +496,11 @@ namespace TotallyWholesome.Network
 
             LastWorldJoinMessage = new InstanceInfo
             {
-                InstanceHash = TWUtils.CreateMD5(Patches.TargetInstanceID)
+                InstanceHash = TWUtils.CreateMD5(Instances.RequestedInstance)
             };
 
             if (ConfigManager.Instance.IsActive(AccessType.AllowPetWorldChangeFollow, LeadManager.Instance.MasterId))
-                LastWorldJoinMessage.FullInstanceID = Patches.TargetInstanceID;
+                LastWorldJoinMessage.FullInstanceID = Instances.RequestedInstance;
 
             if (!IsTWNetConnected()) return;
 

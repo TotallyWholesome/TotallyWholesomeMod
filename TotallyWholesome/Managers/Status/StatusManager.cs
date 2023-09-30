@@ -295,6 +295,12 @@ namespace TotallyWholesome.Managers.Status
         {
             _knownStatuses.Clear();
             _statusComponents.Clear();
+
+            if (Configuration.JSONConfig.HideInPublicWorlds)
+            {
+                _isPublicWorld = true;
+                SendStatusUpdate();
+            }
         }
         
         private void OnPlayerLeave(CVRPlayerEntity obj)

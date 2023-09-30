@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
+using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
@@ -202,6 +203,7 @@ namespace TotallyWholesome.Managers.Lead
             //Store last pairKeys for instance change functions
             LastPairKeys.Clear();
             LastPairKeys.AddRange(_pairKeys);
+            LastFollowerPairKeys.Clear();
             LastFollowerPairKeys.AddRange(ActiveLeadPairs.Where(x => x.Value != null && x.Value.AreWeMaster()).Select(c => c.Key));
             _pairKeys.Clear();
             ActiveLeadPairs.Clear();
@@ -795,7 +797,9 @@ namespace TotallyWholesome.Managers.Lead
         {
             foreach (var pair in ActiveLeadPairs.Where(x => x.Value.IsPlayerInvolved(TWUtils.GetPlayerFromPlayerlist(player.Uuid))).ToArray())
             {
-                ActiveLeadPairs.Remove(pair.Key);
+                //Don't remove from ActiveLeadPairs if we're currently disconnecting from the instance
+                if(!Instances.ForceDisconnect)
+                    ActiveLeadPairs.Remove(pair.Key);
                 OnLeadPairDestroyed?.Invoke(pair.Value);
 
                 if (MasterPair != null && pair.Value.Key == MasterPair.Key)
