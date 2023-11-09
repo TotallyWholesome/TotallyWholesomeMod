@@ -7,11 +7,13 @@ using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using TMPro;
 using TotallyWholesome.Network;
 using TotallyWholesome.TWUI;
 using TWNetCommon;
 using TWNetCommon.Data;
 using UnityEngine;
+using UnityEngine.UI;
 using WholesomeLoader;
 using Object = UnityEngine.Object;
 
@@ -49,8 +51,10 @@ namespace TotallyWholesome.Managers.Status
             Patches.OnWorldJoin += OnInstanceJoin;
             TWNetClient.OnTWNetAuthenticated += OnTWNetAuthenticated;
         }
-        
-        public void LateSetup(){}
+
+        public void LateSetup()
+        {
+        }
 
         [UIEventHandler("enterRankKey")]
         public static void EnterRankKey()
@@ -262,6 +266,14 @@ namespace TotallyWholesome.Managers.Status
             if (_statusComponents.ContainsKey(userID) && _statusComponents[userID] != null) return;
 
             _statusComponents.Remove(userID);
+
+            var nameplateComp = nameplate.GetComponent<PlayerNameplate>();
+
+            if (nameplateComp == null)
+            {
+                Con.Error("Nameplate component was null!");
+                return;
+            }
 
             Transform parent = null;
 

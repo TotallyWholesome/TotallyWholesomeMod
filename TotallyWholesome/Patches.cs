@@ -464,7 +464,7 @@ namespace TotallyWholesome
     {
         static MethodBase TargetMethod()
         {
-            return typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Vivox.VivoxDeviceHandler").GetProperty("InputMuted", BindingFlags.Static | BindingFlags.NonPublic)?.SetMethod;
+            return typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.VivoxServiceManager").GetProperty("InputDeviceMute", BindingFlags.Instance | BindingFlags.NonPublic)?.SetMethod;
         }
         
         static void Prefix(ref bool __0)
