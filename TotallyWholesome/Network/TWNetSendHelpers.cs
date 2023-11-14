@@ -94,6 +94,7 @@ namespace TotallyWholesome.Network
 
                 if (pair != null)
                 {
+                    packet.Key = pair.Key;
                     packet.ShockOperation = pair.ShockOperation;
                     packet.ShockDuration = pair.ShockDuration;
                     packet.ShockDurationMillis = (uint)(PiShockManager.Instance.Duration.SliderValue * 1000);
