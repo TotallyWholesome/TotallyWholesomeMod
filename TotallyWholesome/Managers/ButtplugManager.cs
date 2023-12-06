@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -40,18 +41,14 @@ namespace TotallyWholesome.Managers
 
         private HashSet<LeadPair> queue = new HashSet<LeadPair>();
 
-        private bool VibeGoBrrCompatMode = false;
+        //AdultToyAPI integration
+        private MelonMod AdultToyAPI = null;
+        private MethodInfo GetConnectedDevices = null;
+        private MethodInfo SetMotorSpeed = null;
 
         //forallpets
         public SliderFloat ToyStrength;
         public SliderFloat ToyStrengthIPC;
-
-
-        //VGB Integration
-        private MelonMod vgb;
-        private FieldInfo mIdleIntensity;
-        private FieldInfo mIdleEnabled;
-        private FieldInfo mMaxSeenDevices;
         
         //Achievement data stuff
         public float ActiveVibrationStrength;
@@ -60,7 +57,11 @@ namespace TotallyWholesome.Managers
             get
             {
                 if (buttplugClient == null) return 0;
-                return (int)(VibeGoBrrCompatMode ? mMaxSeenDevices.GetValue(vgb) : buttplugClient.Devices.Length);
+                if(AdultToyAPI!=null)
+                {
+                    return GetDevices().Count();
+                }
+                return buttplugClient.Devices.Length;
             }
         }
 
@@ -93,10 +94,19 @@ namespace TotallyWholesome.Managers
             TWNetListener.ButtplugUpdateEvent += OnButtplugUpdate;
             TWNetListener.LeadRemoveEvent += OnLeadRemoveEvent;
 
-            VibeGoBrrCompatMode = MelonMod.RegisteredMelons.Any(x => x.Info.Name == "VibeGoesBrrr");
-            if (VibeGoBrrCompatMode)
+            foreach (var melon in MelonMod.RegisteredMelons)
             {
-                LoadVibeGoBrrrIntegration();
+                Con.Msg($"Detected mods: {melon.Info.Name}");
+                if (string.Equals(melon.Info.Name, "AdultToyAPI"))
+                {
+                    Con.Msg($"Found Adult Toy API");
+                    AdultToyAPI = melon;
+                }
+            }
+
+            if (AdultToyAPI!=null)
+            {
+                LoadAdultToyAPIIntegration();
                 return;
             }
 
@@ -166,6 +176,10 @@ namespace TotallyWholesome.Managers
         {
             try
             {
+                if(AdultToyAPI!=null)
+                {
+                    return;
+                }
                 if (buttplugClient != null)
                 {
                     Con.Msg("Reconnecting to Buttplug");
@@ -197,6 +211,8 @@ namespace TotallyWholesome.Managers
 
         public void StartButtplugInstance()
         {
+            if(AdultToyAPI!=null)
+            { return; }
             if (Main.Instance.Quitting) return;
             try
             {
@@ -287,14 +303,37 @@ namespace TotallyWholesome.Managers
             await Task.Delay(1000);
             VibrateAtStrength(0);
         }
-
+        private List<object> GetDevices()
+        {
+            Con.Msg($"GetDevices");
+            if(GetConnectedDevices!=null && AdultToyAPI!=null)
+            {
+                Con.Msg($"Get Devices from adult toy api");
+                IEnumerable temp = GetConnectedDevices.Invoke(AdultToyAPI, new object[] { }) as IEnumerable;
+                List<object> result = new List<object>();
+                foreach(var obj in temp)
+                { 
+                    result.Add(obj);
+                }
+                return result;
+            }
+            return new List<object>();
+        }
         public void VibrateAtStrength(float strength)
         {
-            if (VibeGoBrrCompatMode)
+            Con.Msg($"Vibrate at strength: {strength}");
+            if (AdultToyAPI!=null)
             {
-                ActiveVibrationStrength = strength;
-                mIdleEnabled.SetValue(vgb, true);
-                mIdleIntensity.SetValue(vgb, strength);
+                Con.Msg($"Adult Toy API found");
+                List<object> devices = GetDevices();
+                foreach (object toy in devices)
+                {
+                    Con.Msg($"toy found");
+                    if (SetMotorSpeed != null)
+                    {
+                        SetMotorSpeed.Invoke(AdultToyAPI, new object[] { toy, 0, strength });
+                    }
+                }
                 return;
             }
             if (buttplugClient == null || !buttplugClient.Connected)
@@ -331,14 +370,12 @@ namespace TotallyWholesome.Managers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public void LoadVibeGoBrrrIntegration()
+        public void LoadAdultToyAPIIntegration()
         {
-            Con.Msg("Starting VibeGoBrrr Integration");
-            vgb = MelonMod.RegisteredMelons.FirstOrDefault(x => x.Info.Name == "VibeGoesBrrr");
+            Con.Msg("Starting AdultToyAPI Integration");
 
-            mIdleIntensity = vgb.GetType().GetField("mIdleIntensity", BindingFlags.Instance | BindingFlags.NonPublic);
-            mIdleEnabled = vgb.GetType().GetField("mIdleEnabled", BindingFlags.Instance | BindingFlags.NonPublic);
-            mMaxSeenDevices = vgb.GetType().GetField("mMaxSeenDevices", BindingFlags.Instance | BindingFlags.NonPublic);
+            GetConnectedDevices = AdultToyAPI.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(m=>string.Equals(m.Name, "GetConnectedDevices"));
+            SetMotorSpeed = AdultToyAPI.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(m => string.Equals(m.Name, "SetMotorSpeed"));
 
             Con.Msg("Finished VibeGoBrrr Integration");
         }
