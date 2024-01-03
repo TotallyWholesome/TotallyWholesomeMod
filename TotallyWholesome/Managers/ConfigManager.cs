@@ -289,7 +289,7 @@ namespace TotallyWholesome.Managers
 
         [Access(Category = "Pet", Name = "Enable Toy Control",
             DescriptionGlobal = "Enable Buttplug (Requires Restart)",
-            Global = true, User = false)]
+            Global = true, User = false, DialogMessageGlobal = "Enabling toy control will require you to restart before everything works!")]
         EnableToyControl = 0x1004,
 
         [Access(Category = "Pet", Name = "Allow Toy Control",
@@ -333,9 +333,6 @@ namespace TotallyWholesome.Managers
             DialogMessageUser = "Are you sure you want to enable this? This will allow this user to make you their master without confirmation!",
             ConfirmPrompt = true)]
         AutoAcceptMasterRequest = 0x2003,
-
-
-
 
         [Access(Category = "PiShock", Name = "Allow Shock Control",
             DescriptionGlobal = "Enables the PiShock Module for all Masters",

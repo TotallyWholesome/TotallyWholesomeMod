@@ -26,47 +26,44 @@ namespace TotallyWholesome.Managers
 {
     public class ButtplugManager : ITWManager
     {
-
         public static ButtplugManager Instance;
         public ButtplugClient buttplugClient;
 
         public Action ButtplugDeviceAdded;
         public Action ButtplugDeviceRemoved;
-        
+
         private Process intifaceProcess;
         private int port = 12344;
         private string buttplugCLIPath;
 
         private bool isUsingExternalInstance = false;
 
-        private HashSet<LeadPair> queue = new HashSet<LeadPair>();
+        private HashSet<LeadPair> _queue = new HashSet<LeadPair>();
 
         //AdultToyAPI integration
-        private MelonMod AdultToyAPI = null;
-        private MethodInfo GetConnectedDevices = null;
-        private MethodInfo SetMotorSpeed = null;
+        private MelonMod _adultToyAPI = null;
+        private MethodInfo _getConnectedDevices = null;
+        private MethodInfo _setMotorSpeed = null;
 
         //forallpets
         public SliderFloat ToyStrength;
         public SliderFloat ToyStrengthIPC;
-        
+
         //Achievement data stuff
         public float ActiveVibrationStrength;
+
         public int ButtplugDeviceCount
         {
             get
             {
-                if (buttplugClient == null) return 0;
-                if(AdultToyAPI!=null)
-                {
-                    return GetDevices().Count();
-                }
-                return buttplugClient.Devices.Length;
+                if (_adultToyAPI != null) return GetDevices().Count;
+                return buttplugClient != null ? buttplugClient.Devices.Length : 0;
             }
         }
 
         public string ManagerName() => nameof(ButtplugManager);
         public int Priority() => 1;
+
         public void Setup()
         {
             Instance = this;
@@ -86,7 +83,6 @@ namespace TotallyWholesome.Managers
                 TWNetSendHelpers.SendButtplugUpdate(leadPair);
             };
 
-
             //ToChange
             if (!ConfigManager.Instance.IsActive(AccessType.EnableToyControl))
                 return;
@@ -94,24 +90,16 @@ namespace TotallyWholesome.Managers
             TWNetListener.ButtplugUpdateEvent += OnButtplugUpdate;
             TWNetListener.LeadRemoveEvent += OnLeadRemoveEvent;
 
-            foreach (var melon in MelonMod.RegisteredMelons)
-            {
-                Con.Msg($"Detected mods: {melon.Info.Name}");
-                if (string.Equals(melon.Info.Name, "AdultToyAPI"))
-                {
-                    Con.Msg($"Found Adult Toy API");
-                    AdultToyAPI = melon;
-                }
-            }
+            _adultToyAPI = MelonMod.RegisteredMelons.FirstOrDefault(x => x.Info.Name.Equals("AdultToyAPI"));
 
-            if (AdultToyAPI!=null)
+            if (_adultToyAPI != null)
             {
+                Con.Msg("Detected AdultToyAPI, starting integration!");
                 LoadAdultToyAPIIntegration();
                 return;
             }
 
             DownloadButtplugCLI();
-
 
             try
             {
@@ -124,7 +112,9 @@ namespace TotallyWholesome.Managers
             }
         }
 
-        public void LateSetup() { }
+        public void LateSetup()
+        {
+        }
 
         private void OnLeadRemoveEvent(LeadAccept packet)
         {
@@ -143,7 +133,8 @@ namespace TotallyWholesome.Managers
 
             using var wc = new WebClient
             {
-                Headers = {
+                Headers =
+                {
                     ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
                 }
             };
@@ -176,16 +167,18 @@ namespace TotallyWholesome.Managers
         {
             try
             {
-                if(AdultToyAPI!=null)
+                if (_adultToyAPI != null)
                 {
                     return;
                 }
+
                 if (buttplugClient != null)
                 {
                     Con.Msg("Reconnecting to Buttplug");
                     await buttplugClient.DisconnectAsync();
                     buttplugClient = null;
                 }
+
                 buttplugClient = new ButtplugClient("Totally Wholesome");
                 buttplugClient.DeviceAdded += ButtplugClient_DeviceAdded;
                 buttplugClient.DeviceRemoved += ButtplugClient_DeviceRemoved;
@@ -211,8 +204,11 @@ namespace TotallyWholesome.Managers
 
         public void StartButtplugInstance()
         {
-            if(AdultToyAPI!=null)
-            { return; }
+            if (_adultToyAPI != null)
+            {
+                return;
+            }
+
             if (Main.Instance.Quitting) return;
             try
             {
@@ -233,7 +229,6 @@ namespace TotallyWholesome.Managers
                     {
                         Con.Error("Error while retrieving Processname of running application");
                     }
-
                 }
 
                 FileInfo target = new FileInfo(buttplugCLIPath);
@@ -303,41 +298,32 @@ namespace TotallyWholesome.Managers
             await Task.Delay(1000);
             VibrateAtStrength(0);
         }
+
         private List<object> GetDevices()
         {
-            Con.Msg($"GetDevices");
-            if(GetConnectedDevices!=null && AdultToyAPI!=null)
-            {
-                Con.Msg($"Get Devices from adult toy api");
-                IEnumerable temp = GetConnectedDevices.Invoke(AdultToyAPI, new object[] { }) as IEnumerable;
-                List<object> result = new List<object>();
-                foreach(var obj in temp)
-                { 
-                    result.Add(obj);
-                }
-                return result;
-            }
-            return new List<object>();
+            if (_adultToyAPI == null) return null;
+
+            IEnumerable temp = _getConnectedDevices.Invoke(_adultToyAPI, new object[] { }) as IEnumerable;
+
+            return temp?.Cast<object>().ToList();
         }
+
         public void VibrateAtStrength(float strength)
         {
-            Con.Msg($"Vibrate at strength: {strength}");
-            if (AdultToyAPI!=null)
+            if (_adultToyAPI != null)
             {
-                Con.Msg($"Adult Toy API found");
-                List<object> devices = GetDevices();
-                foreach (object toy in devices)
+                var devices = GetDevices();
+                foreach (var toy in devices)
                 {
-                    Con.Msg($"toy found");
-                    if (SetMotorSpeed != null)
-                    {
-                        SetMotorSpeed.Invoke(AdultToyAPI, new object[] { toy, 0, strength });
-                    }
+                    _setMotorSpeed.Invoke(_adultToyAPI, new[] { toy, 0, strength });
                 }
+
                 return;
             }
-            if (buttplugClient == null || !buttplugClient.Connected)
+
+            if (buttplugClient is not { Connected: true })
                 return;
+
             ActiveVibrationStrength = strength;
             foreach (var toy in buttplugClient.Devices)
             {
@@ -363,21 +349,28 @@ namespace TotallyWholesome.Managers
                     return;
 
                 VibrateAtStrength(packet.ToyStrength);
-
-                if (buttplugClient == null || !buttplugClient.Connected)
-                    return;
             });
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public void LoadAdultToyAPIIntegration()
         {
-            Con.Msg("Starting AdultToyAPI Integration");
+            Con.Debug("Attempting to fetch AdultToyAPI methods...");
 
-            GetConnectedDevices = AdultToyAPI.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(m=>string.Equals(m.Name, "GetConnectedDevices"));
-            SetMotorSpeed = AdultToyAPI.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(m => string.Equals(m.Name, "SetMotorSpeed"));
+            _getConnectedDevices = _adultToyAPI.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .FirstOrDefault(m => string.Equals(m.Name, "GetConnectedDevices"));
+            _setMotorSpeed = _adultToyAPI.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(m => string.Equals(m.Name, "SetMotorSpeed"));
 
-            Con.Msg("Finished VibeGoBrrr Integration");
+            if (_getConnectedDevices == null || _setMotorSpeed == null)
+            {
+                Con.Error("Unable to fetch methods for AdultToyAPI! TW will not be able to use AdultToyAPI right now!");
+                Con.Error($"GetConnectedDevices: {_getConnectedDevices != null} | SetMotorSpeed: {_setMotorSpeed != null}");
+
+                //Set the MelonMod reference to null to prevent other functions from trying to use null methodinfos
+                _adultToyAPI = null;
+            }
+
+            Con.Msg("AdultToyAPI is ready for use!");
         }
 
 
