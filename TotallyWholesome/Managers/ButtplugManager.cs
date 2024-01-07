@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ABI_RC.Core.Savior;
 using ButtplugManaged;
@@ -33,12 +34,13 @@ namespace TotallyWholesome.Managers
         public Action ButtplugDeviceRemoved;
 
         private Process intifaceProcess;
-        private int port = 12344;
+        private int port = 12345;
         private string buttplugCLIPath;
 
         private bool isUsingExternalInstance = false;
 
         private HashSet<LeadPair> _queue = new HashSet<LeadPair>();
+        private Regex _portArgCheck = new Regex("--tw\\.buttplugport (?'bpport'\\d+)", RegexOptions.Compiled);
 
         //AdultToyAPI integration
         private MelonMod _adultToyAPI = null;
@@ -97,6 +99,14 @@ namespace TotallyWholesome.Managers
                 Con.Msg("Detected AdultToyAPI, starting integration!");
                 LoadAdultToyAPIIntegration();
                 return;
+            }
+
+            var match = _portArgCheck.Match(Environment.CommandLine);
+
+            if (match.Success && int.TryParse(match.Groups["bpport"].Value, out var newPort))
+            {
+                Con.Msg($"Intiface Central/Engine port switched to {newPort}!");
+                port = newPort;
             }
 
             DownloadButtplugCLI();
@@ -198,8 +208,7 @@ namespace TotallyWholesome.Managers
         public static void RestartButtplug()
         {
             Instance.intifaceProcess?.Kill();
-            if (Instance.isUsingExternalInstance)
-                Instance.StartButtplugInstance();
+            Instance.StartButtplugInstance();
         }
 
         public void StartButtplugInstance()
@@ -210,6 +219,7 @@ namespace TotallyWholesome.Managers
             }
 
             if (Main.Instance.Quitting) return;
+
             try
             {
                 foreach (var item in Process.GetProcesses())
@@ -217,7 +227,7 @@ namespace TotallyWholesome.Managers
                     try
                     {
                         //what todo in this case. Central is diffrent
-                        if (item.ProcessName == "intiface_central.exe")
+                        if (item.ProcessName.Equals("intiface_central", StringComparison.InvariantCultureIgnoreCase))
                         {
                             Con.Msg("Intiface Central running. Using running instance");
                             isUsingExternalInstance = true;
@@ -235,7 +245,7 @@ namespace TotallyWholesome.Managers
 
                 //TODO: Find a better way to handle Intiface, this is still scuffed... WHY CAN'T WE GET THE DATA AND HAVE IT WORK
 
-                var startInfo = new ProcessStartInfo(target.FullName, $"--use-lovense-connect --use-bluetooth-le --websocket-port {port}");
+                var startInfo = new ProcessStartInfo(target.FullName, $"--use-lovense-connect --use-bluetooth-le --use-lovense-dongle-hid --websocket-port {port}");
                 startInfo.UseShellExecute = true;
                 startInfo.WorkingDirectory = Environment.CurrentDirectory;
                 //startInfo.RedirectStandardError = true;
@@ -245,8 +255,6 @@ namespace TotallyWholesome.Managers
                 intifaceProcess.EnableRaisingEvents = true;
                 intifaceProcess.OutputDataReceived += (sender, args) => Con.Debug(args.Data);
                 intifaceProcess.ErrorDataReceived += (sender, args) => Con.Error(args.Data);
-
-                intifaceProcess.Exited += (_, _2) => StartButtplugInstance();
 
                 new Task(async () => await ConnectButtplug()).Start();
             }
