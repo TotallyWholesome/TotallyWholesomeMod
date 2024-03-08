@@ -70,7 +70,7 @@ namespace TotallyWholesome.Objects
                 return ReferenceEquals(_playerEntity, null) ? null : _playerEntity.PlayerObject;
             }
         }
-        
+
         public Vector3 PlayerPosition
         {
             get
@@ -94,6 +94,16 @@ namespace TotallyWholesome.Objects
                 if (!_isRemotePlayer)
                     return MetaPort.Instance.currentAvatarGuid;
                 return ReferenceEquals(_playerEntity, null) ? null : _playerEntity.AvatarId;
+            }
+        }
+
+        public string PlayerIconURL
+        {
+            get
+            {
+                if (!_isRemotePlayer)
+                    return "";
+                return ReferenceEquals(_playerEntity, null) ? "" : _playerEntity.ApiProfileImageUrl;
             }
         }
 

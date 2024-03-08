@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Net;
-using ABI_RC.Core.InteractionSystem;
 using MessagePack;
 using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Managers.Status;
+using TotallyWholesome.Managers.TWUI;
 using TotallyWholesome.Notification;
+using TotallyWholesome.Utils;
 using TWNetCommon;
 using TWNetCommon.Auth;
 using TWNetCommon.BasicMessages;
 using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers;
 using WholesomeLoader;
 
 namespace TotallyWholesome.Network
@@ -24,8 +27,8 @@ namespace TotallyWholesome.Network
         public static Action<MasterSettings> MasterSettingsEvent;
         public static Action<MasterRemoteControl> MasterRemoteControlEvent;
         public static Action<LeashConfigUpdate> LeashConfigUpdate;
-        public static Action<PiShockUpdate> PiShockUpdateEvent;
         public static Action<ButtplugUpdate> ButtplugUpdateEvent;
+        public static Action<PetConfigUpdate> PetConfigUpdateEvent;
 
         public bool NetworkUnreachable;
         public DateTime ReconnectAttemptTime;
@@ -33,7 +36,7 @@ namespace TotallyWholesome.Network
         public override void OnPing(TWNetClient conn)
         {
             //Pong time
-            TWNetClient.Instance.Send(null, TWNetMessageTypes.PingPong);
+            TwTask.Run(TWNetClient.Instance.SendPingAsync());
         }
 
         public override void OnAuthResp(AuthResp packet, TWNetClient conn)
@@ -59,15 +62,8 @@ namespace TotallyWholesome.Network
                 
                 Con.Msg("WholesomeLoader updated! When you restart the new version will be used!");
             }
-
-            conn.OnlineUsers = packet.OnlineUsers;
             
-            Main.Instance.MainThreadQueue.Enqueue(() =>
-            { 
-                if (!TWUtils.IsQMReady()) return;
-
-                TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", conn.OnlineUsers);
-            });
+            TWMenu.Instance.OnlineUsers = packet.OnlineUsers;
 
             conn.AuthResponse(true, packet.RespMsg);
         }
@@ -141,7 +137,7 @@ namespace TotallyWholesome.Network
         {
             try
             {
-                TWNetClient.Instance.FollowMaster(arg1.FullInstanceID);
+                TwTask.Run(TWNetClient.Instance.FollowMaster(arg1.FullInstanceID));
             }
             catch (Exception e)
             {
@@ -198,16 +194,30 @@ namespace TotallyWholesome.Network
             }
         }
 
-        public override void OnPiShockUpdate(PiShockUpdate packet, TWNetClient conn)
+        public override void OnShockerControl(ShockerControl update, TWNetClient conn)
         {
             try
             {
-                Con.Debug($"[RECV] - {packet}");
-                PiShockUpdateEvent?.Invoke(packet);
+                Con.Debug($"[RECV] - {update}");
+                TwTask.Run(ShockerManager.Instance.UiControl(update.Type, update.Intensity, update.Duration));
             }
             catch (Exception e)
             {
-                Con.Error("An error occured during OnPiShockUpdate");
+                Con.Error("An error occured with OnShockerControl");
+                Con.Error(e);
+            }
+        }
+        
+        public override void OnHeightControl(HeightControl update, TWNetClient conn)
+        {
+            try
+            {
+                Con.Debug($"[RECV] - {update}");
+                ShockerManager.Instance.Height(update);
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured with OnShockerControl");
                 Con.Error(e);
             }
         }
@@ -227,14 +237,7 @@ namespace TotallyWholesome.Network
             int userCount = 0;
             if (int.TryParse(packet.Message, out userCount))
             {
-                TWNetClient.Instance.OnlineUsers = userCount;
-                
-                Main.Instance.MainThreadQueue.Enqueue(() =>
-                { 
-                    if (!TWUtils.IsQMReady()) return;
-                
-                    TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", userCount.ToString());
-                });
+                TWMenu.Instance.OnlineUsers = userCount;
             }
         }
 
@@ -267,6 +270,20 @@ namespace TotallyWholesome.Network
             catch (Exception e)
             {
                 Con.Error("An error occured with OnLeashConfigUpdate!");
+                Con.Error(e);
+            }
+        }
+
+        public override void OnPetConfigUpdate(PetConfigUpdate update, TWNetClient conn)
+        {
+            try
+            {
+                Con.Debug($"[RECV] - {update}");
+                PetConfigUpdateEvent?.Invoke(update);
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured with OnPetConfigUpdate!");
                 Con.Error(e);
             }
         }

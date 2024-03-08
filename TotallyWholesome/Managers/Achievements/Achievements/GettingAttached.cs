@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [MasterRestrictionCondition(Restrictions.PinProp)]
+    //[MasterRestrictionCondition(Restrictions.PinProp)]
     [PetRestrictionCondition(Restrictions.PinProp)]
     public class GettingAttached : IAchievement
     {

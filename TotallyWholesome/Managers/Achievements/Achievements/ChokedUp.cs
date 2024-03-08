@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [MasterRestrictionCondition(Restrictions.Gagged)]
+    //[MasterRestrictionCondition(Restrictions.Gagged)]
     [PetRestrictionCondition(Restrictions.Gagged)]
     public class ChokedUp : IAchievement
     {

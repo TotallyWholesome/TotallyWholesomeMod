@@ -5,6 +5,8 @@ using ABI_RC.Systems.InputManagement;
 using TotallyWholesome.Notification;
 using UnityEngine;
 
+// ReSharper disable once CheckNamespace
+// Do not change this, unity serialization
 namespace TotallyWholesome
 {
     public class TWRaycaster : MonoBehaviour

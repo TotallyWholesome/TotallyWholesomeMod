@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Objects.ConfigObjects;
 using UnityEngine;
@@ -25,8 +26,11 @@ namespace TotallyWholesome.Objects
         public HumanBodyBones PetBoneTarget = HumanBodyBones.Neck;
         public float BlindnessRadius = 1f;
         public float DeafenAttenuation = -35f;
+        public List<string> SwitchingAllowedAvatars = new();
 
         public List<PiShockShocker> PiShockShockers = new();
+        
+        public ShockerPlatform SelectedShockerPlatform { get; set; } = ShockerPlatform.None;
 
         //Master Specific Settings
         public HumanBodyBones MasterBoneTarget = HumanBodyBones.RightHand;
@@ -38,5 +42,12 @@ namespace TotallyWholesome.Objects
         public bool HideInPublicWorlds = true;
         public bool ShowDeviceStatus = false;
         public bool ShowAutoAccept = true;
+        
+        public enum ShockerPlatform
+        {
+            None = 0,
+            OpenShock = 1,
+            PiShock = 2
+        }
     }
 }

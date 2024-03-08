@@ -1,13 +1,19 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.Shockers;
+using TotallyWholesome.Utils;
 using TWNetCommon;
 using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers;
+using TWNetCommon.Data.ControlPackets.Shockers.Models;
 using TWNetCommon.Data.NestedObjects;
 using UnityEngine;
 
@@ -20,13 +26,15 @@ namespace TotallyWholesome.Network
         private static DateTime _lastLeashConfigUpdate;
         private static DateTime _lastPiShockUpdate;
         private static DateTime _lastButtplugUpdate;
-        private static Task _remoteSettingsTask;
-        private static Task _masterSettingsTask;
-        private static Task _leashConfigUpdate;
-        private static Task _piShockUpdate;
-        private static Task _buttplugUpdate;
+        private static DateTime _lastPetConfigUpdate;
+        private static Task? _remoteSettingsTask;
+        private static Task? _masterSettingsTask;
+        private static Task? _leashConfigUpdate;
+        private static Task? _piShockUpdate;
+        private static Task? _buttplugUpdate;
+        private static Task? _petConfigUpdate;
 
-        public static void UpdateMasterSettingsAsync(LeadPair pair = null)
+        public static void UpdateMasterSettingsAsync(LeadPair? pair = null)
         {
             if (!TWNetClient.Instance.IsTWNetConnected())
                 return;
@@ -34,7 +42,7 @@ namespace TotallyWholesome.Network
             if (_masterSettingsTask != null && !_masterSettingsTask.IsCompleted)
                 return;
 
-            _masterSettingsTask = Task.Run(() =>
+            _masterSettingsTask = TwTask.Run(async () =>
             {
                 var timeBetweenLast = DateTime.Now.Subtract(_lastMasterSettingsUpdate).Milliseconds;
 
@@ -68,88 +76,73 @@ namespace TotallyWholesome.Network
                     }
                 }
 
-                TWNetClient.Instance.Send(packet, TWNetMessageTypes.MasterSettings);
+                await TWNetClient.Instance.SendAsync(packet, TWNetMessageType.MasterSettings);
             });
         }
-        
-        public static void SendPiShockUpdate(LeadPair pair = null)
+
+        /// <summary>
+        /// Control a shocker
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="intensity"></param>
+        /// <param name="duration"></param>
+        /// <param name="petPair"></param>
+        /// <returns></returns>
+        public static Task SendShockControl(
+            ControlType type,
+            byte intensity,
+            ushort duration,
+            LeadPair? petPair = null)
         {
             if (!TWNetClient.Instance.IsTWNetConnected())
-                return;
-
-            if (_piShockUpdate != null && !_piShockUpdate.IsCompleted)
-                return;
-
-            _piShockUpdate = Task.Run(() =>
+                return Task.CompletedTask;
+            
+            var networkPacket = new ShockerControl
             {
-                var timeBetweenLast = DateTime.Now.Subtract(_lastPiShockUpdate).Milliseconds;
+                Key = petPair?.Key,
+                Type = type,
+                Intensity = intensity,
+                Duration = duration
+            };
 
-                //Ensure MasterRemoteSettings waits before being sent
-                if (timeBetweenLast <= 100)
-                    Thread.Sleep(100 - timeBetweenLast);
-                
-                _lastPiShockUpdate = DateTime.Now;
-
-                PiShockUpdate packet = new PiShockUpdate();
-
-                if (pair != null)
-                {
-                    packet.Key = pair.Key;
-                    packet.ShockOperation = pair.ShockOperation;
-                    packet.ShockDuration = pair.ShockDuration;
-                    packet.ShockDurationMillis = (uint)(PiShockManager.Instance.Duration.SliderValue * 1000);
-                    packet.ShockStrength = pair.ShockStrength;
-                    packet.ShockHeightEnabled = pair.ShockHeightEnabled;
-                    packet.ShockHeight = pair.ShockHeight;
-                    packet.ShockHeightStrengthMin = pair.ShockHeightStrengthMin;
-                    packet.ShockHeightStrengthMax = pair.ShockHeightStrengthMax;
-                    packet.ShockHeightStrengthStep = pair.ShockHeightStrengthStep;
-                    pair.ShockOperation = ShockOperation.NoOp;
-
-                    PiShockManager.Instance.LastStrengthMaster = packet.ShockStrength;
-                    PiShockManager.Instance.LastDurationMaster = packet.ShockDuration;
-                    PiShockManager.Instance.LastOperationMaster = packet.ShockOperation;
-                    PiShockManager.Instance.LastOperationFiredMaster = DateTime.Now;
-                }
-                else
-                {
-                    packet.ShockDuration = (int)Math.Ceiling(PiShockManager.Instance.Duration.SliderValue);
-                    packet.ShockDurationMillis = (uint)(PiShockManager.Instance.Duration.SliderValue * 1000);
-                    packet.ShockStrength = (int)Math.Ceiling(PiShockManager.Instance.Strength.SliderValue);
-                    packet.ShockOperation = PiShockManager.Instance.Operation;
-                    packet.ShockHeightEnabled = PiShockManager.Instance.ShockHeightEnabled;
-                    packet.ShockHeight = PiShockManager.Instance.ShockHeight.SliderValue;
-                    packet.ShockHeightStrengthMin = PiShockManager.Instance.ShockHeightStrengthMin.SliderValue;
-                    packet.ShockHeightStrengthMax = PiShockManager.Instance.ShockHeightStrengthMax.SliderValue;
-                    packet.ShockHeightStrengthStep = PiShockManager.Instance.ShockHeightStrengthStep.SliderValue;
-                    PiShockManager.Instance.Operation = ShockOperation.NoOp;
-                    
-                    PiShockManager.Instance.LastStrengthMaster = packet.ShockStrength;
-                    PiShockManager.Instance.LastDurationMaster = packet.ShockDuration;
-                    PiShockManager.Instance.LastOperationMaster = packet.ShockOperation;
-                    PiShockManager.Instance.LastOperationFiredMaster = DateTime.Now;
-                    PiShockManager.Instance.LastOperationGlobalMaster = DateTime.Now;
-
-                    foreach (var keyPair in LeadManager.Instance.ActiveLeadPairs.Where(x => x.Value.AreWeMaster()))
-                    {
-                        keyPair.Value.ShockDuration = packet.ShockDuration;
-                        keyPair.Value.ShockDurationMillis = packet.ShockDurationMillis;
-                        keyPair.Value.ShockStrength = packet.ShockStrength;
-                        keyPair.Value.ShockOperation = packet.ShockOperation;
-                        keyPair.Value.ShockHeightEnabled = packet.ShockHeightEnabled;
-                        keyPair.Value.ShockHeight = packet.ShockHeight;
-                        keyPair.Value.ShockHeightStrengthMin = packet.ShockHeightStrengthMin;
-                        keyPair.Value.ShockHeightStrengthMax = packet.ShockHeightStrengthMax;
-                        keyPair.Value.ShockHeightStrengthStep = packet.ShockHeightStrengthStep;
-                        keyPair.Value.GlobalValuesUpdate = true;
-                    }
-                }
-                
-                TWNetClient.Instance.Send(packet, TWNetMessageTypes.PiShockUpdate);
-            });
+            return TWNetClient.Instance.SendAsync(networkPacket, TWNetMessageType.ShockerControl);
         }
 
-        public static void SendButtplugUpdate(LeadPair pair = null)
+        /// <summary>
+        /// Height control shocking
+        /// </summary>
+        /// <param name="enabled"></param>
+        /// <param name="height"></param>
+        /// <param name="strengthMin"></param>
+        /// <param name="strengthMax"></param>
+        /// <param name="strengthStep"></param>
+        /// <param name="petPair"></param>
+        /// <returns></returns>
+        public static Task SendHeightControl(
+            bool enabled,
+            float height,
+            float strengthMin,
+            float strengthMax,
+            float strengthStep,
+            LeadPair? petPair = null)
+        {
+            if (!TWNetClient.Instance.IsTWNetConnected())
+                return Task.CompletedTask;
+            
+            var networkPacket = new HeightControl
+            {
+                Key = petPair?.Key,
+                Enabled = enabled,
+                Height = height,
+                StrengthMin = strengthMin,
+                StrengthMax = strengthMax,
+                StrengthStep = strengthStep
+            };
+
+            return TWNetClient.Instance.SendAsync(networkPacket, TWNetMessageType.HeightControl);
+        }
+
+        public static void SendButtplugUpdate(LeadPair? pair = null)
         {
             if (!TWNetClient.Instance.IsTWNetConnected())
                 return;
@@ -157,7 +150,7 @@ namespace TotallyWholesome.Network
             if (_buttplugUpdate != null && !_buttplugUpdate.IsCompleted)
                 return;
 
-            _buttplugUpdate = Task.Run(() =>
+            _buttplugUpdate = TwTask.Run(async () =>
             {
                 var timeBetweenLast = DateTime.Now.Subtract(_lastButtplugUpdate).Milliseconds;
 
@@ -177,7 +170,7 @@ namespace TotallyWholesome.Network
                 else
                 {
                     packet.ToyStrength = ButtplugManager.Instance.ToyStrength.SliderValue;
-                    
+
                     //Update our pairs with the global settings
                     foreach (var keyPair in LeadManager.Instance.ActiveLeadPairs.Where(x => x.Value.AreWeMaster()))
                     {
@@ -185,12 +178,12 @@ namespace TotallyWholesome.Network
                         keyPair.Value.GlobalValuesUpdate = true;
                     }
                 }
-                
-                TWNetClient.Instance.Send(packet, TWNetMessageTypes.ButtplugUpdate);
+
+                await TWNetClient.Instance.SendAsync(packet, TWNetMessageType.ButtplugUpdate);
             });
         }
 
-        public static void SendMasterRemoteSettingsAsync(LeadPair pair = null)
+        public static void SendMasterRemoteSettingsAsync(LeadPair? pair = null)
         {
             if (!TWNetClient.Instance.IsTWNetConnected())
                 return;
@@ -198,7 +191,7 @@ namespace TotallyWholesome.Network
             if (_remoteSettingsTask != null && !_remoteSettingsTask.IsCompleted)
                 return;
 
-            _remoteSettingsTask = Task.Run(() =>
+            _remoteSettingsTask = TwTask.Run(async () =>
             {
                 var timeBetweenLast = DateTime.Now.Subtract(_lastRemoteSettingsUpdate).Milliseconds;
 
@@ -213,20 +206,25 @@ namespace TotallyWholesome.Network
                 if (pair != null)
                 {
                     packet.Key = pair.Key;
-                    packet.GagPet = pair.ForcedMute;
                     packet.Parameters = new List<MasterRemoteParameter>();
-                    packet.DisableFlight = pair.DisableFlight;
-                    packet.DisableSeats = pair.DisableSeats;
-                    packet.BlindPet = pair.Blindfold;
-                    packet.DeafenPet = pair.Deafen;
+                    packet.AppliedFeatures |= pair.ForcedMute ? NetworkedFeature.AllowForceMute : NetworkedFeature.None;
+                    packet.AppliedFeatures |= pair.DisableFlight ? NetworkedFeature.DisableFlight : NetworkedFeature.None;
+                    packet.AppliedFeatures |= pair.DisableSeats ? NetworkedFeature.DisableSeats : NetworkedFeature.None;
+                    packet.AppliedFeatures |= pair.Blindfold ? NetworkedFeature.AllowBlindfolding : NetworkedFeature.None;
+                    packet.AppliedFeatures |= pair.Deafen ? NetworkedFeature.AllowDeafening : NetworkedFeature.None;
+                    packet.AppliedFeatures |= pair.MasterDeafenBypass ? NetworkedFeature.MasterBypassDeafen : NetworkedFeature.None;
+
+                    if (pair.TargetAvatar != null)
+                    {
+                        packet.TargetAvatar = pair.TargetAvatar;
+                        pair.TargetAvatar = null;
+                    }
                     
                     if (pair.PropTarget != null)
                         packet.PropTarget = pair.LockToProp ? pair.PropTarget : null;
 
                     if (pair.LeashPinPosition != Vector3.zero)
                         packet.LeashPinPosition = pair.LockToWorld ? pair.LeashPinPosition.ToTWVector3() : TWVector3.Zero;
-
-                    pair.ShockOperation = ShockOperation.NoOp;
 
                     var paramsUpdated = pair.PetEnabledParameters.Where(x => x.IsUpdated).ToList();
 
@@ -238,11 +236,12 @@ namespace TotallyWholesome.Network
                 }
                 else
                 {
-                    packet.GagPet = LeadManager.Instance.ForcedMute;
-                    packet.DisableFlight = LeadManager.Instance.DisableFlight;
-                    packet.DisableSeats = LeadManager.Instance.DisableSeats;
-                    packet.BlindPet = LeadManager.Instance.Blindfold;
-                    packet.DeafenPet = LeadManager.Instance.Deafen;
+                    packet.AppliedFeatures |= LeadManager.Instance.ForcedMute ? NetworkedFeature.AllowForceMute : NetworkedFeature.None;
+                    packet.AppliedFeatures |= LeadManager.Instance.DisableFlight ? NetworkedFeature.DisableFlight : NetworkedFeature.None;
+                    packet.AppliedFeatures |= LeadManager.Instance.DisableSeats ? NetworkedFeature.DisableSeats : NetworkedFeature.None;
+                    packet.AppliedFeatures |= LeadManager.Instance.Blindfold ? NetworkedFeature.AllowBlindfolding : NetworkedFeature.None;
+                    packet.AppliedFeatures |= LeadManager.Instance.Deafen ? NetworkedFeature.AllowDeafening : NetworkedFeature.None;
+                    packet.AppliedFeatures |= LeadManager.Instance.MasterDeafenBypass ? NetworkedFeature.MasterBypassDeafen : NetworkedFeature.None;
 
                     if (LeadManager.Instance.PropTarget != null)
                         packet.PropTarget = LeadManager.Instance.LockToProp ? LeadManager.Instance.PropTarget : null;
@@ -262,11 +261,12 @@ namespace TotallyWholesome.Network
                         keyPair.Value.LockToWorld = LeadManager.Instance.LockToWorld;
                         keyPair.Value.Blindfold = LeadManager.Instance.Blindfold;
                         keyPair.Value.Deafen = LeadManager.Instance.Deafen;
+                        keyPair.Value.MasterDeafenBypass = LeadManager.Instance.MasterDeafenBypass;
                         keyPair.Value.GlobalValuesUpdate = true;
                     }
                 }
 
-                TWNetClient.Instance.Send(packet, TWNetMessageTypes.MasterRemoteControl2);
+                await TWNetClient.Instance.SendAsync(packet, TWNetMessageType.MasterRemoteControl3);
             });
         }
 
@@ -286,7 +286,7 @@ namespace TotallyWholesome.Network
                 FollowerAccept = true
             };
 
-            TWNetClient.Instance.Send(packet, TWNetMessageTypes.LeadAccept);
+            TwTask.Run(TWNetClient.Instance.SendAsync(packet, TWNetMessageType.LeadAccept));
         }
 
         public static void AcceptMasterRequest(string key, string requesterID)
@@ -303,16 +303,20 @@ namespace TotallyWholesome.Network
                 PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, requesterID),
                 MasterLeashColour = ConfigManager.Instance.IsActive(AccessType.UseCustomLeashColour) ? Configuration.JSONConfig.LeashColour : "",
                 LeashStyle = (int)Configuration.JSONConfig.LeashStyle,
-                DisableFlight = LeadManager.Instance.DisableFlight,
-                DisableSeats = LeadManager.Instance.DisableSeats,
                 TempUnlockLeash = LeadManager.Instance.TempUnlockLeash,
                 Key = key
             };
 
-            TWNetClient.Instance.Send(packet, TWNetMessageTypes.LeadAccept);
+            packet.AppliedFeatures |= LeadManager.Instance.ForcedMute ? NetworkedFeature.AllowForceMute : NetworkedFeature.None;
+            packet.AppliedFeatures |= LeadManager.Instance.DisableFlight ? NetworkedFeature.DisableFlight : NetworkedFeature.None;
+            packet.AppliedFeatures |= LeadManager.Instance.DisableSeats ? NetworkedFeature.DisableSeats : NetworkedFeature.None;
+            packet.AppliedFeatures |= LeadManager.Instance.Blindfold ? NetworkedFeature.AllowBlindfolding : NetworkedFeature.None;
+            packet.AppliedFeatures |= LeadManager.Instance.Deafen ? NetworkedFeature.AllowDeafening : NetworkedFeature.None;
+
+            TwTask.Run(TWNetClient.Instance.SendAsync(packet, TWNetMessageType.LeadAccept));
         }
 
-        public static void SendLeashConfigUpdate(LeadPair pair = null)
+        public static void SendLeashConfigUpdate(LeadPair? pair = null)
         {
             if (!TWNetClient.Instance.IsTWNetConnected())
                 return;
@@ -320,7 +324,7 @@ namespace TotallyWholesome.Network
             if (_leashConfigUpdate != null && !_leashConfigUpdate.IsCompleted)
                 return;
 
-            _leashConfigUpdate = Task.Run(() =>
+            _leashConfigUpdate = TwTask.Run(async () =>
             {
                 var timeBetweenLast = DateTime.Now.Subtract(_lastLeashConfigUpdate).Milliseconds;
 
@@ -363,7 +367,72 @@ namespace TotallyWholesome.Network
                     }
                 }
 
-                TWNetClient.Instance.Send(packet, TWNetMessageTypes.LeashConfigUpdate);
+                await TWNetClient.Instance.SendAsync(packet, TWNetMessageType.LeashConfigUpdate);
+            });
+        }
+
+        public static void SendPetConfigUpdate(UpdateType updateType)
+        {
+            if (!TWNetClient.Instance.IsTWNetConnected())
+                return;
+
+            //Check if we actually have a master lol
+            if (LeadManager.Instance.MasterPair == null) return;
+
+            if (_petConfigUpdate is { IsCompleted: false })
+                return;
+
+            _petConfigUpdate = TwTask.Run(async () =>
+            {
+                var timeBetweenLast = DateTime.Now.Subtract(_lastPetConfigUpdate).Milliseconds;
+
+                //Ensure MasterRemoteSettings waits before being sent
+                if (timeBetweenLast <= 100)
+                    await Task.Delay(100 - timeBetweenLast);
+
+                _lastPetConfigUpdate = DateTime.Now;
+
+                var configUpdate = new PetConfigUpdate();
+
+                if (updateType.HasFlag(UpdateType.AllowedFeaturesUpdate))
+                {
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowForceMute, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowForceMute : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowToyControl, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowToyControl : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowPinning : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowMovementControls, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.DisableFlight : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowBlindfolding, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowBlindfolding : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowDeafening, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowDeafening : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowBeep, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowBeep : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowVibrate, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowVibrate : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowShock, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowShock : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowHeightControl, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowHeight : NetworkedFeature.None;
+                    configUpdate.AllowedFeatures |= ConfigManager.Instance.IsActive(AccessType.AllowAnyAvatarSwitch, LeadManager.Instance.MasterPair.MasterID) ? NetworkedFeature.AllowAnyAvatarSwitching : NetworkedFeature.None;
+                }
+
+                if (updateType.HasFlag(UpdateType.AvatarListUpdate))
+                {
+                    configUpdate.AllowedAvatars = Configuration.JSONConfig.SwitchingAllowedAvatars;
+                }
+
+                if (updateType.HasFlag(UpdateType.RemoteParamUpdate))
+                {
+                    configUpdate.Parameters = new();
+
+                    foreach (var enabled in AvatarParameterManager.Instance.TWAvatarParameters.Where(x => x.RemoteEnabled))
+                    {
+                        configUpdate.Parameters.Add(new MasterRemoteParameter()
+                        {
+                            ParameterTarget = enabled.Name,
+                            ParameterValue = enabled.CurrentValue,
+                            ParameterType = (int)enabled.ParamType,
+                            ParameterOptions = enabled.Options
+                        });
+                    }
+                }
+
+                configUpdate.UpdateType = updateType;
+
+                await TWNetClient.Instance.SendAsync(configUpdate, TWNetMessageType.PetConfigUpdate);
             });
         }
     }

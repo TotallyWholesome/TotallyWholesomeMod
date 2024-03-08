@@ -3,7 +3,7 @@
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
     [ConfigManagerCondition(AccessType.AllowBeep, AccessType.AllowBlindfolding, AccessType.AllowDeafening, AccessType.AllowShock, AccessType.AllowShock, AccessType.AllowVibrate, AccessType.AllowForceMute, AccessType.AllowHeightControl, AccessType.AllowMovementControls, AccessType.AllowShockControl, AccessType.AllowToyControl, AccessType.EnableToyControl, AccessType.AllowWorldPropPinning, AccessType.AutoAcceptMasterRequest, AccessType.AutoAcceptPetRequest, AccessType.FollowMasterWorldChange)]
-    [PiShockLimitCondition(100, 15)]
+    [ShockerNoLimitsLimitCondition]
     public class WhatAreLimits : IAchievement
     {
         public string AchievementName => "What are limits?";

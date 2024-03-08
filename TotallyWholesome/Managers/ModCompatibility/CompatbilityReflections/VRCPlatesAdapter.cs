@@ -8,7 +8,7 @@ using TotallyWholesome.Managers.Status;
 using UnityEngine;
 using WholesomeLoader;
 
-namespace TotallyWholesome
+namespace TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections
 {
     public class VRCPlatesAdapter
     {

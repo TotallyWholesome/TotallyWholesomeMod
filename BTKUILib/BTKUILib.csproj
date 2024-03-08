@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{4BA58EB4-181A-4661-86F3-6E45DCB88DAE}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>BTKUILib</RootNamespace>
+        <AssemblyName>BTKUILib</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <DocumentationFile>bin\Release\BTKUILib.xml</DocumentationFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="0Harmony">
+          <HintPath>..\3rdparty\ml\0Harmony.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Assembly-CSharp">
+          <HintPath>..\3rdparty\Managed\Assembly-CSharp.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="cohtml.Net">
+          <HintPath>..\3rdparty\Managed\cohtml.Net.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Cohtml.RenderingBackend">
+          <HintPath>..\3rdparty\Managed\Cohtml.RenderingBackend.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Cohtml.Runtime">
+          <HintPath>..\3rdparty\Managed\Cohtml.Runtime.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="DarkRift">
+          <HintPath>..\3rdparty\Managed\DarkRift.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="DarkRift.Client">
+          <HintPath>..\3rdparty\Managed\DarkRift.Client.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="MelonLoader">
+          <HintPath>..\3rdparty\ml\MelonLoader.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+          <HintPath>..\3rdparty\Managed\Newtonsoft.Json.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="System" />
+        <Reference Include="System.Core" />
+        <Reference Include="System.Data" />
+        <Reference Include="System.Xml" />
+        <Reference Include="Unity.TextMeshPro">
+          <HintPath>..\3rdparty\Managed\Unity.TextMeshPro.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine">
+          <HintPath>..\3rdparty\Managed\UnityEngine.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.AnimationModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.AnimationModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.AssetBundleModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.CoreModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.InputLegacyModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.InputModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.InputModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.TextCoreModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.TextCoreModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.TextRenderingModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+          <HintPath>..\3rdparty\Managed\UnityEngine.UI.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.UIModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.UIModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.UnityWebRequestWWWModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.VRModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.VRModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.XRModule">
+          <HintPath>..\3rdparty\Managed\UnityEngine.XRModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="BTKUILib.cs" />
+        <Compile Include="Patches.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="QuickMenuAPI.cs" />
+        <Compile Include="UIObjects\Category.cs" />
+        <Compile Include="UIObjects\Components\Button.cs" />
+        <Compile Include="UIObjects\Components\CustomElement.cs" />
+        <Compile Include="UIObjects\Components\SliderFloat.cs" />
+        <Compile Include="UIObjects\Components\ToggleButton.cs" />
+        <Compile Include="UIObjects\Objects\CustomEngineOnFunction.cs" />
+        <Compile Include="UIObjects\Objects\MultiSelection.cs" />
+        <Compile Include="UIObjects\Page.cs" />
+        <Compile Include="UIObjects\QMInteractable.cs" />
+        <Compile Include="UIObjects\QMUIElement.cs" />
+        <Compile Include="UIUtils.cs" />
+        <Compile Include="UserInterface.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="CohtmlUI\.idea\.gitignore" />
+      <Content Include="CohtmlUI\.idea\CohtmlUI.iml" />
+      <Content Include="CohtmlUI\.idea\discord.xml" />
+      <Content Include="CohtmlUI\.idea\modules.xml" />
+      <Content Include="CohtmlUI\.idea\vcs.xml" />
+      <Content Include="CohtmlUI\.idea\watcherTasks.xml" />
+      <Content Include="CohtmlUI\.idea\workspace.xml" />
+      <Content Include="CohtmlUI\bootstrap-grid.min.css" />
+      <Content Include="CohtmlUI\BTKUI.css" />
+      <Content Include="CohtmlUI\BTKUI.css.map" />
+      <Content Include="CohtmlUI\BTKUI.less" />
+      <Content Include="CohtmlUI\images\Arrow Left.png" />
+      <Content Include="CohtmlUI\images\Arrow Up.png" />
+      <Content Include="CohtmlUI\images\Checkmark.png" />
+      <Content Include="CohtmlUI\images\Multiuser.png" />
+      <Content Include="CohtmlUI\images\Settings.png" />
+      <Content Include="CohtmlUI\mod.js" />
+      <Content Include="LICENSE" />
+      <Content Include="README.md" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="CohtmlUI\images\BTKUILib\BTKList.png" />
+      <EmbeddedResource Include="CohtmlUI\images\BTKClose.png" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+
+    <!-- Target to check if lessc is installed -->
+    <Target Name="CheckLessc">
+        <Exec Command="lessc --version" ConsoleToMSBuild="true" ContinueOnError="true" IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="LesscExitCode" />
+        </Exec>
+        <Warning Text="Lessc is NOT installed. We're going to skip the LESS compilation... You can fix by running: npm install -g less" Condition="'$(LesscExitCode)' != '0'" />
+    </Target>
+
+    <!-- Target to compile all LESS files in the project to CSS -->
+    <Target Name="CompileLess" DependsOnTargets="CheckLessc" Condition="'$(LesscExitCode)' == '0'">
+        <CreateItem Include="$(MSBuildProjectDirectory)\**\*.less">
+            <Output TaskParameter="Include" ItemName="DynamicLessFiles" />
+        </CreateItem>
+        <Exec Command="lessc &quot;%(DynamicLessFiles.FullPath)&quot; &quot;%(DynamicLessFiles.RootDir)%(DynamicLessFiles.Directory)%(DynamicLessFiles.Filename).css&quot;" />
+    </Target>
+
+    <!-- Target to Zip the contents of CohtmlUI to BTKUIBuild.zip (after compiling all less files) -->
+    <Target Name="ZipBTKUIBuild" BeforeTargets="BeforeBuild" DependsOnTargets="CheckLessc;CompileLess">
+        <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\CohtmlUI" DestinationFile="$(MSBuildProjectDirectory)\BTKUIBuild.zip" Overwrite="true" />
+        <!-- After creating the zip file, dynamically add it as an embedded resource -->
+        <ItemGroup>
+            <EmbeddedResource Include="BTKUIBuild.zip" />
+        </ItemGroup>
+    </Target>
+
+</Project>

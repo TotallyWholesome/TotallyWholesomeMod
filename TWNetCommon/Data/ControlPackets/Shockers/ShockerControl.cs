@@ -5,8 +5,11 @@ using TWNetCommon.Data.ControlPackets.Shockers.Models;
 
 namespace TWNetCommon.Data.ControlPackets.Shockers;
 
+/// <summary>
+/// Shock control
+/// </summary>
 [MessagePackObject]
-public class ShockerControl
+public sealed class ShockerControl
 {
     /// <summary>
     /// Target lead pair, to target a specific pet
@@ -26,7 +29,7 @@ public class ShockerControl
     /// 300 - 30_000
     /// </summary>
     [Key(2)]
-    public uint Duration { get; set; }
+    public ushort Duration { get; set; }
     
     /// <summary>
     /// Action type
@@ -42,4 +45,9 @@ public class ShockerControl
     public Guid? Id { get; set; }
 
     public override string ToString() => $"ShockControl - Key: [{Key}] Intensity: [{Intensity}] Duration: [{Duration}] Type: [{Type}] Id: [{Id}]";
+
+    public ShockerControl Clone()
+    {
+        return (ShockerControl)MemberwiseClone();
+    }
 }

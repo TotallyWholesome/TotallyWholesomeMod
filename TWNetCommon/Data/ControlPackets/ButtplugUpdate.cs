@@ -21,5 +21,10 @@ namespace TWNetCommon.Data.ControlPackets
         {
             return $"ButtplugUpdate - [Key: {Key}, ToyStrength: {ToyStrength}]";
         }
+
+        public ButtplugUpdate Clone()
+        {
+            return (ButtplugUpdate)MemberwiseClone();
+        }
     }
 }

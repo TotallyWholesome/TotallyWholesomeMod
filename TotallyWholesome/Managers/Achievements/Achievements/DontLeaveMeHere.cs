@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [MasterRestrictionCondition(Restrictions.PinWorld)]
+    //[MasterRestrictionCondition(Restrictions.PinWorld)]
     [PetRestrictionCondition(Restrictions.PinWorld)]
     public class DontLeaveMeHere : IAchievement
     {

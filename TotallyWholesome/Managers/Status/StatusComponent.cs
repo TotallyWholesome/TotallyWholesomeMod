@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-using WholesomeLoader;
+
 
 namespace TotallyWholesome.Managers.Status
 {
@@ -22,6 +22,7 @@ namespace TotallyWholesome.Managers.Status
         public Image petAuto;
         //Background
         public Image backgroundImage;
+        private static readonly int MaskEnabled = Shader.PropertyToID("_MaskEnabled");
 
         public void SetupStatus(GameObject statusInstance)
         {
@@ -52,9 +53,13 @@ namespace TotallyWholesome.Managers.Status
 
         public void UpdateAutoAcceptGroup(bool piShock, bool buttplug, bool pet, bool master)
         {
-            masterAuto.maskable = pet && master;
+            var bothActive = master && pet ? 1 : 0;
+            masterAuto.material.SetInteger(MaskEnabled, bothActive);
+            petAuto.material.SetInteger(MaskEnabled, bothActive);
+            
             masterAuto.gameObject.SetActive(master);
             petAuto.gameObject.SetActive(pet);
+            
             piShockDevice.SetActive(piShock);
             buttplugDevice.SetActive(buttplug);
             statusBackground.gameObject.SetActive(piShock || master);

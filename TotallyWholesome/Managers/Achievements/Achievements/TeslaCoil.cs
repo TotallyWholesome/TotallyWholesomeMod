@@ -1,10 +1,10 @@
 ﻿using TotallyWholesome.Managers.Achievements.Conditions;
-using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers.Models;
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
     [PetCountCondition(1)]
-    [PiShockOperationMasterCondition(ShockOperation.Shock, 100, 3)]
+    [ShockerActionMasterCondition(ControlType.Shock, 100, 3000)]
     public class TeslaCoil : IAchievement
     {
         public string AchievementName => "Tesla Coil";

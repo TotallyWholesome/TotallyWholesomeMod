@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking.IO.Social;
 using TotallyWholesome.Managers;
+using TotallyWholesome.TWUI.UIObjects.Objects;
 
 namespace TotallyWholesome.TWUI
 {
@@ -11,23 +14,8 @@ namespace TotallyWholesome.TWUI
         public static Action ConfirmYes;
         public static Action ConfirmNo;
         public static Action<float> NumberInputComplete;
-
-        public static void AddCVRNotification(string inviteID, string senderUsername, string inviteText)
-        {
-            var cvrInvite = new Invite_t();
-
-            cvrInvite.InviteMeshId = $"twInvite_{inviteID}";
-            cvrInvite.SenderUsername = senderUsername;
-            cvrInvite.WorldName = inviteText;
-            cvrInvite.InstanceName = inviteText;
-            
-            Patches.TWInvites.Add(cvrInvite);
-
-            if (ViewManager.Instance == null || ViewManager.Instance.gameMenuView == null)
-                return;
-            
-            ViewManager.Instance.FlagForUpdate(ViewManager.UpdateTypes.Invites);
-        }
+        
+        private static FieldInfo _qmReady = typeof(CVR_MenuManager).GetField("_quickMenuReady", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public static void SendModInit()
         {
@@ -93,6 +81,28 @@ namespace TotallyWholesome.TWUI
         {
             NumberInputComplete = onCompleted;
             TWUtils.GetInternalView().TriggerEvent("twOpenNumberInput", name, input);
+        }
+        
+        /// <summary>
+        /// Check if the CVR_MenuManager view is ready
+        /// </summary>
+        /// <returns>True if view is ready, false if it's not</returns>
+        public static bool IsQMReady()
+        {
+            if (CVR_MenuManager.Instance == null)
+                return false;
+
+            return (bool)_qmReady.GetValue(CVR_MenuManager.Instance) && UserInterface.TWUIReady;
+        }
+
+        /// <summary>
+        /// Clean non alphanumeric characters from a given string
+        /// </summary>
+        /// <param name="input">Input string</param>
+        /// <returns>Cleaned string</returns>
+        public static string GetCleanString(string input)
+        {
+            return Regex.Replace(Regex.Replace(input, "<.*?>", string.Empty), @"[^0-9a-zA-Z_]+", string.Empty);
         }
     }
 }

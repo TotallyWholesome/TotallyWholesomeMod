@@ -1,11 +1,10 @@
 ﻿using System;
-using ABI_RC.Core.Savior;
-using ABI_RC.Systems.MovementSystem;
+using ABI_RC.Systems.Movement;
+using MelonLoader;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Objects;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.XR;
 
 namespace TotallyWholesome.Managers.Lead.LeadComponents
 {
@@ -14,7 +13,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
     {
         private static readonly int ColourOne = Shader.PropertyToID("_ColourOne");
         private static readonly int ColourTwo = Shader.PropertyToID("_ColourTwo");
-        
+
         public Transform target;
         public Transform targetOverride;
         public Vector3 targetOverrideVector;
@@ -22,6 +21,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         public bool IsAtMaxLeashLimit;
         private TWPlayerObject _ourPlayer;
         private TWPlayerObject _targetPlayer;
+        private TWPlayerObject _pet;
         private float _maxDistance;
         private float _breakDistance;
         private float _sagAmplitude;
@@ -35,7 +35,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         private Color _petColour;
         private static readonly int ShowLead = Shader.PropertyToID("_ShowLead");
 
-        public void SetupRenderer(Transform target, TWPlayerObject ourPlayer, TWPlayerObject targetPlayer, LineRenderer line, float breakDistance, int intermediateSteps, float maxDistance, float sagAmplitude, bool noVisibleLeash, Color masterColour, Color petColour)
+        public void SetupRenderer(Transform target, TWPlayerObject ourPlayer, TWPlayerObject targetPlayer,
+            TWPlayerObject pet, LineRenderer line, float breakDistance, int intermediateSteps, float maxDistance,
+            float sagAmplitude, bool noVisibleLeash, Color masterColour, Color petColour)
         {
             line.enabled = true;
 
@@ -44,6 +46,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
             _ourPlayer = ourPlayer;
             _breakDistance = breakDistance;
             _targetPlayer = targetPlayer;
+            _pet = pet;
             _maxDistance = maxDistance;
             _sagAmplitude = sagAmplitude;
             _lineSteps = intermediateSteps + 2;
@@ -102,9 +105,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
 
         public void UpdateLineColours(Color? masterColour = null, Color? petColour = null)
         {
-            if(masterColour.HasValue)
+            if (masterColour.HasValue)
                 _masterColour = masterColour.Value;
-            if(petColour.HasValue)
+            if (petColour.HasValue)
                 _petColour = petColour.Value;
 
             ApplyColours();
@@ -115,16 +118,17 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
             line.material.SetColor(ColourTwo, _masterColour);
             line.material.SetColor(ColourOne, _petColour);
         }
-        
+
         private void CheckLeashBreakDistance(float currentDistance)
         {
             if (_tempUnlockLeash) return;
-            
+
             if (currentDistance >= _breakDistance && !_leashBroken)
             {
-                if(_ourPlayer != null)
-                    NotificationSystem.EnqueueNotification("Totally Wholesome", "You are too far from your master, the leash has been temporarily broken!", 5f, TWAssets.Link);
-                
+                if (_ourPlayer != null)
+                    NotificationSystem.EnqueueNotification("Totally Wholesome",
+                        "You are too far from your master, the leash has been temporarily broken!", 5f, TWAssets.Link);
+
                 BreakLeash();
                 _leashBroken = true;
             }
@@ -196,10 +200,21 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                 Vector3 difference = targetPosition - localUserPosition;
                 float currentDistance = Vector3.Distance(localUserPosition, targetPosition);
 
+                var petVector = -_pet.PlayerGameObject.transform.up;
+                var masterVector = -_targetPlayer.PlayerGameObject.transform.up;
+                
                 if (!_noVisibleLeash)
                 {
                     for (int i = 0; i < line.positionCount; i++)
                     {
+                        var step = (float)i / (line.positionCount - 1);
+                        
+                        var x = Mathf.SmoothStep(petVector.x, masterVector.x, step);
+                        var y = Mathf.SmoothStep(petVector.y, masterVector.y, step);
+                        var z = Mathf.SmoothStep(petVector.z, masterVector.z, step);
+
+                        _sagDirection = new Vector3(x, y, z);
+
                         float pointForCalcs = (float)i / (line.positionCount - 1);
                         float effectAtPointMultiplier = Mathf.Sin(pointForCalcs * Mathf.PI);
 
@@ -221,30 +236,48 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                     }
                 }
 
-                IsAtMaxLeashLimit = !_leashBroken && !_tempUnlockLeash && MovementSystem.Instance.canMove && currentDistance > _maxDistance;
+                IsAtMaxLeashLimit = !_leashBroken && !_tempUnlockLeash && BetterBetterCharacterController.Instance.CanMove() &&
+                                    currentDistance > _maxDistance;
 
                 CheckLeashBreakDistance(currentDistance);
 
                 if (_ourPlayer == null) return;
-                
+
                 //Follower movement
-                if (currentDistance > _maxDistance && !_leashBroken && !_tempUnlockLeash && MovementSystem.Instance.canMove)
+                if (currentDistance > _maxDistance && !_leashBroken && !_tempUnlockLeash &&
+                    BetterBetterCharacterController.Instance.CanMove())
                 {
-                    float maxSpeed = MovementSystem.Instance.baseMovementSpeed * MovementSystem.Instance.sprintMultiplier;
-                    // if (MetaPort.Instance.isUsingVr && Input.GetKey(KeyCode.LeftShift))
-                    //     maxSpeed = MovementSystem.Instance.baseMovementSpeed;
+                    
+                    float pullStrength = Mathf.Clamp(currentDistance - _maxDistance, 0f, 5f);
+                    
+                    var otherPosition = targetPosition;
+                    var selfPosition = transform.position;
 
-                    float speed = Mathf.Clamp(2f * (currentDistance-_maxDistance), 1.5f, maxSpeed);
+                    var pullNormalized = (otherPosition - selfPosition).normalized;
 
-                    var targetMixedPosition = targetPosition;
-                    var position = _ourPlayer.PlayerPosition;
+                    var leashStrength = 20f;
+                    var finalVelocity = pullNormalized * pullStrength * leashStrength * Time.fixedDeltaTime;
 
-                    targetMixedPosition.y = position.y;
+                    if (BetterBetterCharacterController.Instance.IsGrounded())
+                        finalVelocity *= 2;
+                    
+                    BetterBetterCharacterController.Instance.CharacterMovement.velocity += finalVelocity;
 
-                    var diff = (targetMixedPosition - position).normalized;
+                    float dampingStrength = 5f;
+                    BetterBetterCharacterController.Instance.CharacterMovement.velocity *= Mathf.Max(1f - (dampingStrength * Time.fixedDeltaTime),0f);
 
-                    MovementSystem.Instance.controller.Move(diff * (speed*Time.deltaTime));
-                }
+                    var gravityNormalized = BetterBetterCharacterController.Instance.GetGravityDirection();
+                    var gravityStrength = BetterBetterCharacterController.Instance.GetGravityVector().magnitude;
+
+                    var gravityAlignedStrength = Vector3.Dot(gravityNormalized, pullNormalized) * pullStrength * leashStrength * -1;
+
+                    float disconnectThresold = 0.5f;
+
+                    var pauseValue = gravityAlignedStrength * disconnectThresold > gravityStrength;
+                                        
+                    if(pauseValue)
+                        BetterBetterCharacterController.Instance.PauseGroundConstraint();
+                                    }
             }
             else
             {

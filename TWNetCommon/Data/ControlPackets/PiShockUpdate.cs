@@ -63,6 +63,11 @@ namespace TWNetCommon.Data.ControlPackets
         {
             return $"PiShockUpdate - [Key: {Key}, ShockOperation: {ShockOperation}, ShockDuration: {ShockDuration}, ShockDurationMillis: {ShockDurationMillis}, ShockStrength: {ShockStrength}, ShockHeightEnabled: {ShockHeightEnabled}, ShockHeight: {ShockHeight}, ShockHeightStrengthMin: {ShockHeightStrengthMin}, ShockHeightStrengthMax: {ShockHeightStrengthMax}, ShockHeightStrengthStep: {ShockHeightStrengthStep}]";
         }
+
+        public PiShockUpdate Clone()
+        {
+            return (PiShockUpdate)MemberwiseClone();
+        }
     }
     
     /// <summary>

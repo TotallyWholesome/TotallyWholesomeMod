@@ -1,10 +1,10 @@
 ﻿using TotallyWholesome.Managers.Achievements.Conditions;
-using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers.Models;
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
     [ButtplugDeviceCondition(1)]
-    [PiShockOperationPetCondition(ShockOperation.Shock, 100, 1)]
+    [ShockerActionPetCondition(ControlType.Shock, 100, 1_000)]
     [VibrationDurationCondition(0, 100)]
     public class InfinitePower : IAchievement
     {

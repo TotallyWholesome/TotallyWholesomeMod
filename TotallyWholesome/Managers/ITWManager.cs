@@ -1,10 +1,9 @@
-﻿namespace TotallyWholesome.Managers
+﻿namespace TotallyWholesome.Managers;
+
+// ReSharper disable once InconsistentNaming
+public interface ITWManager
 {
-    public interface ITWManager
-    {
-        public int Priority();
-        public void Setup();
-        public void LateSetup();
-        public string ManagerName();
-    }
+    public int Priority { get; }
+    public void Setup();
+    public void LateSetup();
 }

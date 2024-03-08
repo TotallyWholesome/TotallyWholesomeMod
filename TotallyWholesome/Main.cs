@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using ABI_RC.Systems.GameEventSystem;
+using BTKUILib;
 using MelonLoader;
+using Semver;
 using TotallyWholesome.Managers;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
@@ -20,8 +25,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.4.29";
-        public const string TWVersion = "3.4.29";
+        public const string AssemblyVersion = "3.5.9";
+        public const string TWVersion = "3.5.9";
         public const bool isBetaBuild = false;
         public const string DownloadLink = "https://totallywholeso.me/";
     }
@@ -32,21 +37,14 @@ namespace TotallyWholesome
 
         public static int CurrentTOSLevel = 1;
 
-        public Queue<Action> MainThreadQueue = new Queue<Action>();
+        public ConcurrentQueue<Action> MainThreadQueue = new();
         public bool Quitting;
-        public string TargetWorld;
 
         private TWNetClient _twNetClient;
         private Thread _mainThread;
         private bool _openedTosPopup;
         private bool _firstWorldJoin;
         private List<ITWManager> _managers;
-        
-        //Temporary to allow updates to rollout for the new loader
-        public override void OnApplicationStart()
-        {
-            OnInitializeMelon();
-        }
         
         public override void OnInitializeMelon()
         {
@@ -56,6 +54,21 @@ namespace TotallyWholesome
             Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
             
 
+            if (!RegisteredMelons.Any(x => x.Info.Name.Equals("BTKUILib") && x.Info.SemanticVersion != null && x.Info.SemanticVersion.CompareTo(new SemVersion(2, 1)) >= 0))
+            {
+                Con.Error("BTKUILib was not detected or it outdated! TotallyWholesome cannot function without it!");
+                Con.Error("Please download BTKUILib version 2.0.0 or greater!");
+                return;
+            }
+
+            var dir = "ChilloutVR_Data\\StreamingAssets\\Cohtml\\UIResources\\GameUI\\mods\\TWUI";
+
+            if (Directory.Exists(dir))
+            {
+                Con.Msg("Detected legacy TWUI, deleting!");
+                Directory.Delete(dir, true);
+            }
+
             Patches.SetupPatches();
 
             Patches.OnUserLogin += OnPlayerLoggedIn;
@@ -64,9 +77,10 @@ namespace TotallyWholesome
             Patches.UserLeave += TWUtils.UserLeave;
             Patches.EarlyWorldJoin += EarlyWorldJoin;
 
-            _mainThread = Thread.CurrentThread;
+            // CVR events
+            CVRGameEventSystem.Authentication.OnLogin.AddListener(_ => Patches.OnUserLogin?.Invoke());
             
-            new ConfigManager().Setup();
+            _mainThread = Thread.CurrentThread;
 
             Configuration.Initialize();
             Configuration.SaveConfig(); // Save to build/Add new Config Items to json
@@ -76,6 +90,8 @@ namespace TotallyWholesome
             //Load our sprite assets
             TWAssets.LoadAssets();
 
+            // TODO: Think of something to do with this, and make it prettier, kthxbye
+            
             var type = typeof(ITWManager);
             _managers = new List<ITWManager>();
             foreach (var manager in Assembly.GetExecutingAssembly().DefinedTypes
@@ -85,23 +101,24 @@ namespace TotallyWholesome
                 _managers.Add(twManager);
             }
             
-            foreach (var manager in _managers.OrderByDescending(x => x.Priority()))
+            foreach (var manager in _managers.OrderByDescending(x => x.Priority))
             {
                 try
                 {
-                    Con.Debug($"Loading TW Manager {manager.ManagerName()}");
+                    Con.Debug($"Loading TW Manager {manager.GetType().FullName}");
                     manager.Setup();
                 }
                 catch (Exception e)
                 {
-                    Con.Error($"TW Manager {manager.ManagerName()} failed to load!");
-                    Con.Error(e);
+                    Con.Error($"TW Manager {manager.GetType().FullName} failed to setup!", e);
                 }
             }
         }
 
-        public bool IsOnMainThread(Thread thread)
+        internal bool IsOnMainThread(Thread thread = null)
         {
+            thread ??= Thread.CurrentThread;
+
             return thread.Equals(_mainThread);
         }
 
@@ -143,8 +160,8 @@ namespace TotallyWholesome
                 NotificationSystem.SetupNotifications();
                 
                 //Add our actions into CVRs join and leave
-                CVRPlayerManager.Instance.OnPlayerEntityCreated += entity => Patches.UserJoin.Invoke(entity);
-                CVRPlayerManager.Instance.OnPlayerEntityRecycled += entity => Patches.UserLeave.Invoke(entity); 
+                QuickMenuAPI.UserJoin += entity => Patches.UserJoin.Invoke(entity);
+                QuickMenuAPI.UserLeave += entity => Patches.UserLeave.Invoke(entity);
                 
                 PlayerSetup.Instance.avatarSetupCompleted.AddListener(() =>
                 {
@@ -153,7 +170,8 @@ namespace TotallyWholesome
                 
                 Con.Debug("Calling LateSetup on loaded managers");
                 
-                foreach (var manager in _managers.OrderByDescending(x => x.Priority()))
+                
+                foreach (var manager in _managers.OrderByDescending(x => x.Priority))
                 {
                     try
                     {
@@ -161,8 +179,7 @@ namespace TotallyWholesome
                     }
                     catch (Exception e)
                     {
-                        Con.Error($"TW Manager {manager.ManagerName()} failed during LateSetup!");
-                        Con.Error(e);
+                        Con.Error($"TW Manager {manager.GetType().FullName} failed during LateSetup!", e);
                     }
                 }
                 
@@ -174,8 +191,9 @@ namespace TotallyWholesome
         public override void OnUpdate()
         {
             //Fire any queued actions on main thread
-            if (MainThreadQueue.Count > 0)
-                MainThreadQueue.Dequeue().Invoke();
+            if (MainThreadQueue.IsEmpty) return;
+            if (MainThreadQueue.TryDequeue(out var item))
+                item.Invoke();
         }
 
         public override void OnApplicationQuit()

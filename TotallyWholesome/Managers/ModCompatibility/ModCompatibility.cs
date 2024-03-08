@@ -3,6 +3,7 @@ using System.Linq;
 using ABI_RC.Core.Savior;
 using MelonLoader;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
 using TotallyWholesome.Notification;
 using WholesomeLoader;
 using Yggdrasil.Logging;
@@ -11,9 +12,7 @@ namespace TotallyWholesome.Managers.ModCompatibility
 {
     public class ModCompatibility : ITWManager
     {
-
-        public int Priority() => 0;
-        public string ManagerName() => nameof(ModCompatibility);
+        public int Priority => 0;
 
         private bool _lastVRState;
 

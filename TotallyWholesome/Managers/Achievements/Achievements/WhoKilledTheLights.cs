@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [MasterRestrictionCondition(Restrictions.Blindfolded)]
+    //[MasterRestrictionCondition(Restrictions.Blindfolded)]
     [PetRestrictionCondition(Restrictions.Blindfolded)]
     public class WhoKilledTheLights : IAchievement
     {

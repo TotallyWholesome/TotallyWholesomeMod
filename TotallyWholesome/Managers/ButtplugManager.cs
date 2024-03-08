@@ -11,14 +11,16 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ABI_RC.Core.Savior;
+using BTKUILib.UIObjects.Components;
 using ButtplugManaged;
 using MelonLoader;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.TWUI.Pages;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
-using TotallyWholesome.TWUI;
+using TotallyWholesome.Utils;
 using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
 using WholesomeLoader;
@@ -63,27 +65,11 @@ namespace TotallyWholesome.Managers
             }
         }
 
-        public string ManagerName() => nameof(ButtplugManager);
-        public int Priority() => 1;
+        public int Priority => 1;
 
         public void Setup()
         {
             Instance = this;
-
-            ToyStrength = new SliderFloat("lovenseStrengthSlider", 0f);
-            ToyStrength.OnValueUpdated += f => { TWNetSendHelpers.SendButtplugUpdate(); };
-
-            ToyStrengthIPC = new SliderFloat("lovenseStrengthSliderIPC", 0f);
-            ToyStrengthIPC.OnValueUpdated += f =>
-            {
-                var leadPair = UserInterface.Instance.SelectedLeadPair;
-
-                if (leadPair == null)
-                    return;
-
-                leadPair.ToyStrength = f;
-                TWNetSendHelpers.SendButtplugUpdate(leadPair);
-            };
 
             //ToChange
             if (!ConfigManager.Instance.IsActive(AccessType.EnableToyControl))
@@ -124,6 +110,18 @@ namespace TotallyWholesome.Managers
 
         public void LateSetup()
         {
+            ToyStrength.OnValueUpdated += f => { TWNetSendHelpers.SendButtplugUpdate(); };
+
+            ToyStrengthIPC.OnValueUpdated += f =>
+            {
+                var leadPair = IndividualPetControl.Instance.SelectedLeadPair;
+
+                if (leadPair == null)
+                    return;
+
+                leadPair.ToyStrength = f;
+                TWNetSendHelpers.SendButtplugUpdate(leadPair);
+            };
         }
 
         private void OnLeadRemoveEvent(LeadAccept packet)
@@ -143,8 +141,7 @@ namespace TotallyWholesome.Managers
 
             using var wc = new WebClient
             {
-                Headers =
-                {
+                Headers = {
                     ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
                 }
             };
@@ -204,7 +201,6 @@ namespace TotallyWholesome.Managers
             }
         }
 
-        [UIEventHandler("restartButtplug")]
         public static void RestartButtplug()
         {
             Instance.intifaceProcess?.Kill();
@@ -300,11 +296,14 @@ namespace TotallyWholesome.Managers
             VibrateAtStrength(0);
         }
 
-        public async void BeepBoop()
+        public void BeepBoop()
         {
-            VibrateAtStrength(1);
-            await Task.Delay(1000);
-            VibrateAtStrength(0);
+            TwTask.Run(async () =>
+            {
+                VibrateAtStrength(1);
+                await Task.Delay(1000);
+                VibrateAtStrength(0);
+            });
         }
 
         private List<object> GetDevices()

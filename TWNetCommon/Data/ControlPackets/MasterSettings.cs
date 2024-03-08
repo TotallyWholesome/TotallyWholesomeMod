@@ -16,5 +16,10 @@ namespace TWNetCommon.Data.ControlPackets
         {
             return $"MasterSettings - [LeadLength: {LeadLength}, TempUnlockLeash: {TempUnlockLeash}, Key: {Key}]";
         }
+
+        public MasterSettings Clone()
+        {
+            return (MasterSettings)MemberwiseClone();
+        }
     }
 }

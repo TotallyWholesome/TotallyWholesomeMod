@@ -10,13 +10,17 @@ using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Core.Util;
 using ABI.CCK.Components;
-using cohtml;
+using BTKUILib;
+using BTKUILib.UIObjects.Components;
+using BTKUILib.UIObjects.Objects;
+using JetBrains.Annotations;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead.LeadComponents;
+using TotallyWholesome.Managers.TWUI.Pages;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Objects;
-using TotallyWholesome.TWUI;
+using TotallyWholesome.Utils;
 using TWNetCommon;
 using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
@@ -46,7 +50,7 @@ namespace TotallyWholesome.Managers.Lead
         public bool ClearLeashWhileLeashed;
         public DateTime RecreatedLeashFromLastInstance;
 
-        public string MasterId => MasterPair?.MasterID;
+        [CanBeNull] public string MasterId => MasterPair?.MasterID;
 
         public Dictionary<string, LeadPair> ActiveLeadPairs;
         public List<string> LastPairKeys; //Used for world change
@@ -62,6 +66,7 @@ namespace TotallyWholesome.Managers.Lead
         public bool LockToWorld = false;
         public bool Blindfold = false;
         public bool Deafen = false;
+        public bool MasterDeafenBypass = false;
         public SliderFloat TetherRange;
         public SliderFloat TetherRangeIPC;
         public Vector3 LeashPinPosition = Vector3.zero;
@@ -70,9 +75,6 @@ namespace TotallyWholesome.Managers.Lead
         private LeadRequest _pendingRequest;
         private bool _petRequest;
         private List<string> _pairKeys;
-        private static SliderFloat _rSliderFloat;
-        private static SliderFloat _gSliderFloat;
-        private static SliderFloat _bSliderFloat;
         private static MultiSelection _propSelection;
         private static MultiSelection _propSelectionGlobal;
         private static MultiSelection _leashStyleSelection;
@@ -83,19 +85,6 @@ namespace TotallyWholesome.Managers.Lead
         {
             Instance = this;
 
-            TetherRange = new SliderFloat("leashLengthSlider", 2f);
-            TetherRange.OnValueUpdated += f => { TWNetSendHelpers.UpdateMasterSettingsAsync(); };
-            TetherRangeIPC = new SliderFloat("leashLengthSliderIPC", 2f);
-            TetherRangeIPC.OnValueUpdated += f =>
-            {
-                var leadPair = UserInterface.Instance.SelectedLeadPair;
-                
-                if (leadPair == null)
-                    return;
-
-                leadPair.LeadLength = f;
-                TWNetSendHelpers.UpdateMasterSettingsAsync(leadPair);
-            }; 
             _pairKeys = new List<string>();
             LastPairKeys = new List<string>();
             LastFollowerPairKeys = new List<string>();
@@ -118,18 +107,6 @@ namespace TotallyWholesome.Managers.Lead
             TWNetListener.LeashConfigUpdate += LeashConfigUpdate;
             TWNetClient.OnTWNetDisconnected += OnTWNetDisconnected;
 
-            if (!ColorUtility.TryParseHtmlString(Configuration.JSONConfig.LeashColour, out var currentLeadColor))
-            {
-              currentLeadColor = Color.white;  
-            };
-            
-            _rSliderFloat = new SliderFloat("rFloat", currentLeadColor.r);
-            _gSliderFloat = new SliderFloat("gFloat", currentLeadColor.g);
-            _bSliderFloat = new SliderFloat("bFloat", currentLeadColor.b);
-            _rSliderFloat.OnValueUpdated += f => OnColorChanged();
-            _gSliderFloat.OnValueUpdated += f => OnColorChanged();
-            _bSliderFloat.OnValueUpdated += f => OnColorChanged();
-
             _leashStyleSelection = new MultiSelection("Leash Style", Enum.GetNames(typeof(LeashStyle)), (int)Configuration.JSONConfig.LeashStyle);
 
             _leashStyleSelection.OnOptionUpdated += i =>
@@ -145,11 +122,11 @@ namespace TotallyWholesome.Managers.Lead
 
             _propSelection.OnOptionUpdated += i =>
             {
-                if (UserInterface.Instance.SelectedLeadPair == null) return;
+                if (IndividualPetControl.Instance.SelectedLeadPair == null) return;
                 
-                UserInterface.Instance.SelectedLeadPair.PropTarget = _props.Keys.ToArray()[i];
-                if (!UserInterface.Instance.SelectedLeadPair.LockToProp) return;
-                TWNetSendHelpers.SendMasterRemoteSettingsAsync(UserInterface.Instance.SelectedLeadPair);
+                IndividualPetControl.Instance.SelectedLeadPair.PropTarget = _props.Keys.ToArray()[i];
+                if (!IndividualPetControl.Instance.SelectedLeadPair.LockToProp) return;
+                TWNetSendHelpers.SendMasterRemoteSettingsAsync(IndividualPetControl.Instance.SelectedLeadPair);
             };
 
             _propSelectionGlobal.OnOptionUpdated += i =>
@@ -162,11 +139,24 @@ namespace TotallyWholesome.Managers.Lead
 
         public void LateSetup()
         {
+            //Sliders are only alive after UI has been started
+
+            TetherRange.OnValueUpdated += f => { TWNetSendHelpers.UpdateMasterSettingsAsync(); };
+            TetherRangeIPC.OnValueUpdated += f =>
+            {
+                LeadPair leadPair = IndividualPetControl.Instance.SelectedLeadPair;
+
+                if (leadPair == null)
+                    return;
+
+                leadPair.LeadLength = f;
+                TWNetSendHelpers.UpdateMasterSettingsAsync(leadPair);
+            };
+
             SetupTWRaycaster();
         }
 
-        public int Priority() => 1;
-        public string ManagerName() => "LeadManager";
+        public int Priority => 1;
 
         public void SetupTWRaycaster()
         {
@@ -225,14 +215,6 @@ namespace TotallyWholesome.Managers.Lead
 
         #region UI Actions
 
-        public void OnColorChanged()
-        {
-            var color = new Color(_rSliderFloat.SliderValue, _gSliderFloat.SliderValue, _bSliderFloat.SliderValue);
-            var colorhtml = ColorUtility.ToHtmlStringRGB(color);
-            TWUtils.GetInternalView().TriggerEvent("twLeadColorChanged", colorhtml);
-        }
-
-        [UIEventHandler("selectWorldPosition")]
         public static void SelectWorldPosition()
         {
             CVR_MenuManager.Instance.ToggleQuickMenu(false);
@@ -243,54 +225,39 @@ namespace TotallyWholesome.Managers.Lead
                 TWNetSendHelpers.SendMasterRemoteSettingsAsync();
             });
         }
-        
-        [UIEventHandler("selectWorldPositionIPC")]
+
         public static void SelectWorldPositionIPC()
         {
             CVR_MenuManager.Instance.ToggleQuickMenu(false);
             _twRaycaster.StartRaycaster(vector3 =>
             {
-                if (UserInterface.Instance.SelectedLeadPair == null) return;
-                UserInterface.Instance.SelectedLeadPair.LeashPinPosition = vector3;
-                if (!UserInterface.Instance.SelectedLeadPair.LockToWorld) return;
-                TWNetSendHelpers.SendMasterRemoteSettingsAsync(UserInterface.Instance.SelectedLeadPair);
+                if (IndividualPetControl.Instance.SelectedLeadPair == null) return;
+                IndividualPetControl.Instance.SelectedLeadPair.LeashPinPosition = vector3;
+                if (!IndividualPetControl.Instance.SelectedLeadPair.LockToWorld) return;
+                TWNetSendHelpers.SendMasterRemoteSettingsAsync(IndividualPetControl.Instance.SelectedLeadPair);
             });
         }
 
-        [UIEventHandler("selectBoundProp")]
         public static void SelectBoundProp()
         {
             _propSelectionGlobal.Options = _props.Values.ToArray();
-            UIUtils.OpenMultiSelect(_propSelectionGlobal);
+            QuickMenuAPI.OpenMultiSelect(_propSelectionGlobal);
         }
 
-        [UIEventHandler("selectBoundPropIPC")]
         public static void SelectBoundPropIPC()
         {
             _propSelection.Options = _props.Values.ToArray();
-            UIUtils.OpenMultiSelect(_propSelection);
+            QuickMenuAPI.OpenMultiSelect(_propSelection);
         }
 
-        [UIEventHandler("selectLeashStyle")]
         public static void SelectLeashStyle()
         {
-            UIUtils.OpenMultiSelect(_leashStyleSelection);
+            QuickMenuAPI.OpenMultiSelect(_leashStyleSelection);
         }
 
-        [UIEventHandler("saveColor")]
-        public static void SaveColor()
-        {
-            var newColor = new Color(_rSliderFloat.SliderValue, _gSliderFloat.SliderValue, _bSliderFloat.SliderValue);
-            Configuration.JSONConfig.LeashColour = "#" + ColorUtility.ToHtmlStringRGB(newColor);
-            Configuration.SaveConfig();
-            
-            TWNetSendHelpers.SendLeashConfigUpdate();
-        }
-
-        [UIEventHandler("clearLeads")]
         public static void ClearLeads()
         {
-            UIUtils.ShowConfirm("Clear All Leads?", "This will remove all leads associated with you, are you sure?", "Yes", () =>
+            QuickMenuAPI.ShowConfirm("Clear All Leads?", "This will remove all leads associated with you, are you sure?", () =>
             {
                 //Reset IsForceMuted on clear all leads
                 Patches.IsForceMuted = false;
@@ -300,49 +267,47 @@ namespace TotallyWholesome.Managers.Lead
                     //Cleared leash while leashed
                     Instance.ClearLeashWhileLeashed = true;
                 }
-                
-                TWNetClient.Instance.Send(new LeadAccept()
+
+                TwTask.Run(TWNetClient.Instance.SendAsync(new LeadAccept()
                 {
                     LeadRemove = true
-                }, TWNetMessageTypes.LeadAccept);
+                }, TWNetMessageType.LeadAccept));
                 
-                UIUtils.ShowToast($"Removed all associated leashes!");
+                QuickMenuAPI.ShowAlertToast("Removed all associated leashes!");
             });
         }
 
-        [UIEventHandler("removeLeashIPC")]
         public static void RemoveLeashIPC()
         {
-            var leadPair = UserInterface.Instance.SelectedLeadPair;
+            LeadPair leadPair = IndividualPetControl.Instance.SelectedLeadPair;
                 
             if (leadPair == null)
                 return;
             
-            UIUtils.ShowConfirm("Remove Leash?", $"This will remove the leash with {leadPair.Pet.Username}", "Yes", () =>
+            QuickMenuAPI.ShowConfirm("Remove Leash?", $"This will remove the leash with {leadPair.Pet.Username}", () =>
             {
-                TWNetClient.Instance.Send(new LeadAccept()
+                TwTask.Run(TWNetClient.Instance.SendAsync(new LeadAccept()
                 {
                     Key = leadPair.Key,
                     LeadRemove = true
-                }, TWNetMessageTypes.LeadAccept); 
+                }, TWNetMessageType.LeadAccept));
                 
-                UIUtils.ShowToast($"Removed leash with {leadPair.Pet.Username}!");
+                QuickMenuAPI.ShowAlertToast($"Removed leash with {leadPair.Pet.Username}!");
             });
         }
 
-        [UIEventHandler("requestPet")]
         public static void RequestToBePet()
         {
-            UIUtils.ShowConfirm("Send Request?", $"Are you sure you would like to request {UserInterface.Instance.SelectedPlayerUsername} to be your master?", "Yes", () =>
+            QuickMenuAPI.ShowConfirm("Send Request?", $"Are you sure you would like to request {QuickMenuAPI.SelectedPlayerName} to be your master?", () =>
             {
                 string key = Guid.NewGuid().ToString();
 
                 LeadRequest request = new LeadRequest()
                 {
-                    Target = UserInterface.Instance.SelectedPlayerID,
+                    Target = QuickMenuAPI.SelectedPlayerID,
                     BoneTarget = (int)Configuration.JSONConfig.PetBoneTarget,
-                    NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, UserInterface.Instance.SelectedPlayerID),
-                    PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, UserInterface.Instance.SelectedPlayerID),
+                    NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, QuickMenuAPI.SelectedPlayerID),
+                    PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, QuickMenuAPI.SelectedPlayerID),
                     LeashColour = ConfigManager.Instance.IsActive(AccessType.UseCustomLeashColour) ? Configuration.JSONConfig.LeashColour : "",
                     Key = key
                 };
@@ -352,43 +317,46 @@ namespace TotallyWholesome.Managers.Lead
                 //Set LastKey for validating the broadcast event
                 Instance.LastKey = key;
                         
-                TWNetClient.Instance.Send(request, TWNetMessageTypes.LeadRequest);
+                TwTask.Run(TWNetClient.Instance.SendAsync(request, TWNetMessageType.LeadRequest));
                 
-                UIUtils.ShowToast($"Requested {UserInterface.Instance.SelectedPlayerUsername} to be your master!");
+                QuickMenuAPI.ShowAlertToast($"Requested {QuickMenuAPI.SelectedPlayerName} to be your master!");
             });
         }
 
-        [UIEventHandler("requestMaster")]
         public static void RequestToBeMaster()
         {
-            UIUtils.ShowConfirm("Send Request?", $"Are you sure you would like to request {UserInterface.Instance.SelectedPlayerUsername} to become your pet?", "Yes", () =>
+            QuickMenuAPI.ShowConfirm("Send Request?", $"Are you sure you would like to request {QuickMenuAPI.SelectedPlayerName} to become your pet?", () =>
             {
                 string key = Guid.NewGuid().ToString();
 
                 LeadRequest request = new LeadRequest()
                 {
-                    Target = UserInterface.Instance.SelectedPlayerID,
+                    Target = QuickMenuAPI.SelectedPlayerID,
                     BoneTarget = (int)Configuration.JSONConfig.MasterBoneTarget,
                     LeadLength = Instance.TetherRange.SliderValue,
-                    NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, UserInterface.Instance.SelectedPlayerID),
-                    PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, UserInterface.Instance.SelectedPlayerID),
+                    NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, QuickMenuAPI.SelectedPlayerID),
+                    PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, QuickMenuAPI.SelectedPlayerID),
                     LeashColour = ConfigManager.Instance.IsActive(AccessType.UseCustomLeashColour) ? Configuration.JSONConfig.LeashColour : "",
                     LeashStyle = (int)Configuration.JSONConfig.LeashStyle,
                     MasterRequest = true,
-                    DisableFlight = Instance.DisableFlight,
-                    DisableSeats = Instance.DisableSeats,
                     TempUnlockLeash = Instance.TempUnlockLeash,
                     Key = key
                 };
+
+                request.AppliedFeatures |= Instance.ForcedMute ? NetworkedFeature.AllowForceMute : NetworkedFeature.None;
+                request.AppliedFeatures |= Instance.DisableFlight ? NetworkedFeature.DisableFlight : NetworkedFeature.None;
+                request.AppliedFeatures |= Instance.DisableSeats ? NetworkedFeature.DisableSeats : NetworkedFeature.None;
+                request.AppliedFeatures |= Instance.Blindfold ? NetworkedFeature.AllowBlindfolding : NetworkedFeature.None;
+                request.AppliedFeatures |= Instance.Deafen ? NetworkedFeature.AllowDeafening : NetworkedFeature.None;
 
                 //Set FollowerRequest for handing the broadcast event
                 Instance.FollowerRequest = false;
                 //Set LastKey for validating the broadcast event
                 Instance.LastKey = key;
                         
-                TWNetClient.Instance.Send(request, TWNetMessageTypes.LeadRequest);
+                TwTask.Run(TWNetClient.Instance.SendAsync(request, TWNetMessageType.LeadRequest));
                 
-                UIUtils.ShowToast($"Requested {UserInterface.Instance.SelectedPlayerUsername} to be your pet!");
+                QuickMenuAPI.ShowAlertToast($"Requested {QuickMenuAPI.SelectedPlayerName} to be your pet!");
             });
         }
         
@@ -433,7 +401,7 @@ namespace TotallyWholesome.Managers.Lead
                 _pendingRequest = packet;
                 _petRequest = false;
                 
-                UIUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting to become your pet!");
+                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting to become your pet!");
             });
         }
 
@@ -460,7 +428,7 @@ namespace TotallyWholesome.Managers.Lead
                 _pendingRequest = packet;
                 _petRequest = true;
                 
-                UIUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting for you to become their pet!");
+                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting for you to become their pet!");
             });
         }
 
@@ -485,9 +453,9 @@ namespace TotallyWholesome.Managers.Lead
             if (MasterPair == null || !MasterPair.Key.Equals(packet.Key))
                 return;
 
-            MasterPair.ForcedMute = packet.GagPet;
+            MasterPair.ForcedMute = packet.AppliedFeatures.HasFlag(ConfigManager.GetNetworkedFeatureEnum(AccessType.AllowForceMute));
 
-            ApplyForcedMute(packet.GagPet);
+            ApplyForcedMute(packet.AppliedFeatures.HasFlag(ConfigManager.GetNetworkedFeatureEnum(AccessType.AllowForceMute)));
 
             bool shouldUpdate = false;
             
@@ -562,7 +530,7 @@ namespace TotallyWholesome.Managers.Lead
         {
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                LeadPair pair = new LeadPair(null, null, packet.Key, (HumanBodyBones)packet.PetBoneTarget, (HumanBodyBones)packet.MasterBoneTarget, packet.LeadLength, packet.ForcedMute, packet.NoVisibleLeash, packet.TempUnlockLeash);
+                LeadPair pair = new LeadPair(null, null, packet.Key, (HumanBodyBones)packet.PetBoneTarget, (HumanBodyBones)packet.MasterBoneTarget, packet.LeadLength, packet.AppliedFeatures.HasFlag(NetworkedFeature.AllowForceMute), packet.NoVisibleLeash, packet.TempUnlockLeash);
                 ActiveLeadPairs[packet.Key] = pair;
                 pair.MasterID = packet.MasterID;
                 pair.PetID = packet.FollowerID;
@@ -625,7 +593,7 @@ namespace TotallyWholesome.Managers.Lead
 
                     StatusManager.Instance.UpdatePetMasterMark(packet.FollowerID, true, false);
                     
-                    TWUtils.GetInternalView().TriggerEvent("twAddPet", follower.Username, follower.Uuid);
+                    IndividualPetControl.Instance.AddPet(follower);
 
                     AvatarParameterManager.Instance.TrySetParameter("TWMaster", 1);
 
@@ -784,7 +752,7 @@ namespace TotallyWholesome.Managers.Lead
                 if (TugOfWarPair == pair)
                     TugOfWarPair = null;
                 
-                TWUtils.GetInternalView().TriggerEvent("twRemovePet", pair.Pet.Uuid);
+                IndividualPetControl.Instance.RemovePet(pair.Pet.Uuid);
                 StatusManager.Instance.UpdatePetMasterMark(pair.Pet.Uuid, false, false);
             }
 
@@ -795,7 +763,7 @@ namespace TotallyWholesome.Managers.Lead
 
         private void OnPlayerLeave(CVRPlayerEntity player)
         {
-            foreach (var pair in ActiveLeadPairs.Where(x => x.Value.IsPlayerInvolved(TWUtils.GetPlayerFromPlayerlist(player.Uuid))).ToArray())
+            foreach (var pair in ActiveLeadPairs.Where(x => x.Value.PetID == player.Uuid).ToArray())
             {
                 //Don't remove from ActiveLeadPairs if we're currently disconnecting from the instance
                 if(!Instances.ForceDisconnect)
@@ -816,72 +784,80 @@ namespace TotallyWholesome.Managers.Lead
                 
                 if (pair.Value.AreWeMaster())
                 {
-                    TWUtils.GetInternalView().TriggerEvent("twRemovePet", pair.Value.Pet.Uuid);
+                    IndividualPetControl.Instance.RemovePet(player.Uuid);
                 }
             }
         }
 
         private void OnAvatarIsReady(string userID)
         {
-            var player = TWUtils.GetPlayerFromPlayerlist(userID);
-            
-            foreach (var pair in ActiveLeadPairs.Where(x => x.Value.IsPlayerInvolved(player)))
+            try
             {
-                Con.Debug($"Reapplying leash involving {player.Username}!");
-                if (pair.Value.Master == null || pair.Value.Pet == null)
+                var player = TWUtils.GetPlayerFromPlayerlist(userID);
+
+                foreach (var pair in ActiveLeadPairs.Where(x => x.Value.IsPlayerInvolved(player)))
                 {
-                    TWPlayerObject follower = TWUtils.GetPlayerFromPlayerlist(pair.Value.PetID);
-                    TWPlayerObject master = TWUtils.GetPlayerFromPlayerlist(pair.Value.MasterID);
-
-                    //Ensure Master and Follower are not null before continuing
-                    if (master == null || follower == null) return;
-
-                    //We are the follower
-                    if (follower.Equals(TWUtils.GetOurPlayer()))
+                    Con.Debug($"Reapplying leash involving {player.Username}!");
+                    if (pair.Value.Master == null || pair.Value.Pet == null)
                     {
-                        if ((!FollowerRequest || !pair.Value.Key.Equals(LastKey)) && !LastPairKeys.Contains(pair.Value.Key))
+                        TWPlayerObject follower = TWUtils.GetPlayerFromPlayerlist(pair.Value.PetID);
+                        TWPlayerObject master = TWUtils.GetPlayerFromPlayerlist(pair.Value.MasterID);
+
+                        //Ensure Master and Follower are not null before continuing
+                        if (master == null || follower == null) return;
+
+                        //We are the follower
+                        if (follower.Equals(TWUtils.GetOurPlayer()))
                         {
-                            Con.Error("A follower request was sent but we are not expecting a follower request, or the key is wrong!");
-                            return;
+                            if ((!FollowerRequest || !pair.Value.Key.Equals(LastKey)) && !LastPairKeys.Contains(pair.Value.Key))
+                            {
+                                Con.Error("A follower request was sent but we are not expecting a follower request, or the key is wrong!");
+                                return;
+                            }
+
+                            StatusManager.Instance.UpdatePetMasterMark(pair.Value.MasterID, false, true);
+
+                            if (!_pairKeys.Contains(pair.Value.Key))
+                                _pairKeys.Add(pair.Value.Key);
+
+                            //Reset last key after setting up lead
+                            LastKey = null;
+                            LastMasterPairKey = pair.Key;
                         }
 
-                        StatusManager.Instance.UpdatePetMasterMark(pair.Value.MasterID, false, true);
-
-                        if(!_pairKeys.Contains(pair.Value.Key))
-                            _pairKeys.Add(pair.Value.Key);
-
-                        //Reset last key after setting up lead
-                        LastKey = null;
-                        LastMasterPairKey = pair.Key;
-                    }
-
-                    //We are the master
-                    if (master.Equals(TWUtils.GetOurPlayer()))
-                    {
-                        if ((FollowerRequest || !pair.Value.Key.Equals(LastKey)) && !LastPairKeys.Contains(pair.Value.Key))
+                        //We are the master
+                        if (master.Equals(TWUtils.GetOurPlayer()))
                         {
-                            Con.Error("A master request was sent but we are not expecting a master request, or the key is wrong!");
-                            return;
+                            if ((FollowerRequest || !pair.Value.Key.Equals(LastKey)) && !LastPairKeys.Contains(pair.Value.Key))
+                            {
+                                Con.Error("A master request was sent but we are not expecting a master request, or the key is wrong!");
+                                return;
+                            }
+
+                            StatusManager.Instance.UpdatePetMasterMark(pair.Value.PetID, true, false);
+
+                            IndividualPetControl.Instance.AddPet(follower);
+
+                            AvatarParameterManager.Instance.TrySetParameter("TWMaster", 1);
+
+                            if (!_pairKeys.Contains(pair.Value.Key))
+                                _pairKeys.Add(pair.Value.Key);
+
+                            //Reset last key after setting up lead
+                            LastKey = null;
                         }
 
-                        StatusManager.Instance.UpdatePetMasterMark(pair.Value.PetID, true, false);
-                        
-                        TWUtils.GetInternalView().TriggerEvent("twAddPet", follower.Username, follower.Uuid);
-
-                        AvatarParameterManager.Instance.TrySetParameter("TWMaster", 1);
-
-                        if(!_pairKeys.Contains(pair.Value.Key))
-                            _pairKeys.Add(pair.Value.Key);
-
-                        //Reset last key after setting up lead
-                        LastKey = null;
+                        pair.Value.Master = master;
+                        pair.Value.Pet = follower;
                     }
 
-                    pair.Value.Master = master;
-                    pair.Value.Pet = follower;
+                    ApplyLeash(pair.Value, pair.Value.LeadLength);
                 }
-
-                ApplyLeash(pair.Value, pair.Value.LeadLength);
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured in LeadManager.OnAvatarIsReady!");
+                Con.Error(e);
             }
         }
 
@@ -902,25 +878,33 @@ namespace TotallyWholesome.Managers.Lead
         
         private void OnPropSpawned(CVRSpawnable obj)
         {
-            //Add prop to our lists if needed
-            var ourSpawnables = TWUtils.GetSpawnables();
-            var spawnable = ourSpawnables.FirstOrDefault(x => x.SpawnableId == obj.guid);
-            if (spawnable != null && !_props.ContainsKey(obj.instanceId))
+            try
             {
-                _props.Add(obj.instanceId, spawnable.SpawnableName);
+                //Add prop to our lists if needed
+                var ourSpawnables = TWUtils.GetSpawnables();
+                var spawnable = ourSpawnables.FirstOrDefault(x => x.SpawnableId == obj.guid);
+                if (spawnable != null && !_props.ContainsKey(obj.instanceId))
+                {
+                    _props.Add(obj.instanceId, spawnable.SpawnableName);
+                }
+
+                var pairs = ActiveLeadPairs.Values.Where(x => x.PropTarget != null && x.PropTarget.Equals(obj.instanceId)).ToArray();
+
+                if (pairs.Length == 0) return;
+
+                Transform propTarget = TWUtils.GetRootGameObject(obj.gameObject, "TWLPropAnchor");
+                if (propTarget == null)
+                    propTarget = obj.transform;
+
+                foreach (var pair in pairs)
+                {
+                    pair.LineController.targetOverride = propTarget;
+                }
             }
-            
-            var pairs = ActiveLeadPairs.Values.Where(x => x.PropTarget != null && x.PropTarget.Equals(obj.instanceId)).ToArray();
-
-            if (pairs.Length == 0) return;
-
-            Transform propTarget = TWUtils.GetRootGameObject(obj.gameObject, "TWLPropAnchor");
-            if (propTarget == null)
-                propTarget = obj.transform;
-
-            foreach (var pair in pairs)
+            catch (Exception e)
             {
-                pair.LineController.targetOverride = propTarget;
+                Con.Error("An error occured during LeadManager.OnPropSpawned!");
+                Con.Error(e);
             }
         }
         
@@ -937,7 +921,7 @@ namespace TotallyWholesome.Managers.Lead
             if (leadPair.Pet == null || leadPair.Master == null) return;
             if (leadPair.Pet.Equals(leadPair.Master)) return;
 
-            if (!ActiveLeadPairs.ContainsKey(leadPair.Key))
+            if(!ActiveLeadPairs.ContainsKey(leadPair.Key))
                 ActiveLeadPairs.Add(leadPair.Key, leadPair);
 
             OnLeadPairCreated?.Invoke(leadPair);
@@ -968,7 +952,7 @@ namespace TotallyWholesome.Managers.Lead
                 ColorUtility.TryParseHtmlString(leadPair.PetLeashColour, out colours.Item2);
 
             //Enable and setup renderer if a valid leader is known
-            followerController.SetupRenderer(masterBone, leadPair.AreWeFollower() ? leadPair.Pet : null, leadPair.Master, lineRenderer, 20f, 20, leadLength, 0.5f, leadPair.NoVisibleLeash, colours.Item1, colours.Item2);
+            followerController.SetupRenderer(masterBone, leadPair.AreWeFollower() ? leadPair.Pet : null, leadPair.Master, leadPair.Pet, lineRenderer, 20f, 20, leadLength, 0.5f, leadPair.NoVisibleLeash, colours.Item1, colours.Item2);
             
             
             //Apply line renderer Mat
@@ -1005,7 +989,7 @@ namespace TotallyWholesome.Managers.Lead
             //Set the prop target if the prop exists
             var prop = CVRSyncHelper.Props.FirstOrDefault(x => x.InstanceId.Equals(leadPair.PropTarget));
 
-            if (prop != null && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
+            if (prop != null && prop.Spawnable != null && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
             {
                 Transform propTarget = TWUtils.GetRootGameObject(prop.Spawnable.gameObject, "TWLPropAnchor");
                 if (propTarget == null)
@@ -1039,8 +1023,11 @@ namespace TotallyWholesome.Managers.Lead
             petBone.gameObject.layer = LayerMask.NameToLayer("PlayerNetwork");
             MasterPair = leadPair;
 
-            if(!leadPair.InitialPairCreationComplete)
+            if (!leadPair.InitialPairCreationComplete)
+            {
                 OnFollowerPairCreated?.Invoke(leadPair);
+                TWNetSendHelpers.SendPetConfigUpdate(UpdateType.AllowedFeaturesUpdate | UpdateType.AvatarListUpdate | UpdateType.RemoteParamUpdate);
+            }
 
             leadPair.InitialPairCreationComplete = true;
 

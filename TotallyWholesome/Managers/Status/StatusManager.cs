@@ -3,13 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using TMPro;
+using BTKUILib;
+using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
+using TotallyWholesome.Managers.Shockers;
+using TotallyWholesome.Managers.Shockers.OpenShock.Config;
+using TotallyWholesome.Managers.Shockers.PiShock;
+using TotallyWholesome.Managers.Shockers.PiShock.Config;
+using TotallyWholesome.Managers.TWUI;
 using TotallyWholesome.Network;
-using TotallyWholesome.TWUI;
+using TotallyWholesome.Utils;
 using TWNetCommon;
 using TWNetCommon.Data;
 using UnityEngine;
@@ -32,8 +38,8 @@ namespace TotallyWholesome.Managers.Status
         private Task _statusUpdateTask;
         private StatusUpdate _nextUpdatePacket;
 
-        public string ManagerName() => "StatusManager";
-        public int Priority() => 1;
+        public int Priority => 1;
+
         public void Setup()
         {
             Instance = this;
@@ -43,29 +49,22 @@ namespace TotallyWholesome.Managers.Status
 
             ButtplugManager.Instance.ButtplugDeviceRemoved += DeviceChangeStatusUpdate;
             ButtplugManager.Instance.ButtplugDeviceAdded += DeviceChangeStatusUpdate;
-            PiShockManager.Instance.PiShockDeviceUpdated += DeviceChangeStatusUpdate;
+            //PiShockManager.Instance.PiShockDeviceUpdated += DeviceChangeStatusUpdate;
             
             Patches.OnNameplateRebuild += OnNameplateRebuild;
             Patches.OnWorldLeave += OnWorldLeave;
             Patches.UserLeave += OnPlayerLeave;
             Patches.OnWorldJoin += OnInstanceJoin;
             TWNetClient.OnTWNetAuthenticated += OnTWNetAuthenticated;
+            QuickMenuAPI.OnMenuGenerated += _ =>
+            {
+                Con.Debug("MenuGenerated fired");
+                UpdateQuickMenuStatus();
+            };
         }
 
         public void LateSetup()
         {
-        }
-
-        [UIEventHandler("enterRankKey")]
-        public static void EnterRankKey()
-        {
-            TWUtils.OpenKeyboard(Configuration.JSONConfig.LoginKey, s =>
-            {
-                Configuration.JSONConfig.LoginKey = s;
-                Configuration.SaveConfig();
-                
-                Con.Debug($"LoginKey updated to {s}");
-            });    
         }
 
         public void SetTWBadgeHideStatus(bool state)
@@ -100,7 +99,10 @@ namespace TotallyWholesome.Managers.Status
                 SendStatusUpdate();
         }
 
-        private void DeviceChangeStatusUpdate()
+        /// <summary>
+        ///  Device update received from shockers or buttplugio
+        /// </summary>
+        public void DeviceChangeStatusUpdate()
         {
             if(Configuration.JSONConfig.ShowDeviceStatus && Configuration.JSONConfig.EnableStatus && !(_isPublicWorld && Configuration.JSONConfig.HideInPublicWorlds))
                 SendStatusUpdate(true);
@@ -108,8 +110,10 @@ namespace TotallyWholesome.Managers.Status
 
         public void SendStatusUpdate(bool fromDevice = false)
         {
-            StatusUpdate update = new StatusUpdate();
-            update.EnableStatus = Configuration.JSONConfig.EnableStatus && !(_isPublicWorld && Configuration.JSONConfig.HideInPublicWorlds);
+            var update = new StatusUpdate
+            {
+                EnableStatus = Configuration.JSONConfig.EnableStatus && !(_isPublicWorld && Configuration.JSONConfig.HideInPublicWorlds)
+            };
 
             if (update.EnableStatus)
             {
@@ -117,34 +121,38 @@ namespace TotallyWholesome.Managers.Status
                 update.DisplaySpecialRank = Configuration.JSONConfig.DisplaySpecialStatus;
                 update.MasterAutoAccept = ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
                 update.PetAutoAccept = ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
-                update.PiShockDevice = Configuration.JSONConfig.PiShockShockers.Any(x => x.Enabled) && Configuration.JSONConfig.ShowDeviceStatus;
+                update.PiShockDevice = (OpenShockConfig.Config.Shockers.Count > 0 || PiShockConfig.Config.Shockers.Count > 0) && Configuration.JSONConfig.ShowDeviceStatus;
                 if(ButtplugManager.Instance.buttplugClient != null)
                     update.ButtplugDevice = ButtplugManager.Instance.buttplugClient.Devices.Length > 0 && Configuration.JSONConfig.ShowDeviceStatus;
             }
 
             _nextUpdatePacket = update;
 
+            // Send instantly if not from a device
             if (!fromDevice)
             {
-                TWNetClient.Instance.Send(_nextUpdatePacket, TWNetMessageTypes.StatusUpdate);
+                TwTask.Run(TWNetClient.Instance.SendAsync(_nextUpdatePacket, TWNetMessageType.StatusUpdate));
                 return;
             }
             
             //If update is coming from a device then we limit it's speed
-            if (_statusUpdateTask != null && !_statusUpdateTask.IsCompleted)
+            if (_statusUpdateTask is { IsCompleted: false })
                 return;
 
-            _statusUpdateTask = Task.Run(() =>
+            _statusUpdateTask = TwTask.Run(async () =>
             {
-                var timeBetweenLast = DateTime.Now.Subtract(_lastStatusUpdate).Milliseconds;
+                var timeBetweenLast = DateTime.UtcNow.Subtract(_lastStatusUpdate).Milliseconds;
+                var timeToWait = 50 - timeBetweenLast;
 
-                //Ensure MasterRemoteSettings waits before being sent
-                if (timeBetweenLast <= 5000)
-                    Thread.Sleep(50 - timeBetweenLast);
+                // Only wait if we actually have to wait for more than 0ms
+                if (timeToWait > 0)
+                    await Task.Delay(timeToWait);
 
-                _lastStatusUpdate = DateTime.Now;
+                _lastStatusUpdate = DateTime.UtcNow;
                 
-                TWNetClient.Instance.Send(_nextUpdatePacket, TWNetMessageTypes.StatusUpdate);
+#pragma warning disable CS4014 // Dont wait, since we we use this task for rate limiting
+                TwTask.Run(TWNetClient.Instance.SendAsync(_nextUpdatePacket, TWNetMessageType.StatusUpdate));
+#pragma warning restore CS4014
             });
         }
 
@@ -155,7 +163,7 @@ namespace TotallyWholesome.Managers.Status
                 _ourLastStatusUpdate = packet;
                 
                 Main.Instance.MainThreadQueue.Enqueue(() => {
-                    if (!TWUtils.IsQMReady()) return;
+                    if (!UIUtils.IsQMReady()) return;
                     UpdateQuickMenuStatus();
                 });
 
@@ -219,7 +227,7 @@ namespace TotallyWholesome.Managers.Status
         {
             if (_ourLastStatusUpdate == null) return;
             
-            TWUtils.GetInternalView().TriggerEvent("twStatusUpdate", string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankColour, string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankTextColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankTextColour, _ourLastStatusUpdate.SpecialRank, _ourLastStatusUpdate.DisplaySpecialRank, _ourLastStatusUpdate.PetAutoAccept, _ourLastStatusUpdate.MasterAutoAccept, _ourLastStatusUpdate.ButtplugDevice, _ourLastStatusUpdate.PiShockDevice);
+            TWMenu.TWStatusUpdate.TriggerEvent(string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankColour, string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankTextColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankTextColour, _ourLastStatusUpdate.SpecialRank, _ourLastStatusUpdate.DisplaySpecialRank, _ourLastStatusUpdate.PetAutoAccept, _ourLastStatusUpdate.MasterAutoAccept, _ourLastStatusUpdate.ButtplugDevice, _ourLastStatusUpdate.PiShockDevice);
         }
 
         public void UpdatePetMasterMark(string userID, bool pet, bool master)
@@ -266,14 +274,6 @@ namespace TotallyWholesome.Managers.Status
             if (_statusComponents.ContainsKey(userID) && _statusComponents[userID] != null) return;
 
             _statusComponents.Remove(userID);
-
-            var nameplateComp = nameplate.GetComponent<PlayerNameplate>();
-
-            if (nameplateComp == null)
-            {
-                Con.Error("Nameplate component was null!");
-                return;
-            }
 
             Transform parent = null;
 

@@ -4,7 +4,7 @@ using System.Reflection;
 using MelonLoader;
 using WholesomeLoader;
 
-namespace TotallyWholesome
+namespace TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections
 {
     public class NotificationAPIAdapter
     {

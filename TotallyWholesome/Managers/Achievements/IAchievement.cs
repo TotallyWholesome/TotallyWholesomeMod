@@ -2,42 +2,19 @@
 {
     public interface IAchievement
     {
-        public string AchievementName
-        {
-            get;
-        }
+        public string AchievementName { get; }
 
-        public string AchievementDescription
-        {
-            get;
-        }
+        public string AchievementDescription { get; }
 
-        public AchievementRank AchievementRank
-        {
-            get;
-        }
-        
-        public AchievementCheckMode AchievementCheckMode
-        {
-            get;
-        }
+        public AchievementRank AchievementRank { get; }
 
-        public AchievementConditionMode AchievementConditionMode
-        {
-            get;
-        }
+        public AchievementCheckMode AchievementCheckMode { get; }
 
-        public ICondition[] AchievementConditions
-        {
-            get;
-            set;
-        }
+        public AchievementConditionMode AchievementConditionMode { get; }
 
-        public bool AchievementAwarded
-        {
-            get;
-            set;
-        }
+        public ICondition[] AchievementConditions { get; set; }
+
+        public bool AchievementAwarded { get; set; }
     }
 
     public enum AchievementRank
@@ -50,7 +27,7 @@
     public enum AchievementConditionMode
     {
         All,
-        Any    
+        Any
     }
 
     public enum AchievementCheckMode

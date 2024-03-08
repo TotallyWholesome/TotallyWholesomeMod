@@ -22,7 +22,7 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.3.3";
+        public const string Version = "3.3.5";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 
@@ -86,6 +86,7 @@ namespace WholesomeLoader
                 try
                 {
                     _configJson = JsonConvert.DeserializeObject<Config>(File.ReadAllText(NewConfigRoot + ConfigFile));
+                    //TODO: fix the lack of null check after deserialize, oops.
                 }
                 catch (Exception e)
                 {

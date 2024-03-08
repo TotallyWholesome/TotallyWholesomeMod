@@ -6,6 +6,7 @@ using ABI_RC.Core.UI;
 using MelonLoader;
 using TMPro;
 using TotallyWholesome.Managers.ModCompatibility;
+using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
 using UnityEngine;
 using UnityEngine.UI;
 using WholesomeLoader;

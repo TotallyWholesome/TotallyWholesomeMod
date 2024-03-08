@@ -1,12 +1,14 @@
-﻿using ABI_RC.Core;
+﻿using System.Linq;
+using ABI_RC.Core;
+using ABI_RC.Core.EventSystem;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using ABI_RC.Systems.MovementSystem;
+using ABI_RC.Systems.Movement;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
-using TotallyWholesome.TWUI;
+using TWNetCommon;
 using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
 using UnityEngine;
@@ -18,51 +20,48 @@ namespace TotallyWholesome.Managers
     public class PlayerRestrictionManager : ITWManager
     {
         public static PlayerRestrictionManager Instance;
-        
-        public int Priority() => 0;
-        public string ManagerName() => nameof(PlayerRestrictionManager);
-        
+        public static readonly int Radius = Shader.PropertyToID("_Radius");
+
+        public int Priority => 0;
+
         //Achievement flags
         public bool IsDeafened, IsBlindfolded;
+        public Material BlindnessMaterial;
 
         private GameObject _twBlindnessObject;
-        private Material _blindnessMaterial;
-        private SliderFloat _blindnessRadiusSlider;
-        private static readonly int Radius = Shader.PropertyToID("_Radius");
         private AudioMixer _gameMainMixer;
         private AudioMixerGroup _twMixerGroup;
-        private SliderFloat _deafenAttenuationSlider;
+        private bool _masterBypassApplied;
 
         public void Setup()
         {
             Instance = this;
-            
-            //TODO: Rename that slider id lmao
-            _blindnessRadiusSlider = new SliderFloat("blindlessSlider", Configuration.JSONConfig.BlindnessRadius);
-            _blindnessRadiusSlider.OnValueUpdated += f =>
-            {
-                if (_blindnessMaterial != null)
-                    _blindnessMaterial.SetFloat(Radius, f);
-                
-                Configuration.JSONConfig.BlindnessRadius = f;
-                Configuration.SaveConfig();
-            };
-
-            _deafenAttenuationSlider = new SliderFloat("deafenSlider", Configuration.JSONConfig.DeafenAttenuation);
-            _deafenAttenuationSlider.OnValueUpdated += f =>
-            {
-                if (TWAssets.TWMixer != null)
-                    TWAssets.TWMixer.SetFloat("AttenuationFloat", f);
-
-                Configuration.JSONConfig.DeafenAttenuation = f;
-                Configuration.SaveConfig();
-            };
             
             TWNetListener.MasterRemoteControlEvent += MasterRemoteControlEvent;
             TWNetListener.LeadAcceptEvent += LeadAcceptEvent;
             LeadManager.OnFollowerPairDestroyed += OnFollowerPairDestroyed;
             Patches.OnWorldLeave += OnWorldLeave;
         }
+
+        public void LateSetup()
+        {
+            var cameraGO = PlayerSetup.Instance.GetActiveCamera();
+
+            _twBlindnessObject = Object.Instantiate(TWAssets.TWBlindness, cameraGO.transform);
+            _twBlindnessObject.transform.localPosition = Vector3.zero;
+            _twBlindnessObject.SetActive(false);
+
+            BlindnessMaterial = _twBlindnessObject.transform.Find("Vision Sphere").GetComponent<MeshRenderer>().material;
+            BlindnessMaterial.SetFloat(Radius, Configuration.JSONConfig.BlindnessRadius);
+
+            Con.Debug("Instantiated TWBlindness prefab!");
+
+            _gameMainMixer = RootLogic.Instance.mainSfx.audioMixer;
+            _twMixerGroup = TWAssets.TWMixer.FindMatchingGroups("Master")[0];
+            TWAssets.TWMixer.SetFloat("AttenuationFloat", Configuration.JSONConfig.DeafenAttenuation);
+        }
+
+
 
         private void OnFollowerPairDestroyed(LeadPair obj)
         {
@@ -78,58 +77,96 @@ namespace TotallyWholesome.Managers
             ApplyDeafen(false, true);
         }
 
-        private void LeadAcceptEvent(LeadAccept obj)
+        private void LeadAcceptEvent(LeadAccept packet)
         {
-            if (!obj.FollowerID.Equals(MetaPort.Instance.ownerId)) return;
+            if (!packet.FollowerID.Equals(MetaPort.Instance.ownerId)) return;
 
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                if (ConfigManager.Instance.IsActive(AccessType.AllowMovementControls, obj.MasterID)) 
-                    ChangeMovementOptions(obj.DisableFlight, obj.DisableSeats);
-                if(ConfigManager.Instance.IsActive(AccessType.AllowBlindfolding, obj.MasterID))
-                    ApplyBlindfold(obj.BlindPet);
-                if(ConfigManager.Instance.IsActive(AccessType.AllowDeafening, obj.MasterID))
-                    ApplyDeafen(obj.DeafenPet);        
+                if (ConfigManager.Instance.IsActive(AccessType.AllowMovementControls, packet.MasterID))
+                    ChangeMovementOptions(packet.AppliedFeatures.HasFlag(NetworkedFeature.DisableFlight), packet.AppliedFeatures.HasFlag(NetworkedFeature.DisableSeats));
+
+                if (ConfigManager.Instance.IsActive(AccessType.AllowBlindfolding, packet.MasterID))
+                    ApplyBlindfold(packet.AppliedFeatures.HasFlag(NetworkedFeature.AllowBlindfolding));
+
+                if(ConfigManager.Instance.IsActive(AccessType.AllowDeafening, packet.MasterID))
+                    ApplyDeafen(packet.AppliedFeatures.HasFlag(NetworkedFeature.AllowDeafening));
             });
         }
 
-        private void MasterRemoteControlEvent(MasterRemoteControl obj)
+        private void MasterRemoteControlEvent(MasterRemoteControl packet)
         {
             if (LeadManager.Instance.MasterPair == null) return;
-            if (!LeadManager.Instance.MasterPair.Key.Equals(obj.Key)) return;
+            if (!LeadManager.Instance.MasterPair.Key.Equals(packet.Key)) return;
+
+            if (packet.TargetAvatar != null && (ConfigManager.Instance.IsActive(AccessType.AllowAnyAvatarSwitch, LeadManager.Instance.MasterPair.MasterID) || Configuration.JSONConfig.SwitchingAllowedAvatars.Contains(packet.TargetAvatar)))
+            {
+                //Avatar switch requested, we should fetch the details for this avatar
+                TWUtils.GetAvatarFromAPI(packet.TargetAvatar, response =>
+                {
+                    //Queue up and fire!
+                    if (!response.SwitchPermitted)
+                    {
+                        Con.Warn("Your master requested you switch into an avatar you have no access to!");
+                        return;
+                    }
+
+                    Main.Instance.MainThreadQueue.Enqueue(() =>
+                    {
+                        NotificationSystem.EnqueueNotification("Avatar Switching!", $"Your master has changed your avatar to \"{response.Name}\"!", 5f, TWAssets.Handcuffs);
+                        AssetManagement.Instance.LoadLocalAvatar(packet.TargetAvatar);
+                    });
+                });
+            }
 
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
                 if (ConfigManager.Instance.IsActive(AccessType.AllowMovementControls, LeadManager.Instance.MasterPair.MasterID)) 
-                    ChangeMovementOptions(obj.DisableFlight, obj.DisableSeats);
+                    ChangeMovementOptions(packet.AppliedFeatures.HasFlag(NetworkedFeature.DisableFlight), packet.AppliedFeatures.HasFlag(NetworkedFeature.DisableSeats));
                 
                 if (ConfigManager.Instance.IsActive(AccessType.AllowBlindfolding, LeadManager.Instance.MasterPair.MasterID))
-                    ApplyBlindfold(obj.BlindPet);    
+                    ApplyBlindfold(packet.AppliedFeatures.HasFlag(NetworkedFeature.AllowBlindfolding));
                 
                 if(ConfigManager.Instance.IsActive(AccessType.AllowDeafening, LeadManager.Instance.MasterPair.MasterID))
-                    ApplyDeafen(obj.DeafenPet);
+                    ApplyDeafen(packet.AppliedFeatures.HasFlag(NetworkedFeature.AllowDeafening), false, packet.AppliedFeatures.HasFlag(NetworkedFeature.MasterBypassDeafen));
             });
         }
 
-        public void ApplyDeafen(bool deafen, bool silentSwitch = false)
+        public void ApplyDeafen(bool deafen, bool silentSwitch = false, bool masterBypass = false)
         {
-            if (deafen && _gameMainMixer.outputAudioMixerGroup == null)
+            if ((deafen && !IsDeafened) || (masterBypass != _masterBypassApplied && deafen))
             {
                 _gameMainMixer.outputAudioMixerGroup = _twMixerGroup;
                 AvatarParameterManager.Instance.TrySetParameter("TWDeafened", 1f);
 
-                IsDeafened = true;
-                
-                if(!silentSwitch)
+                foreach (var player in CVRPlayerManager.Instance.NetworkPlayers)
+                {
+                    var vivoxSource = player.PuppetMaster.GetPlayerVivoxAudioSource();
+                    if(vivoxSource != null)
+                        vivoxSource.outputAudioMixerGroup = masterBypass && player.Uuid == LeadManager.Instance.MasterId ? null : _twMixerGroup;
+                }
+
+                if(!silentSwitch && !IsDeafened)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has deafened you!", 3f, TWAssets.Handcuffs);
+
+                IsDeafened = true;
+                _masterBypassApplied = masterBypass;
             }
             
-            if (!deafen && _gameMainMixer.outputAudioMixerGroup != null)
+            if (!deafen && IsDeafened)
             {
                 _gameMainMixer.outputAudioMixerGroup = null;
                 AvatarParameterManager.Instance.TrySetParameter("TWDeafened", 0f);
 
+                foreach (var player in CVRPlayerManager.Instance.NetworkPlayers)
+                {
+                    var vivoxSource = player.PuppetMaster.GetPlayerVivoxAudioSource();
+                    if(vivoxSource != null)
+                        vivoxSource.outputAudioMixerGroup = null;
+                }
+
                 IsDeafened = false;
+                _masterBypassApplied = false;
                 
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master undeafened you!", 3f, TWAssets.Handcuffs);
@@ -166,7 +203,7 @@ namespace TotallyWholesome.Managers
             if (disableFlight && !Patches.IsFlightLocked)
             {
                 Patches.IsFlightLocked = true;
-                MovementSystem.Instance.ChangeFlight(false);
+                BetterBetterCharacterController.Instance.ChangeFlight(false, false);
                 
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has disabled flight!", 3f, TWAssets.Handcuffs);
@@ -183,10 +220,9 @@ namespace TotallyWholesome.Managers
             if (disableSeats && !Patches.AreSeatsLocked)
             {
                 Patches.AreSeatsLocked = true;
-                if(MovementSystem.Instance.lastSeat != null)
-                    MovementSystem.Instance.lastSeat.ExitSeat();
-                
-                if(!silentSwitch)
+                BetterBetterCharacterController.Instance.SetSitting(false);
+
+                if (!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has disabled seat usage!", 3f, TWAssets.Handcuffs);
             }
 
@@ -197,24 +233,6 @@ namespace TotallyWholesome.Managers
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has allowed seat usage!", 3f, TWAssets.Checkmark);
             }
-        }
-
-        public void LateSetup()
-        {
-            var cameraGO = PlayerSetup.Instance.GetActiveCamera();
-
-            _twBlindnessObject = Object.Instantiate(TWAssets.TWBlindness, cameraGO.transform);
-            _twBlindnessObject.transform.localPosition = Vector3.zero;
-            _twBlindnessObject.SetActive(false);
-
-            _blindnessMaterial = _twBlindnessObject.transform.Find("Vision Sphere").GetComponent<MeshRenderer>().material;
-            _blindnessMaterial.SetFloat(Radius, Configuration.JSONConfig.BlindnessRadius);
-
-            Con.Debug("Instantiated TWBlindness prefab!");
-
-            _gameMainMixer = RootLogic.Instance.mainSfx.audioMixer;
-            _twMixerGroup = TWAssets.TWMixer.FindMatchingGroups("Master")[0];
-            TWAssets.TWMixer.SetFloat("AttenuationFloat", Configuration.JSONConfig.DeafenAttenuation);
         }
     }
 }

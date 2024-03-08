@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [MasterRestrictionCondition(Restrictions.TempUnlock)]
+    //[MasterRestrictionCondition(Restrictions.TempUnlock)]
     [PetRestrictionCondition(Restrictions.TempUnlock)]
     public class Freedom : IAchievement
     {

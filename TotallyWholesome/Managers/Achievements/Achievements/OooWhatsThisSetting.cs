@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [MasterRestrictionCondition(Restrictions.ChangeRemoteParam)]
+    //[MasterRestrictionCondition(Restrictions.ChangeRemoteParam)]
     public class OooWhatsThisSetting : IAchievement
     {
         public string AchievementName => "Oooo, What's this setting?";

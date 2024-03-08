@@ -19,15 +19,12 @@
     <OutputPath>bin\Admin\</OutputPath>
     <DefineConstants>ADMIN</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>12</LangVersion>
+    <Optimize>true</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>..\3rdparty\ml\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="ActionMenu">
-      <HintPath>..\3rdparty\Mods\ActionMenu.dll</HintPath>
-      <Private>true</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\3rdparty\Managed\Assembly-CSharp.dll</HintPath>
@@ -52,6 +49,9 @@
     <Reference Include="DarkRift.Client">
       <HintPath>..\3rdparty\Managed\DarkRift.Client.dll</HintPath>
       <Private>true</Private>
+    </Reference>
+    <Reference Include="ECM2">
+      <HintPath>..\3rdparty\Managed\ECM2.dll</HintPath>
     </Reference>
     <Reference Include="MelonLoader">
       <HintPath>..\3rdparty\ml\MelonLoader.dll</HintPath>
@@ -111,11 +111,6 @@
       <HintPath>..\3rdparty\Managed\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="UnityEngine.TextCoreModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\3rdparty\Managed\UnityEngine.TextCoreModule.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
     <Reference Include="UnityEngine.TextRenderingModule, Version=3.7.1.6, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\3rdparty\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
@@ -163,11 +158,9 @@
       <HintPath>..\3rdparty\Managed\UnityEngine.XRModule.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="VivoxUnity">
-      <HintPath>..\3rdparty\Managed\VivoxUnity.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BTKUILib\BTKUILib.csproj" />
     <ProjectReference Include="..\Loaderv2\WholesomeLoader-v2.csproj" />
     <ProjectReference Include="..\ManagedButtplugIo\ButtplugCSharp\ManagedButtplugIo.csproj" />
     <ProjectReference Include="..\MessagePack-CSharp\src\MessagePack\MessagePack.csproj" />
@@ -176,24 +169,108 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="twassets" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="TWUI\TWUIBuild.zip" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="TWUI\TWUIBuildAdmin.zip" Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'" />
+    <EmbeddedResource Remove="TWUI\**" />
+    <None Remove="Images\Ability.png" />
+    <EmbeddedResource Include="Images\Ability.png" />
+    <None Remove="Images\Aim.png" />
+    <EmbeddedResource Include="Images\Aim.png" />
+    <None Remove="Images\Alert.png" />
+    <EmbeddedResource Include="Images\Alert.png" />
+    <None Remove="Images\Arrow Left.png" />
+    <EmbeddedResource Include="Images\Arrow Left.png" />
+    <None Remove="Images\Badge-Bronze.png" />
+    <EmbeddedResource Include="Images\Badge-Bronze.png" />
+    <None Remove="Images\Badge-Gold.png" />
+    <EmbeddedResource Include="Images\Badge-Gold.png" />
+    <None Remove="Images\Badge-Silver.png" />
+    <EmbeddedResource Include="Images\Badge-Silver.png" />
+    <None Remove="Images\Body.png" />
+    <EmbeddedResource Include="Images\Body.png" />
+    <None Remove="Images\Bolt.png" />
+    <EmbeddedResource Include="Images\Bolt.png" />
+    <None Remove="Images\Checkmark.png" />
+    <EmbeddedResource Include="Images\Checkmark.png" />
+    <None Remove="Images\Close.png" />
+    <EmbeddedResource Include="Images\Close.png" />
+    <None Remove="Images\Crown - Stars.png" />
+    <EmbeddedResource Include="Images\Crown - Stars.png" />
+    <None Remove="Images\Discord-Logo-White.png" />
+    <EmbeddedResource Include="Images\Discord-Logo-White.png" />
+    <None Remove="Images\Exit.png" />
+    <EmbeddedResource Include="Images\Exit.png" />
+    <None Remove="Images\Handcuffs.png" />
+    <EmbeddedResource Include="Images\Handcuffs.png" />
+    <None Remove="Images\Key.png" />
+    <EmbeddedResource Include="Images\Key.png" />
+    <None Remove="Images\Link.png" />
+    <EmbeddedResource Include="Images\Link.png" />
+    <None Remove="Images\List x3.png" />
+    <EmbeddedResource Include="Images\List x3.png" />
+    <None Remove="Images\Megaphone.png" />
+    <EmbeddedResource Include="Images\Megaphone.png" />
+    <None Remove="Images\Microphone Off.png" />
+    <EmbeddedResource Include="Images\Microphone Off.png" />
+    <None Remove="Images\Multiuser.png" />
+    <EmbeddedResource Include="Images\Multiuser.png" />
+    <None Remove="Images\Profile.png" />
+    <EmbeddedResource Include="Images\Profile.png" />
+    <None Remove="Images\Reload.png" />
+    <EmbeddedResource Include="Images\Reload.png" />
+    <None Remove="Images\Resize.png" />
+    <EmbeddedResource Include="Images\Resize.png" />
+    <None Remove="Images\Settings.png" />
+    <EmbeddedResource Include="Images\Settings.png" />
+    <None Remove="Images\SpecialMark.png" />
+    <EmbeddedResource Include="Images\SpecialMark.png" />
+    <None Remove="Images\Star.png" />
+    <EmbeddedResource Include="Images\Star.png" />
+    <None Remove="Images\Turn Off.png" />
+    <EmbeddedResource Include="Images\Turn Off.png" />
+    <None Remove="Images\TW-Close.png" />
+    <EmbeddedResource Include="Images\TW-Close.png" />
+    <None Remove="Images\TW-Trash.png" />
+    <EmbeddedResource Include="Images\TW-Trash.png" />
+    <None Remove="Images\TW_Logo_Pride-sm.png" />
+    <EmbeddedResource Include="Images\TW_Logo_Pride-sm.png" />
+    <None Remove="Images\TW_TabIcon.png" />
+    <EmbeddedResource Include="Images\TW_TabIcon.png" />
+    <None Remove="Images\User - Plus Right.png" />
+    <EmbeddedResource Include="Images\User - Plus Right.png" />
+    <None Remove="Images\Vibration.png" />
+    <EmbeddedResource Include="Images\Vibration.png" />
+    <None Remove="Images\Volume - Maximum.png" />
+    <EmbeddedResource Include="Images\Volume - Maximum.png" />
+    <None Remove="Managers\TWUI\TWStyle.css" />
+    <EmbeddedResource Include="Managers\TWUI\TWStyle.css" />
+    <None Remove="Images\OpenShock.png" />
+    <EmbeddedResource Include="Images\OpenShock.png" />
+    <None Remove="Images\PiShock.png" />
+    <EmbeddedResource Include="Images\PiShock.png" />
+    <None Remove="Images\ToggleOff.png" />
+    <EmbeddedResource Include="Images\ToggleOff.png" />
+    <None Remove="Images\ToggleOn.png" />
+    <EmbeddedResource Include="Images\ToggleOn.png" />
+    <None Remove="Images\ExternalLink.png" />
+    <EmbeddedResource Include="Images\ExternalLink.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ILRepack.Lib.MSBuild" Version="2.1.18" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
+    <PackageReference Include="OneOf" Version="3.0.263" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Managers\LovenseManager.cs" />
+    <Compile Remove="TWUI\**" />
   </ItemGroup>
   <ItemGroup Label="FilesToCopy">
     <Content Include="LogFiles\*.config" Pack="true" PackagePath="contentFiles\LogFiles">
       <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="TWUI\**" />
   </ItemGroup>
 </Project>

@@ -15,9 +15,8 @@ namespace TotallyWholesome.Managers.Achievements
     public class AchievementManager : ITWManager
     {
         public static AchievementManager Instance;
-        
-        public string ManagerName() => "AchievementManager";
-        public int Priority() => 0;
+
+        public int Priority => 0;
 
         public List<IAchievement> LoadedAchievements = new();
         public bool AchievementsUpdated;

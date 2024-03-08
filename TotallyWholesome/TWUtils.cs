@@ -1,24 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using ABI_RC.Core.InteractionSystem;
-using ABI_RC.Core.IO;
 using ABI_RC.Core.Networking;
+using ABI_RC.Core.Networking.API;
+using ABI_RC.Core.Networking.API.Responses;
+using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Networking.IO.UserGeneratedContent;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using ABI_RC.Core.UI;
 using ABI.CCK.Components;
-using ABI.CCK.Scripts;
-using cohtml;
-using cohtml.Net;
+using Microsoft.IO;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Objects;
-using TotallyWholesome.TWUI;
+using TotallyWholesome.Utils;
 using TWNetCommon.Data.NestedObjects;
 using UnityEngine;
 using WholesomeLoader;
@@ -31,26 +28,16 @@ namespace TotallyWholesome
         private static FieldInfo _animatorGetter = typeof(PuppetMaster).GetField("_animator", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _nameplateCanvasGetter = typeof(PlayerNameplate).GetField("_canvasGroup", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _getPlayerDescriptor = typeof(PuppetMaster).GetField("_playerDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo _qmReady = typeof(CVR_MenuManager).GetField("_quickMenuReady", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _localAvatarDescriptor = typeof(PlayerSetup).GetField("_avatarDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
         private static FieldInfo _mlVersionGetter = typeof(MelonLoader.BuildInfo).GetField(nameof(MelonLoader.BuildInfo.Version), BindingFlags.Public | BindingFlags.Static);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static FieldInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetField("username", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo _internalCohtmlView = typeof(CohtmlControlledViewWrapper).GetField("_view", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo _vivoxPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _vivoxAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Components.VivoxParticipantPipeline").GetField("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
         private static Dictionary<string, TWPlayerObject> _players = new();
         private static TWPlayerObject _ourPlayer;
-        private static View _internalViewCache;
-
-        public static View GetInternalView()
-        {
-            if (CVR_MenuManager.Instance == null || CVR_MenuManager.Instance.quickMenu == null) return null;
-
-            if (_internalViewCache == null && _internalCohtmlView != null)
-                _internalViewCache = (View)_internalCohtmlView.GetValue(CVR_MenuManager.Instance.quickMenu.View);
-
-            return _internalViewCache;
-        }
+        public static readonly RecyclableMemoryStreamManager RecyclableMemory = new();
 
         public static string CreateMD5(string input)
         {
@@ -78,6 +65,43 @@ namespace TotallyWholesome
             _players.Clear();
         }
 
+        public static AudioSource GetPlayerVivoxAudioSource(this PuppetMaster pm)
+        {
+            var vivoxPipeline = _vivoxPipelineGetter.GetValue(pm);
+            if (vivoxPipeline == null) return null;
+            var source = _vivoxAudioSourceGetter.GetValue(vivoxPipeline) as AudioSource;
+            return source;
+        }
+
+        public static void AddCVRNotification(string inviteID, string senderUsername, string inviteText)
+        {
+            var cvrInvite = new Invite_t();
+
+            cvrInvite.InviteMeshId = $"twInvite_{inviteID}";
+            cvrInvite.SenderUsername = senderUsername;
+            cvrInvite.WorldName = inviteText;
+            cvrInvite.InstanceName = inviteText;
+
+            Patches.TWInvites.Add(cvrInvite);
+
+            if (ViewManager.Instance == null || ViewManager.Instance.gameMenuView == null)
+                return;
+
+            ViewManager.Instance.FlagForUpdate(ViewManager.UpdateTypes.Invites);
+        }
+
+        public static void GetAvatarFromAPI(string avatarID, Action<AvatarDetailsResponse> onSuccess)
+        {
+            TwTask.Run(async () =>
+            {
+                var avatarDetails = await ApiConnection.MakeRequest<AvatarDetailsResponse>(ApiConnection.ApiOperation.AvatarDetail, new { avatarID });
+                if (!avatarDetails.IsSuccessStatusCode) return;
+
+                //Got a good avatar response
+                Main.Instance.MainThreadQueue.Enqueue(() => onSuccess(avatarDetails.Data));
+            });
+        }
+
         public static RichPresenceInstance_t GetRichPresenceInfo()
         {
             return _richPresenceLastMsgGetter.GetValue(null) as RichPresenceInstance_t;
@@ -97,11 +121,6 @@ namespace TotallyWholesome
         {
             if (_players.ContainsKey(player.Uuid))
                 _players.Remove(player.Uuid);
-        }
-
-        public static bool IsQMReady()
-        {
-            return CVR_MenuManager.Instance != null && UserInterface.TWUIReady;
         }
 
         public static void OpenKeyboard(string currentValue, Action<string> callback)
@@ -145,11 +164,13 @@ namespace TotallyWholesome
         
         public static TWPlayerObject GetPlayerFromPlayerlist(string userID)
         {
+            if (userID == null) return null;
+
             if (MetaPort.Instance.ownerId.Equals(userID))
                 return GetOurPlayer();
 
-            if (_players.ContainsKey(userID))
-                return _players[userID];
+            if (_players.TryGetValue(userID, out var playerObj))
+                return playerObj;
             
             foreach (var player in CVRPlayerManager.Instance.NetworkPlayers)
             {
@@ -232,6 +253,52 @@ namespace TotallyWholesome
                 default:
                     return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
             }
+        }
+
+        public static HumanBodyBones? GetBodyBoneFromLeadAttachIndex(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return HumanBodyBones.Neck;
+                case 1:
+                    return HumanBodyBones.Spine;
+                case 2:
+                    return HumanBodyBones.Hips;
+                case 3:
+                    return HumanBodyBones.LeftFoot;
+                case 4:
+                    return HumanBodyBones.RightFoot;
+                case 5:
+                    return HumanBodyBones.LeftHand;
+                case 6:
+                    return HumanBodyBones.RightHand;
+            }
+
+            return null;
+        }
+
+        public static int GetLeadAttachIndexFromBodyBone(this HumanBodyBones bone)
+        {
+            switch (bone)
+            {
+                case HumanBodyBones.Neck:
+                    return 0;
+                case HumanBodyBones.Spine:
+                    return 1;
+                case HumanBodyBones.Hips:
+                    return 2;
+                case HumanBodyBones.LeftFoot:
+                    return 3;
+                case HumanBodyBones.RightFoot:
+                    return 4;
+                case HumanBodyBones.LeftHand:
+                    return 5;
+                case HumanBodyBones.RightHand:
+                    return 6;
+            }
+
+            return 0;
         }
 
         #region Type Conversion

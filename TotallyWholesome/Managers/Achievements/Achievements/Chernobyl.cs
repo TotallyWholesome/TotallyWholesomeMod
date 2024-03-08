@@ -1,11 +1,10 @@
 ﻿using TotallyWholesome.Managers.Achievements.Conditions;
-using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers.Models;
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
     [PetCountCondition(6)]
-    [PiShockOperationGlobalCondition]
-    [PiShockOperationMasterCondition(ShockOperation.Shock, 100, 15)]
+    [ShockerActionMasterCondition(ControlType.Shock, 100, 15_000)]
     public class Chernobyl : IAchievement
     {
         public string AchievementName => "Chernobyl";

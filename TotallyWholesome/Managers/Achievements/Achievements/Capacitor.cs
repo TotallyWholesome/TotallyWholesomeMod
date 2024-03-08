@@ -1,9 +1,9 @@
 ﻿using TotallyWholesome.Managers.Achievements.Conditions;
-using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers.Models;
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [PiShockOperationPetCondition(ShockOperation.Shock, 100, 3)]
+    [ShockerActionPetCondition(ControlType.Shock, 100, 3_000)]
     public class Capacitor : IAchievement
     {
         public string AchievementName => "Capacitor";

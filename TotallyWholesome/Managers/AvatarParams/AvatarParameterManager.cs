@@ -7,19 +7,17 @@ using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI.CCK.Scripts;
-using cohtml;
+using BTKUILib;
+using BTKUILib.UIObjects;
+using BTKUILib.UIObjects.Components;
 using MelonLoader;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.TWUI;
 using TotallyWholesome.Network;
 using TotallyWholesome.Objects.ConfigObjects;
-using TotallyWholesome.TWUI;
-using TWNetCommon;
-using TWNetCommon.Data;
 using TWNetCommon.Data.ControlPackets;
-using TWNetCommon.Data.NestedObjects;
 using UnityEngine;
 using WholesomeLoader;
-using Yggdrasil.Logging;
 
 namespace TotallyWholesome.Managers.AvatarParams
 {
@@ -34,9 +32,11 @@ namespace TotallyWholesome.Managers.AvatarParams
         private int _maxParams = 12;
         private bool _shouldUpdateParameters = false;
         private AvatarParameter _aaProfilesEntry;
+        private Page _avatarRemoteConfPage;
+        private Category _avatarRemoteParamToggles;
+        private List<ToggleButton> _avatarParamGeneratedToggles = new();
 
-        public int Priority() => -1;
-        public string ManagerName() => nameof(AvatarParameterManager);
+        public int Priority => -1;
 
         public void Setup()
         {
@@ -44,12 +44,40 @@ namespace TotallyWholesome.Managers.AvatarParams
             
             Patches.OnLocalAvatarReady += OnLocalAvatarReady;
             TWNetListener.MasterRemoteControlEvent += MasterRemoteControlEvent;
-            UserInterface.Instance.OnBackAction += ShouldUpdate;
-            UserInterface.Instance.OnOpenedPage += ShouldUpdate;
-            LeadManager.OnFollowerPairCreated += UpdateEnabledParametersOnAccept;
+            TWNetListener.PetConfigUpdateEvent += PetConfigUpdateEvent;
+            QuickMenuAPI.OnBackAction += ShouldUpdate;
+            QuickMenuAPI.OnOpenedPage += ShouldUpdate;
         }
-        
-        public void LateSetup(){}
+
+        private void PetConfigUpdateEvent(PetConfigUpdate packet)
+        {
+            if (!packet.UpdateType.HasFlag(UpdateType.RemoteParamUpdate))
+                return;
+
+            if (!LeadManager.Instance.ActiveLeadPairs.ContainsKey(packet.Key))
+            {
+                Con.Debug("ParameterConfigureUpdate came too early, ActiveLeadPair not yet registered!");
+                return;
+            }
+
+            var leadPair = LeadManager.Instance.ActiveLeadPairs[packet.Key];
+
+            if (!leadPair.IsPlayerInvolved(TWUtils.GetOurPlayer()))
+                return;
+
+            Con.Debug($"Updated LeadPair enabled remote params with {packet.Parameters.Count} params");
+
+            leadPair.PetEnabledParameters = packet.Parameters;
+            leadPair.UpdatedEnabledParams = true;
+        }
+
+        public void LateSetup()
+        {
+            _avatarRemoteConfPage = TWMenu.Pages["AvatarRemoteConfig"];
+            _avatarRemoteParamToggles = _avatarRemoteConfPage.AddCategory("Parameters", false);
+            _avatarRemoteConfPage.PageDisplayName = "Avatar Remote Config - 0/12 Selected";
+            UpdateAvatarRemoteConfig();
+        }
 
         public void TrySetParameter(string name, float value)
         {
@@ -66,9 +94,8 @@ namespace TotallyWholesome.Managers.AvatarParams
             TrySetParameterMain(name, value);
         }
 
-        public void SetParameterRemoteState(string name, bool state)
+        public void SetParameterRemoteState(AvatarParameter param, ToggleButton toggle, bool state)
         {
-            var param = TWAvatarParameters.FirstOrDefault(x => x.Name.Equals(name));
             var count = TWAvatarParameters.Count(x => x.RemoteEnabled);
 
             if (state)
@@ -80,15 +107,15 @@ namespace TotallyWholesome.Managers.AvatarParams
 
             if (count > 12)
             {
-                UIUtils.ShowNotice("Max Parameters!", $"You have too many enabled remote parameters! You can have a max of {_maxParams}!");
-                UIUtils.SetToggleState(name, false, "FloatParams", "AvatarRemote");
+                QuickMenuAPI.ShowNotice("Max Parameters!", $"You have too many enabled remote parameters! You can have a max of {_maxParams}!");
+                toggle.ToggleValue = false;
                 return;
             }
 
             param.RemoteEnabled = state;
             _shouldUpdateParameters = true;
 
-            TWUtils.GetInternalView().TriggerEvent("twAvatarRemoteUpdateHeader", count);
+            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - {count}/12 Selected";
         }
         
         public void SendUpdatedParameters(LeadPair pair)
@@ -117,32 +144,18 @@ namespace TotallyWholesome.Managers.AvatarParams
             config.AvatarID = MetaPort.Instance.currentAvatarGuid;
             config.EnabledRemoteParams = new List<string>();
 
-            MasterRemoteControl remoteControl = new MasterRemoteControl();
-            if(LeadManager.Instance.MasterPair != null)
-                remoteControl.Key = LeadManager.Instance.MasterPair.Key;
-            remoteControl.ParameterConfigureUpdate = true;
-            remoteControl.Parameters = new List<MasterRemoteParameter>();
-
-            foreach (var enabled in TWAvatarParameters.Where(x => x.RemoteEnabled))
-            {
-                config.EnabledRemoteParams.Add(enabled.Name);
-                remoteControl.Parameters.Add(new MasterRemoteParameter()
-                {
-                    ParameterTarget = enabled.Name, 
-                    ParameterValue = enabled.CurrentValue, 
-                    ParameterType = (int)enabled.ParamType,
-                    ParameterOptions = enabled.Options
-                });
-            }
+            config.EnabledRemoteParams.AddRange(TWAvatarParameters.Where(e => e.RemoteEnabled).Select(x => x.Name).ToArray());
 
             EnabledParams = config.EnabledRemoteParams.Count;
-                
-            if(_shouldUpdateParameters)
+
+            if (_shouldUpdateParameters)
+            {
                 Configuration.SaveAvatarConfig(config.AvatarID, config);
+            }
 
             _shouldUpdateParameters = false;
 
-            TWNetClient.Instance.Send(remoteControl, TWNetMessageTypes.MasterRemoteControl2);
+            TWNetSendHelpers.SendPetConfigUpdate(UpdateType.RemoteParamUpdate);
         }
 
         private IEnumerator WaitForParamReset(string parameterName, float targetValue, float resetValue, float duration, float waitForStart)
@@ -155,16 +168,11 @@ namespace TotallyWholesome.Managers.AvatarParams
             yield return new WaitForSeconds(duration);
             
             TrySetParameterMain(parameterName, resetValue);
-        } 
-
-        private void UpdateEnabledParametersOnAccept(LeadPair pair)
-        {
-            UpdateEnabledParameters(true);
         }
 
         private void ShouldUpdate(string targetPage, string lastPage)
         {
-            if (lastPage!=null && !lastPage.Equals("AvatarRemoteConfig")) return;
+            if (lastPage!=null && !lastPage.Equals(_avatarRemoteConfPage.ElementID)) return;
 
             UpdateEnabledParameters();
         }
@@ -181,26 +189,6 @@ namespace TotallyWholesome.Managers.AvatarParams
             
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                if (packet.ParameterConfigureUpdate)
-                {
-                    if (!LeadManager.Instance.ActiveLeadPairs.ContainsKey(packet.Key))
-                    {
-                        Con.Debug("ParameterConfigureUpdate came too early, ActiveLeadPair not yet registered!");
-                        return;
-                    }
-                    
-                    var leadPair = LeadManager.Instance.ActiveLeadPairs[packet.Key];
-
-                    if (!leadPair.IsPlayerInvolved(TWUtils.GetOurPlayer()))
-                        return;
-
-                    Con.Debug($"Updated LeadPair enabled remote params with {packet.Parameters.Count} params");
-                
-                    leadPair.PetEnabledParameters = packet.Parameters;
-                    leadPair.UpdatedEnabledParams = true;
-                    return;
-                }
-                
                 if (LeadManager.Instance.MasterPair == null || !LeadManager.Instance.MasterPair.Key.Equals(packet.Key))
                     return;
 
@@ -291,9 +279,37 @@ namespace TotallyWholesome.Managers.AvatarParams
             TWAvatarParameters.Add(_aaProfilesEntry);
 
             _shouldUpdateParameters = true;
-            
-            UserInterface.Instance.UpdateAvatarRemoteConfig();
+
+            UpdateAvatarRemoteConfig();
+
             ShouldUpdate(null, null);
+        }
+
+        private void UpdateAvatarRemoteConfig()
+        {
+            foreach(var toggle in _avatarParamGeneratedToggles)
+                toggle.Delete();
+
+            _avatarParamGeneratedToggles.Clear();
+
+            var count = 0;
+
+            foreach (var param in TWAvatarParameters)
+            {
+                var paramToggle = _avatarRemoteParamToggles.AddToggle(param.Name, $"Enables {param.Name} to be controlled by your master", param.RemoteEnabled);
+
+                if (param.RemoteEnabled)
+                    count++;
+
+                paramToggle.OnValueUpdated += b =>
+                {
+                    SetParameterRemoteState(param, paramToggle, b);
+                };
+
+                _avatarParamGeneratedToggles.Add(paramToggle);
+            }
+
+            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - {count}/12 Selected";
         }
     }
 }

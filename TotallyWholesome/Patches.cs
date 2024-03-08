@@ -8,15 +8,13 @@ using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using ABI_RC.Core.UI;
 using ABI_RC.Systems.GameEventSystem;
-using ABI_RC.Systems.MovementSystem;
+using ABI_RC.Systems.Movement;
 using ABI.CCK.Components;
 using ABI.CCK.Scripts;
 using HarmonyLib;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
-using TotallyWholesome.TWUI;
 using WholesomeLoader;
 
 namespace TotallyWholesome
@@ -31,7 +29,6 @@ namespace TotallyWholesome
         public static Action<RichPresenceInstance_t> OnWorldJoin;
         public static Action OnWorldLeave;
         public static Action OnGameNetworkConnected;
-        public static Action<CVR_MenuManager> OnMarkMenuAsReady;
         public static Action<string> OnAvatarInstantiated;
         public static Action OnLocalAvatarReady;
         public static Action<string> OnKeyboardSubmitted;
@@ -67,10 +64,8 @@ namespace TotallyWholesome
             Con.Debug("Setting up Patches...");
             
             ApplyPatches(typeof(NameplatePatches));
-            ApplyPatches(typeof(AuthManagerPatches));
             ApplyPatches(typeof(RichPresensePatch));
             ApplyPatches(typeof(InstancesPatches));
-            ApplyPatches(typeof(CVRMenuManagerPatch));
             ApplyPatches(typeof(PuppetMasterPatch));
             ApplyPatches(typeof(ViewManagerPatches));
             //ApplyPatches(typeof(MicrophoneCapturePatch));
@@ -154,22 +149,6 @@ namespace TotallyWholesome
         }
     }
 
-    [HarmonyPatch]
-    class AuthManagerPatches
-    {
-        static MethodBase TargetMethod()
-        {
-            return typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetMethod("AuthResultHandle", BindingFlags.NonPublic | BindingFlags.Static);
-        }
-
-        private static void Postfix(AuthUIManager.AuthResultType type)
-        {
-            if (type != AuthUIManager.AuthResultType.LoggedInOk) return;
-            
-            Patches.OnUserLogin?.Invoke();
-        }
-    }
-
     [HarmonyPatch(typeof(PlayerNameplate))]
     class NameplatePatches
     {
@@ -227,34 +206,6 @@ namespace TotallyWholesome
             {
                 Con.Error(e);
             }
-
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(CVR_MenuManager))]
-    class CVRMenuManagerPatch
-    {
-        [HarmonyPatch("RegisterEvents")]
-        [HarmonyPostfix]
-        static void MarkMenuAsReady(CVR_MenuManager __instance)
-        {
-            try
-            {
-                Patches.OnMarkMenuAsReady?.Invoke(__instance);
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-
-        //We'll use this point to detect a menu reload/setup and ensure TWUIReady is false
-        [HarmonyPatch("UpdateModList")]
-        [HarmonyPrefix]
-        static bool UpdateModListPatch()
-        {
-            UserInterface.TWUIReady = false;
 
             return true;
         }
@@ -556,20 +507,17 @@ namespace TotallyWholesome
         }
     }
 
-    [HarmonyPatch(typeof(MovementSystem))]
+    [HarmonyPatch(typeof(BetterBetterCharacterController))]
     class MovementSystemPatches
     {
-        [HarmonyPatch(nameof(MovementSystem.ChangeFlight))]
+        [HarmonyPatch(nameof(BetterBetterCharacterController.ChangeFlight))]
         [HarmonyPrefix]
-        static bool ChangeFlightPrefix(ref bool b)
+        static bool ChangeFlightPrefix(ref bool isFlying)
         {
-            if (!b || !Patches.IsFlightLocked) return true;
-            
-            if (b && Patches.IsFlightLocked)
-            {
-                b = false;
-                NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has disabled flight!", 3f, TWAssets.Handcuffs);
-            }
+            if (!isFlying || !Patches.IsFlightLocked) return true;
+
+            isFlying = false;
+            NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has disabled flight!", 3f, TWAssets.Handcuffs);
 
             return true;
         }

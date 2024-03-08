@@ -1,9 +1,9 @@
 ﻿using TotallyWholesome.Managers.Achievements.Conditions;
-using TWNetCommon.Data.ControlPackets;
+using TWNetCommon.Data.ControlPackets.Shockers.Models;
 
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
-    [PiShockOperationPetCondition(ShockOperation.Shock, 1, 1)]
+    [ShockerActionPetCondition(ControlType.Shock, 1, 1_000)]
     [VibrationDurationCondition(0, 1)]
     [PetRestrictionCondition(Restrictions.Blindfolded, Restrictions.Deafened, Restrictions.Gagged)]
     public class WomboCombo : IAchievement

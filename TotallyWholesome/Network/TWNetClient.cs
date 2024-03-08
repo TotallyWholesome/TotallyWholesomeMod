@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.API;
@@ -13,12 +15,15 @@ using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using BTKUILib;
 using cohtml;
 using MelonLoader;
 using MessagePack;
 using TotallyWholesome.Managers;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.TWUI;
 using TotallyWholesome.Notification;
+using TotallyWholesome.Utils;
 using TWNetCommon;
 using TWNetCommon.Auth;
 using TWNetCommon.BasicMessages;
@@ -39,7 +44,6 @@ namespace TotallyWholesome.Network
         public static Action OnTWNetAuthenticated;
         
         public TWNetListener Listener;
-        public int OnlineUsers = 0;
         public bool ExpectedDisconnect;
         public bool Reconnecting;
         public bool HasSentAuth;
@@ -50,7 +54,7 @@ namespace TotallyWholesome.Network
         public string TargetInstanceID;
         public bool HasBeenRatelimited;
 
-        private Thread _clientPollThread;
+        private Task _clientPollTask;
         private string _targetWorld;
         private object _worldChangeToken;
         private string _inviteID;
@@ -59,7 +63,7 @@ namespace TotallyWholesome.Network
         private List<Action> _waitingForGSConnection = new();
         
         private string _host = "potato.moe";
-        private int _port = 14005;
+        private int _port = 14007;
         private Auth _authPacket;
         private LengthPrefixFramer _framer = new(16000);
 
@@ -103,93 +107,24 @@ namespace TotallyWholesome.Network
                 WLVersion = wholesomeLoader.Info.Version
             };
 
-            if (_clientPollThread != null) return;
-            
-            _clientPollThread = new Thread(ClientLogic);
-            _clientPollThread.Start();
+            if (_clientPollTask != null) return;
+
+            _clientPollTask = TwTask.Run(ClientLogic);
         }
-        
-        public void Send(object obj, int packetID)
+
+        public async Task SendAsync<T>(T obj, TWNetMessageType packetId)
         {
+            Con.Debug($"[SENDASYNC] {obj}");
             try
             {
-                using var writer = new BinaryWriter(new MemoryStream());
-                writer.Write(BitConverter.GetBytes(packetID));
-                
-                switch (packetID)
+                await using var memoryStream = new MemoryStream();
+                await using (var writer = new BinaryWriter(memoryStream, Encoding.Default, true))
                 {
-                    case TWNetMessageTypes.Auth:
-                        writer.Write(MessagePackSerializer.Serialize((Auth)obj));
-                        break;
-                    case TWNetMessageTypes.AuthResp:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((AuthResp)obj));
-                        break;
-                    case TWNetMessageTypes.Disconnection:
-                    case TWNetMessageTypes.UserCountUpdated:
-                    case TWNetMessageTypes.LeadRequestResp:
-                    case TWNetMessageTypes.SystemNotice:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((MessageResponse)obj));
-                        break;
-                    case TWNetMessageTypes.PairJoinNotification:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((PairJoinNotification)obj));
-                        break;
-                    case TWNetMessageTypes.LeadRequest:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((LeadRequest)obj));
-                        break;
-                    case TWNetMessageTypes.LeadAccept:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((LeadAccept)obj));
-                        break;
-                    case TWNetMessageTypes.InstanceInfo:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((InstanceInfo)obj));
-                        break;
-                    case TWNetMessageTypes.MasterRemoteControl2:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((MasterRemoteControl)obj));
-                        break;
-                    case TWNetMessageTypes.MasterSettings:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((MasterSettings)obj));
-                        break;
-                    case TWNetMessageTypes.StatusUpdate:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((StatusUpdate)obj));
-                        break;
-                    case TWNetMessageTypes.StatusUpdateConfirmation:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((StatusUpdateConfirmation)obj));
-                        break;
-                    case TWNetMessageTypes.UserJoin:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((UserInstanceChange)obj));
-                        break;
-
-                    case TWNetMessageTypes.InstanceFollowResponse:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((InstanceFollowResponse)obj));
-                        break;
-                    case TWNetMessageTypes.LeashConfigUpdate:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((LeashConfigUpdate)obj));
-                        break;
-                    case TWNetMessageTypes.ButtplugUpdate:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((ButtplugUpdate)obj));
-                        break;
-                    case TWNetMessageTypes.PiShockUpdate:
-                        Con.Debug($"[SEND] - {obj}");
-                        writer.Write(MessagePackSerializer.Serialize((PiShockUpdate)obj));
-                        break;
+                    writer.Write(0); // Size to be filled by the framer
+                    writer.Write(BitConverter.GetBytes((int)packetId));
+                    writer.Write(MessagePackSerializer.Serialize(obj));    
                 }
-                
-                writer.Flush();
-                
-                Send(_framer.Frame(((MemoryStream)writer.BaseStream).ToArray()));
+                await SendAsync(_framer.FrameNoAlloc(memoryStream));
             }
             catch (Exception e)
             {
@@ -197,9 +132,20 @@ namespace TotallyWholesome.Network
             }
         }
 
+        public async Task SendPingAsync()
+        {
+            await using var memoryStream = new MemoryStream();
+            await using (var writer = new BinaryWriter(memoryStream, Encoding.Default, true))
+            {
+                writer.Write(0); // Size to be filled by the framer
+                writer.Write(BitConverter.GetBytes((int)TWNetMessageType.PingPong));
+            }
+            await SendAsync(_framer.FrameNoAlloc(memoryStream));
+        }
+        
 #region Threading
 
-        private static void ClientLogic()
+        private async Task ClientLogic()
         {
             while (!Main.Instance.Quitting)
             {
@@ -224,7 +170,7 @@ namespace TotallyWholesome.Network
 
                             Con.Error($"Unable to connect to TWNet! Retrying in {reconnectTimeAdjustment / 1000} seconds... (Attempt {Instance.ReconnectCount})");
 
-                            Thread.Sleep(reconnectTimeAdjustment);
+                            await Task.Delay(reconnectTimeAdjustment);
                         }
                     }
 
@@ -239,7 +185,7 @@ namespace TotallyWholesome.Network
                             Instance.ReconnectCount = 0;
                         }
 
-                        Instance.Send(Instance._authPacket, TWNetMessageTypes.Auth);
+                        await Instance.SendAsync(Instance._authPacket, TWNetMessageType.Auth);
                     }
                 }
                 catch (Exception e)
@@ -248,7 +194,7 @@ namespace TotallyWholesome.Network
                     Con.Error(e);
                 }
 
-                Thread.Sleep(15);
+                await Task.Delay(15);
             }
         }
 
@@ -294,7 +240,7 @@ namespace TotallyWholesome.Network
             
             Array.Copy(bytes, sizeof(int), finalBytes, 0, finalBytes.Length);
             
-            Listener.HandlePacket(this, finalBytes, packetID, ReceiveData);
+            Listener.HandlePacket(this, finalBytes, packetID);
         }
 
         public bool IsTWNetConnected()
@@ -302,7 +248,7 @@ namespace TotallyWholesome.Network
             return Status == ClientStatus.Connected;
         }
 
-        public async void FollowMaster(string worldID)
+        public async Task FollowMaster(string worldID)
         {
             if (!ConfigManager.Instance.IsActive(AccessType.FollowMasterWorldChange, LeadManager.Instance.MasterId)) return;
             
@@ -323,7 +269,7 @@ namespace TotallyWholesome.Network
                     TargetInstanceHash = TWUtils.CreateMD5(worldID)
                 };
                     
-                Send(response, TWNetMessageTypes.InstanceFollowResponse);
+                await SendAsync(response, TWNetMessageType.InstanceFollowResponse);
 
                 return;
             }
@@ -431,13 +377,7 @@ namespace TotallyWholesome.Network
             
             Con.Warn($"Connection to TWNet lost! Disconnect reason: {arg2}");
             
-            Main.Instance.MainThreadQueue.Enqueue(() =>
-            {
-                if (!TWUtils.IsQMReady()) return;
-                
-                TWUtils.GetInternalView().TriggerEvent("twUserCountUpdate", "Disconnected");
-            });
-
+            TWMenu.Instance.OnlineUsers = -1;
             OnTWNetDisconnected?.Invoke();
         }
 
@@ -465,7 +405,7 @@ namespace TotallyWholesome.Network
 
             if (!IsTWNetConnected()) return;
 
-            Send(LastWorldJoinMessage, TWNetMessageTypes.InstanceInfo);
+            TwTask.Run(SendAsync(LastWorldJoinMessage, TWNetMessageType.InstanceInfo));
         }
         
         /// <summary>
@@ -481,7 +421,7 @@ namespace TotallyWholesome.Network
 
             if (!IsTWNetConnected()) return;
             
-            Send(userJoin, TWNetMessageTypes.UserJoin);
+            TwTask.Run(SendAsync(userJoin, TWNetMessageType.UserJoin));
         }
 
         private void OnEarlyWorldJoin()
@@ -504,7 +444,7 @@ namespace TotallyWholesome.Network
 
             if (!IsTWNetConnected()) return;
 
-            Send(LastWorldJoinMessage, TWNetMessageTypes.InstanceInfo);
+            TwTask.Run(SendAsync(LastWorldJoinMessage, TWNetMessageType.InstanceInfo));
         }
 
         protected override void OnReceiveException(Exception ex)

@@ -27,5 +27,10 @@ namespace TWNetCommon.Data.ControlPackets
             var prop = PropTarget ?? "none";
             return $"LeashConfigUpdate - [Key: {Key}, MasterLeashColour: {MasterLeashColour}, PetLeashColour: {PetLeashColour}, LeashStyle: {LeashStyle}, LeashPinPosition: {LeashPinPosition}, PropTarget: {prop}]";
         }
+
+        public LeashConfigUpdate Clone()
+        {
+            return (LeashConfigUpdate)MemberwiseClone();
+        }
     }
 }

@@ -20,6 +20,9 @@
             <InputAssemblies Include="$(OutputPath)/TWNetCommon.dll" />
             <InputAssemblies Include="$(OutputPath)/Microsoft.NET.StringTools.dll" />
             <InputAssemblies Include="$(OutputPath)/websocket-sharp.dll" />
+            <InputAssemblies Include="$(OutputPath)/Microsoft.IO.RecyclableMemoryStream.dll" />
+            <InputAssemblies Include="$(OutputPath)/System.Threading.Channels.dll" />
+            <InputAssemblies Include="$(OutputPath)/OneOf.dll" />
             <InputAssemblies Include="..\3rdparty\System.Reflection.Emit.dll" />
             <InputAssemblies Include="..\3rdparty\System.Reflection.Emit.Lightweight.dll" />
             <InputAssemblies Include="..\3rdparty\System.Reflection.Emit.ILGeneration.dll" />

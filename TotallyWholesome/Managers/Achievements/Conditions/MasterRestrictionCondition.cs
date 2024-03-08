@@ -1,11 +1,10 @@
 ﻿using System;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
-using TotallyWholesome.TWUI;
 
 namespace TotallyWholesome.Managers.Achievements.Conditions
 {
-    public class MasterRestrictionCondition : Attribute, ICondition
+    /*public class MasterRestrictionCondition : Attribute, ICondition
     {
         private Restrictions[] _requiredRestrictions;
         
@@ -58,5 +57,5 @@ namespace TotallyWholesome.Managers.Achievements.Conditions
         {
             _requiredRestrictions = requiredRestrictions;
         }
-    }
+    }*/
 }
