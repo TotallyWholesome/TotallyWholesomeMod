@@ -48,7 +48,7 @@ public class IndividualPetControl : ITWManager
     private Category _generatedSliderFloats;
     private Page _avatarSwitchingPage;
     private Category _petAvatarListCat;
-    private Button _openAvatarSwitch, _removeLeashes, _beep, _vibrate, _shock, _switchToMyAvi;
+    private Button _openAvatarSwitch, _removeLeash, _beep, _vibrate, _shock, _switchToMyAvi;
 
     //Individual Pet Controls
     public SliderFloat StrengthIPC;
@@ -116,8 +116,8 @@ public class IndividualPetControl : ITWManager
         _switchToMyAvi.OnPress += SwitchToMyAvatar;
         _petAvatarListCat = _avatarSwitchingPage.AddCategory("Switchable Avatars", true, false);
 
-        _removeLeashes = controls.AddButton("Remove Leashes", "TWClose", "Remove all leashes connected to you");
-        _removeLeashes.OnPress += LeadManager.RemoveLeashIPC;
+        _removeLeash = controls.AddButton("Remove Leash", "TWClose", "Remove this pets leash");
+        _removeLeash.OnPress += LeadManager.RemoveLeashIPC;
 
         LeadManager.Instance.TetherRangeIPC =
             controls.AddSlider("Leash Length", "Adjust the length of this pets leash", 2f, 0f, 10f);
