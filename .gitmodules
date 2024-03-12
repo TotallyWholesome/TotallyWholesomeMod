@@ -10,3 +10,6 @@
 [submodule "MessagePack-CSharp"]
 	path = MessagePack-CSharp
 	url = https://github.com/TotallyWholesome/MessagePack-CSharp.git
+[submodule "BTKUILib"]
+	path = BTKUILib
+	url = https://github.com/BTK-Development/BTKUILib.git
