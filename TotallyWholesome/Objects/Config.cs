@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Notification;
 using TotallyWholesome.Objects.ConfigObjects;
 using UnityEngine;
 
@@ -42,6 +43,13 @@ namespace TotallyWholesome.Objects
         public bool HideInPublicWorlds = true;
         public bool ShowDeviceStatus = false;
         public bool ShowAutoAccept = true;
+
+        //Notification Settings
+        public float NotificationAlpha = .7f;
+        public NotificationAlignment NotificationAlignment = NotificationAlignment.CenterMiddle;
+        public bool NotificationCustomPlacement = false;
+        public float NotificationX = 0f;
+        public float NotificationY = 0f;
         
         public enum ShockerPlatform
         {

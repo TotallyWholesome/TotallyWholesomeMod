@@ -18,11 +18,6 @@ namespace TotallyWholesome.Managers.ModCompatibility
 
         public void Setup()
         {
-            if (Environment.CommandLine.Contains("--TWUIXMode") && UIXAdapter.IsUIXAvailable())
-            {
-                Con.Msg("TotallyWholesome is currently using UIX mode!");
-            }
-
             if (NotificationAPIAdapter.IsNotifAPIAvailable())
             {
                 Con.Msg("Detected [Information Redacted]'s NotificationAPI, it will be used in place of the CVR hud notifications!");
@@ -42,7 +37,7 @@ namespace TotallyWholesome.Managers.ModCompatibility
             Con.Msg("Detected VR mode switch, reconfiguring TW...");
             _lastVRState = MetaPort.Instance.isUsingVr;
             
-            NotificationSystem.VRModeSwitched();
+            NotificationSystem.Instance.VRModeSwitched();
             LeadManager.Instance.SetupTWRaycaster();
         }
 

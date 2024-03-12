@@ -297,7 +297,7 @@ namespace TotallyWholesome.Managers
             Global = true, User = false, Default = true)]
         UseTabMenu = 0x0005,*/
 
-        [Access(Category = "SettingsGeneral", Name = "Disable TW Notification System",
+        [Access(Category = "SettingsNotifCat", Name = "Disable TW Notification System",
             DescriptionGlobal = "Disables the TW Notification system, if available it will use the NotificationAPI mod otherwise it'll use the CVR hud notifications",
             Global = true, User = false,
             DialogMessageGlobal = "Are you sure you want to disable the TW notification system? Disabling it will make TW use either the CVR hud notifications or the NotificationAPI mod if available.",

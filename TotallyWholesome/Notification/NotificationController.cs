@@ -98,7 +98,7 @@ namespace TotallyWholesome.Notification
                 _descriptionText.text = _currentNotification.Description;
                 _iconImage.sprite = _currentNotification.Icon == null ? defaultSprite : _currentNotification.Icon;
                 _iconImage.enabled = true;
-                _currentNotification.BackgroundColor.a = NotificationSystem.NotificationAlpha.Value;
+                _currentNotification.BackgroundColor.a = Configuration.JSONConfig.NotificationAlpha;
                 _backgroundImage.color = _currentNotification.BackgroundColor;
                 _titleText.faceColor = _white;
                 _descriptionText.faceColor = _white;

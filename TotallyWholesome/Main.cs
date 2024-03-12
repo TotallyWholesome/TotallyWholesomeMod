@@ -25,8 +25,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.5.9";
-        public const string TWVersion = "3.5.9";
+        public const string AssemblyVersion = "3.5.10";
+        public const string TWVersion = "3.5.10";
         public const bool isBetaBuild = false;
         public const string DownloadLink = "https://totallywholeso.me/";
     }
@@ -157,7 +157,6 @@ namespace TotallyWholesome
                 Patches.LateStartupPatches();
 
                 NotificationSystem.UseCVRNotificationSystem = ConfigManager.Instance.IsActive(AccessType.UseOldHudMessage);
-                NotificationSystem.SetupNotifications();
                 
                 //Add our actions into CVRs join and leave
                 QuickMenuAPI.UserJoin += entity => Patches.UserJoin.Invoke(entity);

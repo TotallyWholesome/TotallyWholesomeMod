@@ -10,10 +10,12 @@ using BTKUILib.UIObjects.Objects;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Network;
+using TotallyWholesome.Notification;
 using TotallyWholesome.Utils;
 using TWNetCommon.Data.ControlPackets;
 using TWNetCommon.Data.ControlPackets.Shockers.Models;
 using UnityEngine;
+using UnityEngine.UI;
 using WholesomeLoader;
 
 namespace TotallyWholesome.Managers.TWUI.Pages;
@@ -37,6 +39,11 @@ public class TWSettingsUI : ITWManager
     private SliderFloat _gSliderFloat;
     private SliderFloat _bSliderFloat;
     private CustomEngineOnFunction _colourPreviewUpdate;
+
+    //Notification page
+    private MultiSelection _alignmentSelect;
+    private SliderFloat _notifXSlider;
+    private SliderFloat _notifYSlider;
 
     private Page _userManagePage;
     private Dictionary<string, ToggleButton> _userPermsToggles = new();
@@ -106,6 +113,38 @@ public class TWSettingsUI : ITWManager
 
         var menuPage = general.AddPage("Menu Settings", "Settings", "Control the visibility and position of some elements", "TotallyWholesome");
         TWMenu.Pages.Add("SettingsMenuAdjPage", menuPage);
+
+        //Notification Config Page
+        var notifPage = general.AddPage("Notification Config", "Megaphone", "Configure the placement and opacity of the TW notification system", "TotallyWholesome");
+        var notifCat = notifPage.AddCategory("NotifCat", false);
+        TWMenu.Categories.Add("SettingsNotifCat", notifCat);
+
+        _alignmentSelect = new MultiSelection("Notification Alignment", Enum.GetNames(typeof(NotificationAlignment)), (int)Configuration.JSONConfig.NotificationAlignment);
+        _alignmentSelect.OnOptionUpdated += i =>
+        {
+            Configuration.JSONConfig.NotificationAlignment = (NotificationAlignment)i;
+            Configuration.SaveConfig();
+            NotificationSystem.UpdateNotificationAlignment();
+        };
+
+        var alignmentButton = notifCat.AddButton("Notification Alignment", "Resize", "Change the alignment of the notification");
+        alignmentButton.OnPress += () => QuickMenuAPI.OpenMultiSelect(_alignmentSelect);
+
+        var customPlacementToggle = notifCat.AddToggle("Custom Placement", "Enable custom placement of the notification popup", Configuration.JSONConfig.NotificationCustomPlacement);
+        customPlacementToggle.OnValueUpdated += b =>
+        {
+            _notifXSlider.Disabled = !b;
+            _notifYSlider.Disabled = !b;
+            Configuration.JSONConfig.NotificationCustomPlacement = b;
+            Configuration.SaveConfig();
+            NotificationSystem.UpdateNotificationAlignment();
+        };
+
+        var testNotif = notifCat.AddButton("Test Notification", "Megaphone", "Sends a test notification");
+        testNotif.OnPress += () =>
+        {
+            NotificationSystem.EnqueueNotification("Test Notification", "This is a test notification!", 10f, TWAssets.Megaphone);
+        };
 
         var menuPageCat = menuPage.AddCategory("Menu Settings");
         TWMenu.Categories.Add("MenuAdjMainCat", menuPageCat);
@@ -267,6 +306,32 @@ public class TWSettingsUI : ITWManager
 
             Configuration.JSONConfig.DeafenAttenuation = f;
             Configuration.SaveConfig();
+        };
+
+        //Notification slider creation, gotta be after ConfigManager element gen
+        var alphaSlider = notifCat.AddSlider("Notification Opacity", "Adjust the transparency of the notification popup", Configuration.JSONConfig.NotificationAlpha, 0f, 1f, 2, .7f, true);
+        alphaSlider.OnValueUpdated += f =>
+        {
+            Configuration.JSONConfig.NotificationAlpha = f;
+            Configuration.SaveConfig();
+        };
+
+        _notifXSlider = notifCat.AddSlider("Notification X Position", "Adjust the X position of the notification popup on the HUD", Configuration.JSONConfig.NotificationX, -1200, 1200, 2, 0, true);
+        _notifXSlider.Disabled = !Configuration.JSONConfig.NotificationCustomPlacement;
+        _notifXSlider.OnValueUpdated += f =>
+        {
+            Configuration.JSONConfig.NotificationX = f;
+            Configuration.SaveConfig();
+            NotificationSystem.UpdateNotificationAlignment();
+        };
+
+        _notifYSlider = notifCat.AddSlider("Notification Y Position", "Adjust the Y position of the notification popup on the HUD", Configuration.JSONConfig.NotificationY, -600, 600, 2, 0, true);
+        _notifYSlider.Disabled = !Configuration.JSONConfig.NotificationCustomPlacement;
+        _notifYSlider.OnValueUpdated += f =>
+        {
+            Configuration.JSONConfig.NotificationY = f;
+            Configuration.SaveConfig();
+            NotificationSystem.UpdateNotificationAlignment();
         };
 
         //Let's add all the switchable avatars
