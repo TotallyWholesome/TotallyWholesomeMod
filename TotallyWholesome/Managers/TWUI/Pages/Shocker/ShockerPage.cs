@@ -65,7 +65,7 @@ public static class ShockerPage
         _intensityLimit.OnValueUpdated += f => _shockerConfig.LimitIntensity = Convert.ToByte(f);
 
         _durationLimit = shockerPermsAndLimits.AddSlider("Duration Limit",
-            "The maximum intensity this shocker can go to",
+            "The maximum duration this shocker can go to",
             0, 0, 15);
         _durationLimit.OnValueUpdated += f => _shockerConfig.LimitDuration = Convert.ToUInt16(f * 1000);
 

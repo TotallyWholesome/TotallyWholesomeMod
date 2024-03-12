@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
 using System.Net;
 using System.Net.Http;
@@ -172,7 +173,11 @@ public class PiShockManager : IShockerProvider, IAsyncDisposable
     {
         var piShockOperation = PiShockUtils.OperationTranslation[type];
 
-        foreach (var (key, value) in PiShockConfig.Config.Shockers)
+        var selectedShockers = PiShockConfig.Config.Shockers.Where(x => x.Value.Enabled).ToArray();
+        if (ConfigManager.Instance.IsActiveCurrent(AccessType.ShockRandomShocker) && selectedShockers.Length > 0)
+            selectedShockers = [selectedShockers[new Random().Next(0, selectedShockers.Length)]];
+
+        foreach (var (key, value) in selectedShockers)
         {
             if (!_shockerInfoCache.TryGetValue(key, out var shockerInfo))
             {

@@ -276,7 +276,7 @@ namespace TotallyWholesome.Managers
 
         [Access(Category = "SettingsGeneral", Name = "Private Leash",
             DescriptionGlobal = "Only you and your Pets/Masters will see the Leash",
-            DescriptionUser = "Only you and this Pets/Masters will see the Leash",
+            DescriptionUser = "Only you and this Pet/Master will see the Leash",
             Global = true, User = true,
             DialogMessageGlobal = "Changing Private Leash will not apply until you clear and create new leashes!",
             DialogMessageUser = "Changing Private Leash will not apply until you clear create it again!")]
@@ -328,14 +328,14 @@ namespace TotallyWholesome.Managers
 
         [Access(Category = "SettingsPet", Name = "Allow Force Mute",
             DescriptionGlobal = "This will allow all masters to mute you",
-            DescriptionUser = "This will allow this masters to mute you",
+            DescriptionUser = "This will allow this master to mute you",
             Global = true, User = true,
             DialogMessageGlobal = "Allowing Force Mute will allow your master to mute you at any time! You can disable this setting to unlock it.",
             DialogMessageUser = "Allowing Force Mute will allow your master to mute you at any time! You can disable this setting to unlock it.", FeatureEnum = NetworkedFeature.AllowForceMute)]
         AllowForceMute = 0x1002,
 
         //TODO: MAKE THIS WORK AGAIN AAAAA
-        /*[Access(Category = "Pet", Name = "Enable Muffled Mode",
+        /*[Access(Category = "SettingsPet", Name = "Enable Muffled Mode",
             DescriptionGlobal = "Instead of muted you will be muffled",
             Global = true, User = false)]
         EnableMuffledMode = 0x1003,*/
@@ -347,7 +347,7 @@ namespace TotallyWholesome.Managers
 
         [Access(Category = "SettingsPet", Name = "Allow Toy Control",
             DescriptionGlobal = "This will allow all masters to control your Toys",
-            DescriptionUser = "This will allow this masters to control your Toys",
+            DescriptionUser = "This will allow this master to control your Toys",
             Global = true, User = true,
             DialogMessageGlobal = "Allowing Toy Control will allow your master to control your connected toys! You can disable this setting to reset it.",
             DialogMessageUser = "Allowing Toy Control will allow your master to control your connected toys! You can disable this setting to reset it.", FeatureEnum = NetworkedFeature.AllowToyControl)]
@@ -370,19 +370,19 @@ namespace TotallyWholesome.Managers
         AllowBlindfolding = 0x1009,
         [Access(Category = "SettingsPet", Name = "Allow Deafening", DescriptionGlobal = "Allows all masters to deafen you!", DescriptionUser = "Allows this master to deafen you!", Global = true, User = true, FeatureEnum = NetworkedFeature.AllowDeafening)]
         AllowDeafening = 0x1010,
-        [Access(Category = "SettingsPet", Name = "Allow Switching to Any Avatar", DescriptionGlobal = "Allows this master to change you into ANY avatar that you can access, you should be mindful of who can do this!", DescriptionUser = "Allows this master to change you into ANY avatar that you can access, you should be mindful of who can do this!", Global = true, User = true, FeatureEnum = NetworkedFeature.AllowAnyAvatarSwitching, ConfirmPrompt = true, DialogMessageGlobal = "Enabling this will allow ANY master to change you into ANY avatar! Please be careful enabling this in instances where NSFW content isn't allowed!", DialogMessageUser = "Enabling this will allow this master to change you into ANY avatar! Please be careful about allowing usage of this in instances where NSFW content isn't allowed!")]
+        [Access(Category = "SettingsPet", Name = "Allow Switching to Any Avatar", DescriptionGlobal = "Allows all masters to change you into ANY avatar that you can access, you should be mindful of who can do this!", DescriptionUser = "Allows this master to change you into ANY avatar that you can access, you should be mindful of who can do this!", Global = true, User = true, FeatureEnum = NetworkedFeature.AllowAnyAvatarSwitching, ConfirmPrompt = true, DialogMessageGlobal = "Enabling this will allow ANY master to change you into ANY avatar! Please be careful enabling this in instances where NSFW content isn't allowed!", DialogMessageUser = "Enabling this will allow this master to change you into ANY avatar! Please be careful about allowing usage of this in instances where NSFW content isn't allowed!")]
         AllowAnyAvatarSwitch = 0x1011,
 
         [Access(Category = "SettingsMaster", Name = "Allow Pet to follow you",
             DescriptionGlobal = "This will allow all pets to follow you on World change",
-            DescriptionUser = "This will allow this pets to follow you on World change",
+            DescriptionUser = "This will allow this pet to follow you on World change",
             Global = true, User = false,
             DialogMessageGlobal = "Send World Change to Pet will send enough information for your pet to join your instance, this applies to any instance type.")]
         AllowPetWorldChangeFollow = 0x2002,
 
         [Access(Category = "SettingsMaster", Name = "Auto Accept Master Requests",
             DescriptionGlobal = "This will allow all pets to make you their master automatically",
-            DescriptionUser = "This will allow this pets to make you their master automatically",
+            DescriptionUser = "This will allow this pet to make you their master automatically",
             Global = true, User = true,
             DialogMessageGlobal = "Are you sure you want to enable this? This will allow ANYONE to make you their master!",
             DialogMessageUser = "Are you sure you want to enable this? This will allow this user to make you their master without confirmation!",

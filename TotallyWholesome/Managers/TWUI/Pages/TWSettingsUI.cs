@@ -242,7 +242,7 @@ public class TWSettingsUI : ITWManager
             {
                 var category = TWMenu.Categories[$"User{attribute.Category}"];
                 var toggle = category.AddToggle(attribute.Name, attribute.DescriptionUser, ConfigManager.Instance.IsActive(accessType));
-                toggle.OnValueUpdated += b => { ConfigManager.Instance.SetActive(accessType, b, toggle); };
+                toggle.OnValueUpdated += b => { ConfigManager.Instance.SetActive(accessType, b, toggle, QuickMenuAPI.SelectedPlayerID); };
                 _userPermsToggles.Add(accessType.ToString(), toggle);
             }
         }

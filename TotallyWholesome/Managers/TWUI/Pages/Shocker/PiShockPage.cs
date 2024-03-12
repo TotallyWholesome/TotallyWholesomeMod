@@ -63,11 +63,17 @@ public static class PiShockPage
         foreach (var (key, value) in PiShockConfig.Config.Shockers)
         {
             var button =
-                _shockersCategory.AddButton(key, value.Enabled ? "ToggleOn" : "ToggleOff", "Open Shocker Settings");
+                _shockersCategory.AddButton(key, value.Enabled ? "ToggleOn" : "ToggleOff", "Toggle Shocker Enablement");
             if (shockersInfos.TryGetValue(key, out var info))
             {
                 button.ButtonText = info.Name;
             }
+            button.OnPress += () =>
+            {
+                value.Enabled = !value.Enabled;
+                button.ButtonIcon = value.Enabled ? "ToggleOn" : "ToggleOff";
+                PiShockConfig.SaveFnF();
+            };
         }
     }
 
