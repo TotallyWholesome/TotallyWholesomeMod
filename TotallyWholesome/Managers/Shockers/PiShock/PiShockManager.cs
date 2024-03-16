@@ -211,13 +211,6 @@ public class PiShockManager : IShockerProvider, IAsyncDisposable
         _disposed = true;
         Instance = null!;
         _httpClient.Dispose();
-        
-        GC.SuppressFinalize(this);
-    }
-    
-    ~PiShockManager()
-    {
-        DisposeAsync().AsTask().Wait();
     }
 }
 

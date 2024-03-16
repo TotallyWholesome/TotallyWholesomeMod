@@ -13,6 +13,7 @@ using BTKUILib;
 using MelonLoader;
 using Semver;
 using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using UnityEngine;
@@ -25,8 +26,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.5.10";
-        public const string TWVersion = "3.5.10";
+        public const string AssemblyVersion = "3.5.11";
+        public const string TWVersion = "3.5.11";
         public const bool isBetaBuild = false;
         public const string DownloadLink = "https://totallywholeso.me/";
     }
@@ -195,12 +196,14 @@ namespace TotallyWholesome
                 item.Invoke();
         }
 
-        public override void OnApplicationQuit()
+        public override async void OnApplicationQuit()
         {
             Con.Debug("Closing connection to TWNet!");
             Quitting = true;
             TWNetClient.Instance.DisconnectClient();
             ButtplugManager.Instance.ShutDown();
+            if (ShockerManager.Instance.ShockerProvider is not IAsyncDisposable disposable) return;
+            await disposable.DisposeAsync();
         }
     }
 }

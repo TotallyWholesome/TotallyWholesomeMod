@@ -284,11 +284,5 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
         Logger.Msg("Disposing OpenShockManager");
         _httpClient?.Dispose();
         if (_webSocket != null) await _webSocket.DisposeAsync();
-        GC.SuppressFinalize(this);
-    }
-
-    ~OpenShockManager()
-    {
-        DisposeAsync().AsTask().Wait();
     }
 }
