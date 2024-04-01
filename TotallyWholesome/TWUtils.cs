@@ -228,6 +228,14 @@ namespace TotallyWholesome
             return (Color.HSVToRGB(hueValue1, .8f, .8f), Color.HSVToRGB(hueValue2, .8f, .8f));
         }
 
+        public static int RandomFromUserID(string userID)
+        {
+            var hash1 = _hasher.ComputeHash(Encoding.UTF8.GetBytes(userID));
+            var hueValue1 = (float)hash1[3].Combine(hash1[4])/65535;
+
+            return (int)(hueValue1 * 100);
+        }
+
         public static int Combine(this byte b1, byte concat)
         {
             int combined = b1 << 8 | concat;
@@ -236,23 +244,7 @@ namespace TotallyWholesome
 
         public static Tuple<Material, LineTextureMode> GetStyleMat(LeashStyle style)
         {
-            switch (style)
-            {
-                case LeashStyle.Classic:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment); 
-                case LeashStyle.Gradient:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Gradient, LineTextureMode.Stretch);
-                case LeashStyle.Magic:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Magic, LineTextureMode.Stretch); 
-                case LeashStyle.Chain:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Chain, LineTextureMode.RepeatPerSegment);
-                case LeashStyle.Leather:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Leather, LineTextureMode.RepeatPerSegment);
-                case LeashStyle.Custom:
-                    return new Tuple<Material, LineTextureMode>(null, LineTextureMode.RepeatPerSegment);
-                default:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
-            }
+            return new Tuple<Material, LineTextureMode>(TWAssets.Amogus, LineTextureMode.RepeatPerSegment);
         }
 
         public static HumanBodyBones? GetBodyBoneFromLeadAttachIndex(int index)

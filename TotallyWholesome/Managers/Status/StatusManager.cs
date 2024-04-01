@@ -63,6 +63,12 @@ namespace TotallyWholesome.Managers.Status
             };
         }
 
+        public bool IsTagCustom()
+        {
+            if (_ourLastStatusUpdate == null) return false;
+            return !_ourLastStatusUpdate.SpecialRank.Contains("BETA") && !_ourLastStatusUpdate.SpecialRank.Contains("ALPHA") && !_ourLastStatusUpdate.SpecialRank.Contains("DEV") && !_ourLastStatusUpdate.SpecialRank.Contains("MOD") && !_ourLastStatusUpdate.SpecialRank.Contains("<sprite=0>");
+        }
+
         public void LateSetup()
         {
         }
@@ -226,8 +232,10 @@ namespace TotallyWholesome.Managers.Status
         public void UpdateQuickMenuStatus()
         {
             if (_ourLastStatusUpdate == null) return;
-            
-            TWMenu.TWStatusUpdate.TriggerEvent(string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankColour, string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankTextColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankTextColour, _ourLastStatusUpdate.SpecialRank, _ourLastStatusUpdate.DisplaySpecialRank, _ourLastStatusUpdate.PetAutoAccept, _ourLastStatusUpdate.MasterAutoAccept, _ourLastStatusUpdate.ButtplugDevice, _ourLastStatusUpdate.PiShockDevice);
+
+            var rankFilter = _ourLastStatusUpdate.SpecialRank.Replace("<sprite=0>", "Amogus");
+
+            TWMenu.TWStatusUpdate.TriggerEvent(string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankColour, string.IsNullOrWhiteSpace(_ourLastStatusUpdate.SpecialRankTextColour) ? "#ffffff": _ourLastStatusUpdate.SpecialRankTextColour, rankFilter, _ourLastStatusUpdate.DisplaySpecialRank, _ourLastStatusUpdate.PetAutoAccept, _ourLastStatusUpdate.MasterAutoAccept, _ourLastStatusUpdate.ButtplugDevice, _ourLastStatusUpdate.PiShockDevice);
         }
 
         public void UpdatePetMasterMark(string userID, bool pet, bool master)

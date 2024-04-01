@@ -1,4 +1,5 @@
 ﻿using System;
+using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
 
 namespace TotallyWholesome.Managers.Achievements.Conditions
@@ -41,7 +42,15 @@ namespace TotallyWholesome.Managers.Achievements.Conditions
                     case Restrictions.TempUnlock:
                         clear = LeadManager.Instance.MasterPair.TempUnlockLeash;
                         break;
+                    case Restrictions.PinEither:
+                        clear = LeadManager.Instance.MasterPair.LockToProp || LeadManager.Instance.MasterPair.LockToWorld;
+                        break;
+                    case Restrictions.ChangeRemoteParam:
+                        clear = AvatarParameterManager.Instance.ChangedPetParam;
+                        break;
                 }
+
+
 
                 if (!clear) break;
             }
@@ -64,6 +73,7 @@ namespace TotallyWholesome.Managers.Achievements.Conditions
         NoSeats,
         PinWorld,
         PinProp,
+        PinEither,
         TempUnlock,
         ChangeRemoteParam
     }

@@ -4,7 +4,7 @@ using TotallyWholesome.Managers.Achievements.Conditions;
 namespace TotallyWholesome.Managers.Achievements.Achievements
 {
     [LoginCondition]
-    [DateCondition(2023, 4, 1, 2023, 4, 2)]
+    [DateCondition(2024, 4, 1, 2024, 4, 2)]
     public class AprilFools : IAchievement
     {
         public string AchievementName => "You want sum fuk?";

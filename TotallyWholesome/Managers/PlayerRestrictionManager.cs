@@ -27,11 +27,12 @@ namespace TotallyWholesome.Managers
         //Achievement flags
         public bool IsDeafened, IsBlindfolded;
         public Material BlindnessMaterial;
+        public int AvatarSwitched;
+        public bool MasterBypassApplied;
 
         private GameObject _twBlindnessObject;
         private AudioMixer _gameMainMixer;
         private AudioMixerGroup _twMixerGroup;
-        private bool _masterBypassApplied;
 
         public void Setup()
         {
@@ -113,6 +114,7 @@ namespace TotallyWholesome.Managers
 
                     Main.Instance.MainThreadQueue.Enqueue(() =>
                     {
+                        AvatarSwitched++;
                         NotificationSystem.EnqueueNotification("Avatar Switching!", $"Your master has changed your avatar to \"{response.Name}\"!", 5f, TWAssets.Handcuffs);
                         AssetManagement.Instance.LoadLocalAvatar(packet.TargetAvatar);
                     });
@@ -134,7 +136,7 @@ namespace TotallyWholesome.Managers
 
         public void ApplyDeafen(bool deafen, bool silentSwitch = false, bool masterBypass = false)
         {
-            if ((deafen && !IsDeafened) || (masterBypass != _masterBypassApplied && deafen))
+            if ((deafen && !IsDeafened) || (masterBypass != MasterBypassApplied && deafen))
             {
                 _gameMainMixer.outputAudioMixerGroup = _twMixerGroup;
                 AvatarParameterManager.Instance.TrySetParameter("TWDeafened", 1f);
@@ -150,7 +152,7 @@ namespace TotallyWholesome.Managers
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master has deafened you!", 3f, TWAssets.Handcuffs);
 
                 IsDeafened = true;
-                _masterBypassApplied = masterBypass;
+                MasterBypassApplied = masterBypass;
             }
             
             if (!deafen && IsDeafened)
@@ -166,7 +168,7 @@ namespace TotallyWholesome.Managers
                 }
 
                 IsDeafened = false;
-                _masterBypassApplied = false;
+                MasterBypassApplied = false;
                 
                 if(!silentSwitch)
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "Your master undeafened you!", 3f, TWAssets.Handcuffs);

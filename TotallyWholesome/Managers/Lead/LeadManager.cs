@@ -49,6 +49,7 @@ namespace TotallyWholesome.Managers.Lead
         public List<LeadPair> PetPairs = new();
         public bool ClearLeashWhileLeashed;
         public DateTime RecreatedLeashFromLastInstance;
+        public bool FlippedLeashAccepted;
 
         [CanBeNull] public string MasterId => MasterPair?.MasterID;
 
@@ -305,33 +306,6 @@ namespace TotallyWholesome.Managers.Lead
                 LeadRequest request = new LeadRequest()
                 {
                     Target = QuickMenuAPI.SelectedPlayerID,
-                    BoneTarget = (int)Configuration.JSONConfig.PetBoneTarget,
-                    NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, QuickMenuAPI.SelectedPlayerID),
-                    PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, QuickMenuAPI.SelectedPlayerID),
-                    LeashColour = ConfigManager.Instance.IsActive(AccessType.UseCustomLeashColour) ? Configuration.JSONConfig.LeashColour : "",
-                    Key = key
-                };
-
-                //Set FollowerRequest for handing the broadcast event
-                Instance.FollowerRequest = true;
-                //Set LastKey for validating the broadcast event
-                Instance.LastKey = key;
-                        
-                TwTask.Run(TWNetClient.Instance.SendAsync(request, TWNetMessageType.LeadRequest));
-                
-                QuickMenuAPI.ShowAlertToast($"Requested {QuickMenuAPI.SelectedPlayerName} to be your master!");
-            });
-        }
-
-        public static void RequestToBeMaster()
-        {
-            QuickMenuAPI.ShowConfirm("Send Request?", $"Are you sure you would like to request {QuickMenuAPI.SelectedPlayerName} to become your pet?", () =>
-            {
-                string key = Guid.NewGuid().ToString();
-
-                LeadRequest request = new LeadRequest()
-                {
-                    Target = QuickMenuAPI.SelectedPlayerID,
                     BoneTarget = (int)Configuration.JSONConfig.MasterBoneTarget,
                     LeadLength = Instance.TetherRange.SliderValue,
                     NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, QuickMenuAPI.SelectedPlayerID),
@@ -353,7 +327,34 @@ namespace TotallyWholesome.Managers.Lead
                 Instance.FollowerRequest = false;
                 //Set LastKey for validating the broadcast event
                 Instance.LastKey = key;
-                        
+
+                TwTask.Run(TWNetClient.Instance.SendAsync(request, TWNetMessageType.LeadRequest));
+                
+                QuickMenuAPI.ShowAlertToast($"Requested {QuickMenuAPI.SelectedPlayerName} to be your master!");
+            });
+        }
+
+        public static void RequestToBeMaster()
+        {
+            QuickMenuAPI.ShowConfirm("Send Request?", $"Are you sure you would like to request {QuickMenuAPI.SelectedPlayerName} to become your pet?", () =>
+            {
+                string key = Guid.NewGuid().ToString();
+
+                LeadRequest request = new LeadRequest()
+                {
+                    Target = QuickMenuAPI.SelectedPlayerID,
+                    BoneTarget = (int)Configuration.JSONConfig.PetBoneTarget,
+                    NoVisibleLeash = ConfigManager.Instance.IsActive(AccessType.NoVisibleLeash, QuickMenuAPI.SelectedPlayerID),
+                    PrivateLeash = ConfigManager.Instance.IsActive(AccessType.PrivateLeash, QuickMenuAPI.SelectedPlayerID),
+                    LeashColour = ConfigManager.Instance.IsActive(AccessType.UseCustomLeashColour) ? Configuration.JSONConfig.LeashColour : "",
+                    Key = key
+                };
+
+                //Set FollowerRequest for handing the broadcast event
+                Instance.FollowerRequest = true;
+                //Set LastKey for validating the broadcast event
+                Instance.LastKey = key;
+
                 TwTask.Run(TWNetClient.Instance.SendAsync(request, TWNetMessageType.LeadRequest));
                 
                 QuickMenuAPI.ShowAlertToast($"Requested {QuickMenuAPI.SelectedPlayerName} to be your pet!");
@@ -367,6 +368,8 @@ namespace TotallyWholesome.Managers.Lead
                 NotificationSystem.EnqueueNotification("Totally Wholesome", "You accepted a request that did not exist!", 4f, TWAssets.Alert);
                 return;
             }
+
+            FlippedLeashAccepted = true;
             
             if(_petRequest)
                 TWNetSendHelpers.AcceptPetRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
@@ -388,10 +391,11 @@ namespace TotallyWholesome.Managers.Lead
                 if ((ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Friends.FriendsWith(packet.RequesterID)) ||
                     !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly))
                 {
-                    if (ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest, packet.RequesterID))
+                    if (ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest, packet.RequesterID))
                     {
-                        Con.Debug("Auto accepted master request");
-                        NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a master request!", 4f, TWAssets.Crown);
+                        Con.Debug("Auto accepted pet request");
+                        NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a pet request!", 4f, TWAssets.Crown);
+                        FlippedLeashAccepted = true;
                         TWNetSendHelpers.AcceptMasterRequest(packet.Key, packet.RequesterID);
                         return;
                     }
@@ -401,7 +405,7 @@ namespace TotallyWholesome.Managers.Lead
                 _pendingRequest = packet;
                 _petRequest = false;
                 
-                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting to become your pet!");
+                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting for you to become their pet!");
             });
         }
 
@@ -415,10 +419,11 @@ namespace TotallyWholesome.Managers.Lead
                 if ((ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Friends.FriendsWith(packet.RequesterID)) ||
                     !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly))
                 {
-                    if (ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest, packet.RequesterID))
+                    if (ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest, packet.RequesterID))
                     {
-                        Con.Debug("Auto accepted pet request");
-                        NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a pet request!", 4f, TWAssets.Handcuffs);
+                        Con.Debug("Auto accepted master request");
+                        NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a master request!", 4f, TWAssets.Handcuffs);
+                        FlippedLeashAccepted = true;
                         TWNetSendHelpers.AcceptPetRequest(packet.Key, packet.RequesterID);
                         return;
                     }
@@ -428,7 +433,7 @@ namespace TotallyWholesome.Managers.Lead
                 _pendingRequest = packet;
                 _petRequest = true;
                 
-                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting for you to become their pet!");
+                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting to become your pet!");
             });
         }
 
@@ -953,8 +958,7 @@ namespace TotallyWholesome.Managers.Lead
 
             //Enable and setup renderer if a valid leader is known
             followerController.SetupRenderer(masterBone, leadPair.AreWeFollower() ? leadPair.Pet : null, leadPair.Master, leadPair.Pet, lineRenderer, 20f, 20, leadLength, 0.5f, leadPair.NoVisibleLeash, colours.Item1, colours.Item2);
-            
-            
+
             //Apply line renderer Mat
             var matinfo = TWUtils.GetStyleMat(leadPair.LeashStyle);
 

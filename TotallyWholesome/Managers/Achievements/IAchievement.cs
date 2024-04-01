@@ -36,5 +36,6 @@
         PerSecond,
         PerMinute,
         Hourly,
+        Disabled
     }
 }

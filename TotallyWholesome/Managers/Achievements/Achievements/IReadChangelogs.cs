@@ -2,14 +2,16 @@
 
 namespace TotallyWholesome.Managers.Achievements.Achievements;
 
-[LoginCondition]
-[DateCondition(2024, 02, 02, 2024, 03, 7)]
-public class BetaTester35 : IAchievement
+[HangingCondition(30)]
+[AvatarSwitchCondition(4)]
+[MasterBypassCondition]
+[SwitchableAvatarsCondition(2)]
+public class IReadChangelogs : IAchievement
 {
-    public string AchievementName => "More Beta Testing!";
-    public string AchievementDescription => "Play with Totally Wholesome 3.5 during the closed beta testing!";
+    public string AchievementName => "I Read Changelogs!";
+    public string AchievementDescription => "Have all the new features used on you at once!";
     public AchievementRank AchievementRank => AchievementRank.Gold;
-    public AchievementCheckMode AchievementCheckMode => AchievementCheckMode.Disabled;
+    public AchievementCheckMode AchievementCheckMode => AchievementCheckMode.PerSecond;
     public AchievementConditionMode AchievementConditionMode => AchievementConditionMode.All;
     public ICondition[] AchievementConditions { get; set; }
     public bool AchievementAwarded { get; set; }

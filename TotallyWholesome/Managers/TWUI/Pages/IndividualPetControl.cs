@@ -33,6 +33,9 @@ public class IndividualPetControl : ITWManager
     public ToggleButton GagPet, HeightControl;
     public Dictionary<string, Button> PetButtons = new();
 
+    //Achievement vars
+    public int MasterAvatarSwitching;
+
     private Category _petSelectCat;
     private Page _remoteParamControl;
 
@@ -329,6 +332,7 @@ public class IndividualPetControl : ITWManager
                             $"Are you sure you want to switch this pet into \"{response.Name}\"? Please make sure this avatar is appropriate for the instance type you're in!",
                             () =>
                             {
+                                MasterAvatarSwitching++;
                                 leadPair.TargetAvatar = response.Id;
                                 TWNetSendHelpers.SendMasterRemoteSettingsAsync(leadPair);
                             });

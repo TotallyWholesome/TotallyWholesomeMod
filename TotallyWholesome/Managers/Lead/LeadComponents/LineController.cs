@@ -19,6 +19,8 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         public Vector3 targetOverrideVector;
         public LineRenderer line;
         public bool IsAtMaxLeashLimit;
+        public bool IsUngrounded;
+        public DateTime HangingStart;
         private TWPlayerObject _ourPlayer;
         private TWPlayerObject _targetPlayer;
         private TWPlayerObject _pet;
@@ -34,6 +36,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         private Color _masterColour;
         private Color _petColour;
         private static readonly int ShowLead = Shader.PropertyToID("_ShowLead");
+        private static readonly int RandomSeed = Shader.PropertyToID("_RandomSeed");
 
         public void SetupRenderer(Transform target, TWPlayerObject ourPlayer, TWPlayerObject targetPlayer,
             TWPlayerObject pet, LineRenderer line, float breakDistance, int intermediateSteps, float maxDistance,
@@ -117,6 +120,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         {
             line.material.SetColor(ColourTwo, _masterColour);
             line.material.SetColor(ColourOne, _petColour);
+            line.material.SetInt(RandomSeed, TWUtils.RandomFromUserID(_pet.Uuid));
         }
 
         private void CheckLeashBreakDistance(float currentDistance)
@@ -259,8 +263,19 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                     var finalVelocity = pullNormalized * pullStrength * leashStrength * Time.fixedDeltaTime;
 
                     if (BetterBetterCharacterController.Instance.IsGrounded())
+                    {
+                        IsUngrounded = false;
                         finalVelocity *= 2;
-                    
+                    }
+                    else
+                    {
+                        if (!IsUngrounded)
+                        {
+                            IsUngrounded = true;
+                            HangingStart = DateTime.Now;
+                        }
+                    }
+
                     BetterBetterCharacterController.Instance.CharacterMovement.velocity += finalVelocity;
 
                     float dampingStrength = 5f;
@@ -277,7 +292,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                                         
                     if(pauseValue)
                         BetterBetterCharacterController.Instance.PauseGroundConstraint();
-                                    }
+                }
             }
             else
             {

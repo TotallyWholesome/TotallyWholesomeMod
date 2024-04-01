@@ -19,7 +19,7 @@ namespace TotallyWholesome
         public static Sprite Close;
         public static Sprite Checkmark;
         public static Sprite BadgeGold, BadgeSilver, BadgeBronze;
-        public static Material Classic, Chain, Gradient, Leather, Magic;
+        public static Material Classic, Chain, Gradient, Leather, Magic, Amogus;
         public static GameObject StatusPrefab, NotificationPrefab, TWRaycaster, TWBlindness;
         public static AudioMixer TWMixer;
 
@@ -74,6 +74,8 @@ namespace TotallyWholesome
                 Leather.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 Magic = _twAssetsBundle.LoadAsset<Material>("TWMagic");
                 Magic.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Amogus = _twAssetsBundle.LoadAsset<Material>("AMOGUS");
+                Amogus.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 NotificationPrefab = _twAssetsBundle.LoadAsset<GameObject>("NotificationRoot");
                 NotificationPrefab.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 TWRaycaster = _twAssetsBundle.LoadAsset<GameObject>("TWRaycaster");

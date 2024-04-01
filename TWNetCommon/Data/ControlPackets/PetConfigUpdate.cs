@@ -45,6 +45,7 @@ public class PetConfigUpdate
     }
 }
 
+//TODO: Fix the bitmask, oops.
 [Flags]
 public enum UpdateType
 {

@@ -29,7 +29,7 @@ namespace TotallyWholesome.Managers.AvatarParams
         public int EnabledParams;
         public bool ChangedPetParam;
 
-        private int _maxParams = 12;
+        private int _maxParams = 69;
         private bool _shouldUpdateParameters = false;
         private AvatarParameter _aaProfilesEntry;
         private Page _avatarRemoteConfPage;
@@ -75,7 +75,7 @@ namespace TotallyWholesome.Managers.AvatarParams
         {
             _avatarRemoteConfPage = TWMenu.Pages["AvatarRemoteConfig"];
             _avatarRemoteParamToggles = _avatarRemoteConfPage.AddCategory("Parameters", false);
-            _avatarRemoteConfPage.PageDisplayName = "Avatar Remote Config - 0/12 Selected";
+            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - 0/{_maxParams} Selected";
             UpdateAvatarRemoteConfig();
         }
 
@@ -105,7 +105,7 @@ namespace TotallyWholesome.Managers.AvatarParams
 
             if (param == null) return;
 
-            if (count > 12)
+            if (count > _maxParams)
             {
                 QuickMenuAPI.ShowNotice("Max Parameters!", $"You have too many enabled remote parameters! You can have a max of {_maxParams}!");
                 toggle.ToggleValue = false;
@@ -115,7 +115,7 @@ namespace TotallyWholesome.Managers.AvatarParams
             param.RemoteEnabled = state;
             _shouldUpdateParameters = true;
 
-            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - {count}/12 Selected";
+            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - {count}/{_maxParams} Selected";
         }
         
         public void SendUpdatedParameters(LeadPair pair)
@@ -209,6 +209,8 @@ namespace TotallyWholesome.Managers.AvatarParams
 
                         continue;
                     }
+
+                    ChangedPetParam = true;
                     
                     PlayerSetup.Instance.animatorManager.SetAnimatorParameter(update.ParameterTarget, update.ParameterValue);
                     CVR_MenuManager.Instance.SendAdvancedAvatarUpdate(update.ParameterTarget, update.ParameterValue, false);
@@ -309,7 +311,7 @@ namespace TotallyWholesome.Managers.AvatarParams
                 _avatarParamGeneratedToggles.Add(paramToggle);
             }
 
-            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - {count}/12 Selected";
+            _avatarRemoteConfPage.PageDisplayName = $"Avatar Remote Config - {count}/{_maxParams} Selected";
         }
     }
 }
