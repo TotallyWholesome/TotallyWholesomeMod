@@ -85,7 +85,6 @@ public class TWMenu : ITWManager
         RegIcon("TWClose", "TW-Close");
         RegIcon("TWTrash", "TW-Trash");
         RegIcon("TWLogoPride", "TW_Logo_Pride-sm");
-        RegIcon("TWLogoScuffed", "TWScuffed");
         RegIcon("TWTabIcon", "TW_TabIcon");
         RegIcon("UserPlusRight", "User - Plus Right");
         RegIcon("VolumeMax", "Volume - Maximum");
@@ -209,7 +208,7 @@ public class TWMenu : ITWManager
         };
 
     
-        TWRootPage.MenuTitle = $"Totally Wholesome - {BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Sus Build")}";
+        TWRootPage.MenuTitle = $"Totally Wholesome - {BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}";
     
         _initialised = true;
         UpdateMenuSubtitle();

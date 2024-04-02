@@ -231,9 +231,9 @@ namespace TotallyWholesome
         public static int RandomFromUserID(string userID)
         {
             var hash1 = _hasher.ComputeHash(Encoding.UTF8.GetBytes(userID));
-            var hueValue1 = (float)hash1[3].Combine(hash1[4])/65535;
+            var floatValue = (float)hash1[3].Combine(hash1[4])/65535;
 
-            return (int)(hueValue1 * 100);
+            return (int)(floatValue * 100);
         }
 
         public static int Combine(this byte b1, byte concat)
@@ -244,7 +244,25 @@ namespace TotallyWholesome
 
         public static Tuple<Material, LineTextureMode> GetStyleMat(LeashStyle style)
         {
-            return new Tuple<Material, LineTextureMode>(TWAssets.Amogus, LineTextureMode.RepeatPerSegment);
+            switch (style)
+            {
+                case LeashStyle.Classic:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
+                case LeashStyle.Gradient:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Gradient, LineTextureMode.Stretch);
+                case LeashStyle.Magic:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Magic, LineTextureMode.Stretch);
+                case LeashStyle.Chain:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Chain, LineTextureMode.RepeatPerSegment);
+                case LeashStyle.Leather:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Leather, LineTextureMode.RepeatPerSegment);
+                case LeashStyle.Amogus:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Amogus, LineTextureMode.RepeatPerSegment);
+                case LeashStyle.Custom:
+                    return new Tuple<Material, LineTextureMode>(null, LineTextureMode.RepeatPerSegment);
+                default:
+                    return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
+            }
         }
 
         public static HumanBodyBones? GetBodyBoneFromLeadAttachIndex(int index)

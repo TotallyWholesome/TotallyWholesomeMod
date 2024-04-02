@@ -10,7 +10,7 @@ namespace TotallyWholesome.Managers.Achievements.Achievements
         public string AchievementName => "You want sum fuk?";
         public string AchievementDescription => "Connect to TWNet on April 1st 2023!";
         public AchievementRank AchievementRank => AchievementRank.Gold;
-        public AchievementCheckMode AchievementCheckMode => AchievementCheckMode.Hourly;
+        public AchievementCheckMode AchievementCheckMode => AchievementCheckMode.Disabled;
         public AchievementConditionMode AchievementConditionMode => AchievementConditionMode.All;
         public ICondition[] AchievementConditions { get; set; }
         public bool AchievementAwarded { get; set; }

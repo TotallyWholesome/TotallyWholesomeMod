@@ -252,8 +252,6 @@
     <EmbeddedResource Include="Images\ToggleOn.png" />
     <None Remove="Images\ExternalLink.png" />
     <EmbeddedResource Include="Images\ExternalLink.png" />
-    <None Remove="Images\TWScuffed.png" />
-    <EmbeddedResource Include="Images\TWScuffed.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ILRepack.Lib.MSBuild" Version="2.1.18" />

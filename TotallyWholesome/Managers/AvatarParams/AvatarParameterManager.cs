@@ -29,7 +29,7 @@ namespace TotallyWholesome.Managers.AvatarParams
         public int EnabledParams;
         public bool ChangedPetParam;
 
-        private int _maxParams = 69;
+        private readonly int _maxParams = 36;
         private bool _shouldUpdateParameters = false;
         private AvatarParameter _aaProfilesEntry;
         private Page _avatarRemoteConfPage;

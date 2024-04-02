@@ -35,12 +35,13 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         private bool _tempUnlockLeash = false;
         private Color _masterColour;
         private Color _petColour;
+        private int _randomSeed;
         private static readonly int ShowLead = Shader.PropertyToID("_ShowLead");
         private static readonly int RandomSeed = Shader.PropertyToID("_RandomSeed");
 
         public void SetupRenderer(Transform target, TWPlayerObject ourPlayer, TWPlayerObject targetPlayer,
             TWPlayerObject pet, LineRenderer line, float breakDistance, int intermediateSteps, float maxDistance,
-            float sagAmplitude, bool noVisibleLeash, Color masterColour, Color petColour)
+            float sagAmplitude, bool noVisibleLeash, Color masterColour, Color petColour, int randomSeed)
         {
             line.enabled = true;
 
@@ -55,6 +56,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
             _lineSteps = intermediateSteps + 2;
             _sagDirection = Physics.gravity.normalized;
             _noVisibleLeash = noVisibleLeash;
+            _randomSeed = randomSeed;
 
             if (!_noVisibleLeash)
             {
@@ -106,12 +108,14 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
             ApplyColours();
         }
 
-        public void UpdateLineColours(Color? masterColour = null, Color? petColour = null)
+        public void UpdateLineColours(Color? masterColour = null, Color? petColour = null, int? randomSeed = null)
         {
             if (masterColour.HasValue)
                 _masterColour = masterColour.Value;
             if (petColour.HasValue)
                 _petColour = petColour.Value;
+            if (randomSeed.HasValue)
+                _randomSeed = randomSeed.Value;
 
             ApplyColours();
         }
@@ -120,7 +124,7 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
         {
             line.material.SetColor(ColourTwo, _masterColour);
             line.material.SetColor(ColourOne, _petColour);
-            line.material.SetInt(RandomSeed, TWUtils.RandomFromUserID(_pet.Uuid));
+            line.material.SetInt(RandomSeed, _randomSeed);
         }
 
         private void CheckLeashBreakDistance(float currentDistance)

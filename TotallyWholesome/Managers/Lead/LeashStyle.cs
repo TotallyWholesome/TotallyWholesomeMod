@@ -7,6 +7,7 @@
         Magic,
         Chain,
         Leather,
+        Amogus,
         Custom,
     }
 }
