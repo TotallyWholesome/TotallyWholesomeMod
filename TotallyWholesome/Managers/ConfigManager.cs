@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using ABI_RC.Core.Base;
 using BTKUILib;
 using BTKUILib.UIObjects.Components;
 using Newtonsoft.Json;
@@ -215,11 +216,10 @@ namespace TotallyWholesome.Managers
                     if (!value)
                         TWNetClient.Instance.AbortInstanceChange();
                     break;
-                //TODO: MUFFLE
-                /*case AccessType.EnableMuffledMode:
+                case AccessType.EnableMuffledMode:
                     if (!value)
                         AudioManagement.SetMicrophoneActive(false);
-                    break;*/
+                    break;
                 case AccessType.UseOldHudMessage:
                     NotificationSystem.UseCVRNotificationSystem = value;
                     break;
@@ -334,11 +334,10 @@ namespace TotallyWholesome.Managers
             DialogMessageUser = "Allowing Force Mute will allow your master to mute you at any time! You can disable this setting to unlock it.", FeatureEnum = NetworkedFeature.AllowForceMute)]
         AllowForceMute = 0x1002,
 
-        //TODO: MAKE THIS WORK AGAIN AAAAA
-        /*[Access(Category = "SettingsPet", Name = "Enable Muffled Mode",
+        [Access(Category = "SettingsPet", Name = "Enable Muffled Mode",
             DescriptionGlobal = "Instead of muted you will be muffled",
             Global = true, User = false)]
-        EnableMuffledMode = 0x1003,*/
+        EnableMuffledMode = 0x1003,
 
         [Access(Category = "SettingsPet", Name = "Enable Toy Control",
             DescriptionGlobal = "Enable Buttplug (Requires Restart)",

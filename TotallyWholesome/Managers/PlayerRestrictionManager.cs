@@ -143,7 +143,7 @@ namespace TotallyWholesome.Managers
 
                 foreach (var player in CVRPlayerManager.Instance.NetworkPlayers)
                 {
-                    var vivoxSource = player.PuppetMaster.GetPlayerVivoxAudioSource();
+                    var vivoxSource = player.PuppetMaster.GetPlayerCommsAudioSource();
                     if(vivoxSource != null)
                         vivoxSource.outputAudioMixerGroup = masterBypass && player.Uuid == LeadManager.Instance.MasterId ? null : _twMixerGroup;
                 }
@@ -162,7 +162,7 @@ namespace TotallyWholesome.Managers
 
                 foreach (var player in CVRPlayerManager.Instance.NetworkPlayers)
                 {
-                    var vivoxSource = player.PuppetMaster.GetPlayerVivoxAudioSource();
+                    var vivoxSource = player.PuppetMaster.GetPlayerCommsAudioSource();
                     if(vivoxSource != null)
                         vivoxSource.outputAudioMixerGroup = null;
                 }

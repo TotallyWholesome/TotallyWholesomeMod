@@ -179,7 +179,7 @@ namespace TotallyWholesome.Managers.AvatarParams
 
         private void TrySetParameterMain(string name, float value)
         {
-            PlayerSetup.Instance.animatorManager.SetAnimatorParameter(name, value);
+            PlayerSetup.Instance.animatorManager.SetParameter(name, value);
         }
         
         private void MasterRemoteControlEvent(MasterRemoteControl packet)
@@ -212,7 +212,7 @@ namespace TotallyWholesome.Managers.AvatarParams
 
                     ChangedPetParam = true;
                     
-                    PlayerSetup.Instance.animatorManager.SetAnimatorParameter(update.ParameterTarget, update.ParameterValue);
+                    PlayerSetup.Instance.animatorManager.SetParameter(update.ParameterTarget, update.ParameterValue);
                     CVR_MenuManager.Instance.SendAdvancedAvatarUpdate(update.ParameterTarget, update.ParameterValue, false);
                 }
             });

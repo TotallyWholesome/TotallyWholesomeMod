@@ -32,8 +32,9 @@ namespace TotallyWholesome
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
         private static FieldInfo _mlVersionGetter = typeof(MelonLoader.BuildInfo).GetField(nameof(MelonLoader.BuildInfo.Version), BindingFlags.Public | BindingFlags.Static);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static FieldInfo _vivoxPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static FieldInfo _vivoxAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Components.VivoxParticipantPipeline").GetField("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _commsPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static PropertyInfo _commsAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.Components.Comms_AudioTap").GetProperty("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
         private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
         private static Dictionary<string, TWPlayerObject> _players = new();
         private static TWPlayerObject _ourPlayer;
@@ -65,12 +66,12 @@ namespace TotallyWholesome
             _players.Clear();
         }
 
-        public static AudioSource GetPlayerVivoxAudioSource(this PuppetMaster pm)
+        public static AudioSource GetPlayerCommsAudioSource(this PuppetMaster pm)
         {
-            var vivoxPipeline = _vivoxPipelineGetter.GetValue(pm);
-            if (vivoxPipeline == null) return null;
-            var source = _vivoxAudioSourceGetter.GetValue(vivoxPipeline) as AudioSource;
-            return source;
+            var commsPipeline = _commsPipelineGetter.GetValue(pm);
+            if (commsPipeline == null) return null;
+            AudioSource commsAudioSource = _commsAudioSourceGetter.GetValue(commsPipeline) as AudioSource;
+            return commsAudioSource;
         }
 
         public static void AddCVRNotification(string inviteID, string senderUsername, string inviteText)

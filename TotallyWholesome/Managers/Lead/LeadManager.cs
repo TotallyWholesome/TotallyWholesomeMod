@@ -493,18 +493,18 @@ namespace TotallyWholesome.Managers.Lead
                     //Clear before sending to ensure the gag message appears on top
                     NotificationSystem.ClearNotification();
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "You have been gagged!", 3f, TWAssets.MicrophoneOff);
-                    //if (!ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId))
+                    if (!ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId))
                         AudioManagement.SetMicrophoneActive(false);
 
                     Patches.IsForceMuted = true;
-                    //Patches.IsMuffled = ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId);
+                    Patches.IsMuffled = ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId);
                 }
                 else if (!mute && Patches.IsForceMuted)
                 {
                     NotificationSystem.ClearNotification();
                     NotificationSystem.EnqueueNotification("Totally Wholesome", "You have been ungagged!", 3f, TWAssets.MicrophoneOff);
                     Patches.IsForceMuted = false;
-                    //Patches.IsMuffled = false;
+                    Patches.IsMuffled = false;
                 }
                 
                 //Always reapply TWGag state

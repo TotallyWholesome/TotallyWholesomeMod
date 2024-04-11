@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.IO.Instancing;
@@ -68,7 +69,7 @@ namespace TotallyWholesome
             ApplyPatches(typeof(InstancesPatches));
             ApplyPatches(typeof(PuppetMasterPatch));
             ApplyPatches(typeof(ViewManagerPatches));
-            //ApplyPatches(typeof(MicrophoneCapturePatch));
+            ApplyPatches(typeof(MicrophoneCapturePatch));
             ApplyPatches(typeof(PlayerSetupPatches));
             ApplyPatches(typeof(AdvancedAvatarSettingsPatch));
             ApplyPatches(typeof(MovementSystemPatches));
@@ -303,8 +304,6 @@ namespace TotallyWholesome
         }
     }
 
-    //TODO: UNFUCKLE THIS SHIT AAAA
-    /*
     [HarmonyPatch]
     public class MicrophoneCapturePatch
     {
@@ -317,59 +316,32 @@ namespace TotallyWholesome
 
         private static float _in1, _in2, _out1, _out2;
 
-        public static StringWriter Writer;
-        
-        private delegate void vx_after_capture_audio_read_t(IntPtr callback_handle, IntPtr session_group_handle, IntPtr initial_target_uri, IntPtr pcm_frames, int pcm_frame_count, int audio_frame_rate, int channels_per_frame);
-
-        [MonoPInvokeCallback(typeof(vx_after_capture_audio_read_t))]
-        private static unsafe void vx_after_capture_audio_read(IntPtr callback_handle, IntPtr session_group_handle, IntPtr initial_target_uri, IntPtr pcm_frames, int pcm_frame_count, int audio_frame_rate, int channels_per_frame)
-        {
-            try
-            {
-                if (session_group_handle == IntPtr.Zero || initial_target_uri == IntPtr.Zero || pcm_frames == IntPtr.Zero || !(Patches.IsForceMuted && Patches.IsMuffled)) return;
-
-                int pcmDataCount = pcm_frame_count * channels_per_frame;
-                
-                if(pcmDataCount <= 0) return;
-
-                short* pcmFrameData = (short*)pcm_frames;
-
-                for (int i = 0; i < pcmDataCount; i++)
-                {
-                    var data = pcmFrameData[i];
-                    var fixedFloat = (float)(data - short.MinValue) / (short.MaxValue - short.MinValue);
-                    var output = _b[0] * fixedFloat+ _b[1] * _in1 + _b[2] * _in2 - _a[1] * _out1 - _a[2] * _out2;
-            
-                    _in2 = _in1;
-                    _in1 = fixedFloat;
-                    _out2 = _out1;
-                    _out1 = output;
-                    
-                    pcmFrameData[i] = (short)(output * (short.MaxValue - short.MinValue) + short.MinValue);
-                    
-                   Writer.WriteLine("Data: Orig - " + fixedFloat + " Adj - " + output);
-                }
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-
         static MethodBase TargetMethod()
         {
-            return typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Vivox.Internal.VivoxPCMReader").GetMethod("Initialize", BindingFlags.Static | BindingFlags.NonPublic);
-        }
-        static void Postfix(ref vx_sdk_config_t config)
-        {
-            config.pf_on_audio_unit_after_capture_audio_read = (SWIGTYPE_p_f_p_void_p_q_const__char_p_q_const__char_p_short_int_int_int__void)Activator.CreateInstance(typeof(SWIGTYPE_p_f_p_void_p_q_const__char_p_q_const__char_p_short_int_int_int__void), BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { Marshal.GetFunctionPointerForDelegate<vx_after_capture_audio_read_t>(new vx_after_capture_audio_read_t(vx_after_capture_audio_read)), true }, null, null);
-            Con.Debug("Created and set our after_capture_audio_read delegate");
-            
             RecalculateCoefficients();
-            Writer = new StringWriter();
+            return typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.FMOD.FMOD_AudioCapture").GetMethod("TransmitPacket", BindingFlags.Instance | BindingFlags.NonPublic);
         }
-        
-        public static void RecalculateCoefficients()
+        static bool Prefix(ref float[] data)
+        {
+            if (!Patches.IsMuffled)
+                return true;
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                var output = _b[0] * data[i] + _b[1] * _in1 + _b[2] * _in2 - _a[1] * _out1 - _a[2] * _out2;
+
+                _in2 = _in1;
+                _in1 = data[i];
+                _out2 = _out1;
+                _out1 = output;
+
+                data[i] = output;
+            }
+
+            return true;
+        }
+
+        private static void RecalculateCoefficients()
         {
             var omega = 2 * Math.PI * MagicFilterLevel;
             var alpha = Math.Sin(omega) / (2 * QLevel);
@@ -389,8 +361,8 @@ namespace TotallyWholesome
             
             _in1 = _in2 = _out1 = _out2 = 0;
         }
-        
-        public static void Normalize()
+
+        private static void Normalize()
         {
             var a0 = _a[0];
 
@@ -408,21 +380,17 @@ namespace TotallyWholesome
             for (var i = 0; i < _b.Length; _b[i++] /= a0) { }
         }
     }
-    */
 
-    [HarmonyPatch]
+    [HarmonyPatch(typeof(AudioManagement))]
     class MicrophoneMutePatch
     {
-        static MethodBase TargetMethod()
+        [HarmonyPatch(nameof(AudioManagement.SetMicrophoneActive))]
+        [HarmonyPrefix]
+        static void SetMicActivePrefix(ref bool active)
         {
-            return typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.VivoxServiceManager").GetProperty("InputDeviceMute", BindingFlags.Instance | BindingFlags.NonPublic)?.SetMethod;
-        }
-        
-        static void Prefix(ref bool __0)
-        {
-            if (Patches.IsForceMuted)// && !Patches.IsMuffled)
+            if (Patches.IsForceMuted && !Patches.IsMuffled)
             {
-                __0 = true;
+                active = true;
 
                 if (DateTime.Now.Subtract(Patches.TimeSinceLastUnmute).Seconds >= 20)
                 {
