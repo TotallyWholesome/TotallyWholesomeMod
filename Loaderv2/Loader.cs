@@ -1,6 +1,5 @@
 ﻿using MelonLoader;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,9 +8,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Harmony;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Semver;
 using UnityEngine;
 
@@ -22,7 +19,7 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.3.5";
+        public const string Version = "3.3.6";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 
@@ -42,6 +39,7 @@ namespace WholesomeLoader
         private bool _paranoidMode;
         
         private Config _configJson;
+        private HttpClient _wlClient;
         private TWAssemblyVersion _selectedVersion = new();
 
         public override void OnInitializeMelon()
@@ -52,6 +50,11 @@ namespace WholesomeLoader
                 Directory.CreateDirectory(NewConfigRoot);
 
             LoadVersionData();
+
+            Con.Debug($"Current version: {_currentVersion}");
+
+            _wlClient = new HttpClient();
+            _wlClient.DefaultRequestHeaders.Add("User-Agent", "WholesomeLoader");
 
             Assembly twAssembly = null;
 
@@ -85,8 +88,7 @@ namespace WholesomeLoader
             {
                 try
                 {
-                    _configJson = JsonConvert.DeserializeObject<Config>(File.ReadAllText(NewConfigRoot + ConfigFile));
-                    //TODO: fix the lack of null check after deserialize, oops.
+                    _configJson = JsonConvert.DeserializeObject<Config>(File.ReadAllText(NewConfigRoot + ConfigFile)) ?? new Config();
                 }
                 catch (Exception e)
                 {
@@ -107,6 +109,8 @@ namespace WholesomeLoader
                 Con.Msg($"WholesomeLoader will attempt to load branch {_configJson.SelectedBranch}! If you find issues please report them in the appropriate channels!");
 
             var loadCached = CheckNewAssemblyVersion();
+
+            Con.Debug($"LoadCached: {loadCached} {_selectedVersion}");
 
             if(twAssembly == null)
                 if (!CheckCompatibility())
@@ -211,10 +215,6 @@ namespace WholesomeLoader
 
         private bool CheckNewAssemblyVersion()
         {
-            using HttpClient client = new HttpClient();
-            
-            client.DefaultRequestHeaders.Add("User-Agent", "WholesomeLoader");
-
             try
             {
                 var targetUrl = VersionsURL;
@@ -222,7 +222,7 @@ namespace WholesomeLoader
                 if (_configJson != null)
                     targetUrl += $"/{_configJson.LoginKey}";
                 
-                Task<HttpResponseMessage> versionRequest = client.GetAsync(targetUrl);
+                Task<HttpResponseMessage> versionRequest = _wlClient.GetAsync(targetUrl);
                 versionRequest.Wait();
 
                 HttpResponseMessage message = versionRequest.Result;
@@ -277,6 +277,8 @@ namespace WholesomeLoader
             if(File.Exists(NewConfigRoot + "TotallyWholesome.dll"))
                 md5Sum = GetMD5(NewConfigRoot + "TotallyWholesome.dll");
 
+            Con.Debug($"getTW_Assy {loadCached} {md5Sum} Compared to: {_selectedVersion.AssemblyHash}");
+
             if (loadCached && md5Sum != null)
             {
                 if (_selectedVersion.AssemblyHash != null && (md5Sum.Equals(_selectedVersion.AssemblyHash) || string.IsNullOrWhiteSpace(_selectedVersion.AssemblyHash)))
@@ -302,19 +304,15 @@ namespace WholesomeLoader
                 }
             }
 
-            using HttpClient client = new HttpClient();
-            
-            client.DefaultRequestHeaders.Add("User-Agent", "WholesomeLoader");
-
             try
             {
                 string finalUrl = URL;
 
-                if(!string.IsNullOrWhiteSpace(_configJson.LoginKey) && !string.IsNullOrWhiteSpace(_configJson.SelectedBranch))
+                if (!string.IsNullOrWhiteSpace(_configJson.LoginKey) && !string.IsNullOrWhiteSpace(_configJson.SelectedBranch))
                     finalUrl += $"/{_configJson.LoginKey}/{_selectedVersion.Branch}";
 
-                Task<HttpResponseMessage> assyRequest = client.GetAsync(finalUrl);
-                assyRequest.Wait();
+                Task<HttpResponseMessage> assyRequest = _wlClient.GetAsync(finalUrl);
+                assyRequest.Wait(20000);
                 HttpResponseMessage message = assyRequest.Result;
                 switch (message.StatusCode)
                 {
@@ -336,6 +334,29 @@ namespace WholesomeLoader
                         Con.Error($"An unknown error has occured! HTTP Status Code: {message.StatusCode} | Unable to load TotallyWholesome!");
                         break;
                 }
+            }
+            catch (WebException w)
+            {
+                switch (w.Status)
+                {
+                    case WebExceptionStatus.ConnectFailure:
+                        Con.Error("WholesomeLoader was unable to connect to the TW API! Please check your connection as well as the TW Discord for any updates!");
+                        break;
+                    case WebExceptionStatus.NameResolutionFailure:
+                        Con.Error("WholesomeLoader encountered an issue with resolving the DNS for the TW API, check that your DNS is functional or alternatively use a reliable public DNS like cloudflare!");
+                        break;
+                    case WebExceptionStatus.RequestCanceled:
+                        Con.Error("WholesomeLoader's request was cancelled, this could potentially be related to DNS not resolving, or potentially the TW API not responding properly!");
+                        break;
+                    case WebExceptionStatus.Timeout:
+                        Con.Error("WholesomeLoader's request has timed out! Check the TW Discord for any status updates or check that your network is working properly!");
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                Con.Error("You can check that you're able to connect to the TW API by visiting https://api.potato.moe/api-tw/v3/getAssyVersions, you should see a response!");
+                Con.Error("WholesomeLoader was unable to retrieve Totally Wholesome... Unable to start!");
+                Con.Error(w);
             }
             catch(Exception e)
             {
@@ -400,12 +421,15 @@ namespace WholesomeLoader
             set => MaxVer = new CVRVersion(value);
             get => MaxVer?.VersionString;
         }
-        
-        
 
         public bool IsValid()
         {
             return !string.IsNullOrWhiteSpace(AssemblyHash) && !string.IsNullOrWhiteSpace(AssemblyName);
+        }
+
+        public override string ToString()
+        {
+            return $"[TWAssemblyVersion] {Branch}, {BranchPrettyName}, {TWVersionInfo}, {AssemblyName} {AssemblyHash}";
         }
     }
     
