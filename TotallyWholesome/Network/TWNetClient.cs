@@ -431,6 +431,9 @@ namespace TotallyWholesome.Network
 
             if (_connectedToGS)
                 return;
+            
+            if (MetaPort.Instance.IsHomeInstance)
+                return;
 
             _connectedToGS = true;
 

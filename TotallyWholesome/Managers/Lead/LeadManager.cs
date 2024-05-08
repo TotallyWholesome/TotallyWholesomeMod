@@ -385,6 +385,7 @@ namespace TotallyWholesome.Managers.Lead
             
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
+                var requester = TWUtils.GetPlayerFromPlayerlist(packet.RequesterID);
 
                 if ((ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Friends.FriendsWith(packet.RequesterID)) ||
                     !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly))
@@ -392,13 +393,12 @@ namespace TotallyWholesome.Managers.Lead
                     if (ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest, packet.RequesterID))
                     {
                         Con.Debug("Auto accepted master request");
-                        NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a master request!", 4f, TWAssets.Crown);
+                        NotificationSystem.EnqueueNotification("Totally Wholesome", $"You have auto accepted a master request from {requester.Username}!", 4f, TWAssets.Crown);
                         TWNetSendHelpers.AcceptMasterRequest(packet.Key, packet.RequesterID);
                         return;
                     }
                 }
 
-                var requester = TWUtils.GetPlayerFromPlayerlist(packet.RequesterID);
                 _pendingRequest = packet;
                 _petRequest = false;
                 
@@ -412,6 +412,7 @@ namespace TotallyWholesome.Managers.Lead
 
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
+                var requester = TWUtils.GetPlayerFromPlayerlist(packet.RequesterID);
 
                 if ((ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Friends.FriendsWith(packet.RequesterID)) ||
                     !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly))
@@ -419,13 +420,12 @@ namespace TotallyWholesome.Managers.Lead
                     if (ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest, packet.RequesterID))
                     {
                         Con.Debug("Auto accepted pet request");
-                        NotificationSystem.EnqueueNotification("Totally Wholesome", "You have auto accepted a pet request!", 4f, TWAssets.Handcuffs);
+                        NotificationSystem.EnqueueNotification("Totally Wholesome", $"You have auto accepted a pet request from {requester.Username}!", 4f, TWAssets.Handcuffs);
                         TWNetSendHelpers.AcceptPetRequest(packet.Key, packet.RequesterID);
                         return;
                     }
                 }
 
-                var requester = TWUtils.GetPlayerFromPlayerlist(packet.RequesterID);
                 _pendingRequest = packet;
                 _petRequest = true;
                 
