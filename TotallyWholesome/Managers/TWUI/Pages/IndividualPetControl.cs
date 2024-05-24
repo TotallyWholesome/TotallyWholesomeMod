@@ -30,7 +30,6 @@ public class IndividualPetControl : ITWManager
 
     public LeadPair SelectedLeadPair;
     public string SelectedPetName, SelectedPetID;
-    public ToggleButton GagPet, HeightControl;
     public Dictionary<string, Button> PetButtons = new();
 
     //Achievement vars
@@ -56,6 +55,7 @@ public class IndividualPetControl : ITWManager
     //Individual Pet Controls
     public SliderFloat StrengthIPC;
     public SliderFloat DurationIPC;
+    public ToggleButton HeightControl;
     public SliderFloat ShockHeightIPC;
     public SliderFloat ShockHeightStrengthMinIPC;
     public SliderFloat ShockHeightStrengthMaxIPC;
@@ -413,7 +413,6 @@ public class IndividualPetControl : ITWManager
 
     private void UpdateIPCPage()
     {
-        GagPet.ToggleValue = SelectedLeadPair.ForcedMute;
         HeightControl.ToggleValue = SelectedLeadPair.Shocker.HeightControl.Enabled;
         LeadManager.Instance.TetherRangeIPC.SetSliderValue(SelectedLeadPair.LeadLength);
         ButtplugManager.Instance.ToyStrengthIPC.SetSliderValue(SelectedLeadPair.ToyStrength);
