@@ -289,10 +289,15 @@ namespace TotallyWholesome.Managers.AvatarParams
 
         private void UpdateAvatarRemoteConfig()
         {
-            foreach(var toggle in _avatarParamGeneratedToggles)
-                toggle.Delete();
+            if (_avatarRemoteParamToggles != null)
+            {
+                foreach (var toggle in _avatarParamGeneratedToggles)
+                    toggle.Delete();
+            }
 
             _avatarParamGeneratedToggles.Clear();
+
+            if (_avatarRemoteParamToggles == null) return;
 
             var count = 0;
 
