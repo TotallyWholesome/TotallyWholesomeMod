@@ -390,7 +390,7 @@ namespace TotallyWholesome
         {
             if (Patches.IsForceMuted && !Patches.IsMuffled)
             {
-                active = true;
+                active = false;
 
                 if (DateTime.Now.Subtract(Patches.TimeSinceLastUnmute).Seconds >= 20)
                 {
