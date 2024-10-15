@@ -36,6 +36,8 @@ namespace TotallyWholesome
 
         private static PropertyInfo _commsAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.Components.Comms_AudioTap").GetProperty("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
         private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
+        private static PropertyInfo _currentInstancePrivacyGetter = typeof(MetaPort).GetProperty("CurrentInstancePrivacy");
+        private static FieldInfo _currentInstancePrivacyField = typeof(MetaPort).GetField("CurrentInstancePrivacy");
         private static Dictionary<string, TWPlayerObject> _players = new();
         private static TWPlayerObject _ourPlayer;
         public static readonly RecyclableMemoryStreamManager RecyclableMemory = new();
@@ -59,6 +61,13 @@ namespace TotallyWholesome
             }
 
             return sb.ToString();
+        }
+
+        public static string GetCurrentInstancePrivacy()
+        {
+            if (_currentInstancePrivacyGetter != null)
+                return (string)_currentInstancePrivacyGetter.GetValue(MetaPort.Instance);
+            return (string)_currentInstancePrivacyField.GetValue(MetaPort.Instance);
         }
 
         public static void LeaveWorld()

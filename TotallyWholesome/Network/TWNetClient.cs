@@ -309,7 +309,7 @@ namespace TotallyWholesome.Network
             _waitingForGSConnection.Add(() =>
             {
                 if (LeadManager.Instance.LastFollowerPairKeys.Contains(packet.Key) && Friends.FriendsWith(packet.UserID) &&
-                    Enum.TryParse<Instances.InstancePrivacyType>(MetaPort.Instance.CurrentInstancePrivacy, out var privacy))
+                    Enum.TryParse<Instances.InstancePrivacyType>(TWUtils.GetCurrentInstancePrivacy(), out var privacy))
                 {
                     if (privacy == Instances.InstancePrivacyType.EveryoneCanInvite)
                     {

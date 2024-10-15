@@ -43,8 +43,6 @@ namespace TotallyWholesome
         public static bool IsFlightLocked;
         public static bool AreSeatsLocked;
         public static string LastRichPresenseUpdate;
-        public static string TargetWorldID;
-        public static string TargetInstanceID;
         public static List<Invite_t> TWInvites = new();
 
         public static DateTime TimeSinceLastUnmute = DateTime.Now;
@@ -168,16 +166,17 @@ namespace TotallyWholesome
         }
     }
 
-    [HarmonyPatch(typeof(Instances))]
+    [HarmonyPatch]
     class InstancesPatches
     {
-        [HarmonyPatch(nameof(Instances.SetJoinTarget))]
-        [HarmonyPostfix]
-        static void SetJoinTarget(string __0, string __1)
+        static MethodBase TargetMethod()
         {
-            Patches.TargetWorldID = __1;
-            Patches.TargetInstanceID = __0;
-            
+            var tryNewTarget = typeof(Instances).GetMethods(BindingFlags.Public | BindingFlags.Static).FirstOrDefault(x => x.Name == "SetJoinTarget" && x.GetParameters().Length == 1);
+            return tryNewTarget != null ? tryNewTarget : typeof(Instances).GetMethod("SetJoinTarget", BindingFlags.Public | BindingFlags.Static);
+        }
+
+        static void Postfix()
+        {
             Patches.OnChangingInstance?.Invoke();
         }
     }
