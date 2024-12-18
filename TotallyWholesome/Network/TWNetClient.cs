@@ -22,6 +22,7 @@ using MessagePack;
 using TotallyWholesome.Managers;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.TWUI;
+using TotallyWholesome.Managers.TWUI.Pages;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Utils;
 using TWNetCommon;
@@ -53,6 +54,8 @@ namespace TotallyWholesome.Network
         public string WholesomeLoaderLocation;
         public string TargetInstanceID;
         public bool HasBeenRatelimited;
+        public TagData CurrentTagData;
+        public bool CanUseTag;
 
         private Task _clientPollTask;
         private string _targetWorld;
@@ -102,7 +105,7 @@ namespace TotallyWholesome.Network
             {
                 DisplayName = TWUtils.GetSelfUsername(),
                 UserID = MetaPort.Instance.ownerId,
-                TWVersion = BuildInfo.TWVersion,
+                TWVersion = BuildInfo.TWVersion + "+" + ThisAssembly.Git.Commit,
                 Key = Configuration.JSONConfig.LoginKey,
                 WLVersion = wholesomeLoader.Info.Version
             };

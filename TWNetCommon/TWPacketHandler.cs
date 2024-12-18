@@ -108,7 +108,6 @@ namespace TWNetCommon
                         var pcu = MessagePackSerializer.Deserialize<PetConfigUpdate>(bytes, out bytesRead);
                         OnPetConfigUpdate(pcu, conn);
                         break;
-
                     case TWNetMessageType.ShockerControl:
                         var shockerControl = MessagePackSerializer.Deserialize<ShockerControl>(bytes, out bytesRead);
                         OnShockerControl(shockerControl, conn);
@@ -117,7 +116,10 @@ namespace TWNetCommon
                         var shockerHeight = MessagePackSerializer.Deserialize<HeightControl>(bytes, out bytesRead);
                         OnHeightControl(shockerHeight, conn);
                         break;
-
+                    case TWNetMessageType.TagDataUpdate:
+                        var tagData = MessagePackSerializer.Deserialize<TagData>(bytes, out bytesRead);
+                        OnTagDataUpdate(tagData, conn);
+                        break;
                     default:
                         throw new Exception("Packet not registered in TWPacketHandler!");
                 }
@@ -165,5 +167,6 @@ namespace TWNetCommon
         public virtual void OnHeightControl(HeightControl update, TConnection conn) { }
         public virtual void OnPetConfigUpdate(PetConfigUpdate update, TConnection conn){ }
         public virtual void OnByteLengthMismatch(TConnection conn, int readBytes, int totalBytes) { }
+        public virtual void OnTagDataUpdate(TagData data, TConnection conn) { }
     }
 }

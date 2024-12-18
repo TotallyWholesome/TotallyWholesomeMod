@@ -45,11 +45,10 @@ public class PetConfigUpdate
     }
 }
 
-//TODO: Fix the bitmask, oops.
 [Flags]
 public enum UpdateType
 {
-    RemoteParamUpdate,
-    AvatarListUpdate,
-    AllowedFeaturesUpdate
+    RemoteParamUpdate = 0,
+    AvatarListUpdate = 1,
+    AllowedFeaturesUpdate = 2
 }

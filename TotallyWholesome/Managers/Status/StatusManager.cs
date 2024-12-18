@@ -63,12 +63,6 @@ namespace TotallyWholesome.Managers.Status
             };
         }
 
-        public bool IsTagCustom()
-        {
-            if (_ourLastStatusUpdate == null) return false;
-            return !_ourLastStatusUpdate.SpecialRank.Contains("BETA") && !_ourLastStatusUpdate.SpecialRank.Contains("ALPHA") && !_ourLastStatusUpdate.SpecialRank.Contains("DEV") && !_ourLastStatusUpdate.SpecialRank.Contains("MOD") && !_ourLastStatusUpdate.SpecialRank.Contains("<sprite=0>");
-        }
-
         public void LateSetup()
         {
         }
@@ -221,6 +215,11 @@ namespace TotallyWholesome.Managers.Status
                     //Updated client, show complete status indicator
                     component.UpdateAutoAcceptGroup(packet.PiShockDevice, packet.ButtplugDevice, packet.PetAutoAccept, packet.MasterAutoAccept);
                 }
+
+                //Enable beta icon if build is release-beta
+                #if BETA
+                component.backgroundImage.sprite = packet.ActiveBetaUser ? TWAssets.TWTagBetaIcon : TWAssets.TWTagNormalIcon;
+                
 
                 if (ColorUtility.TryParseHtmlString(packet.SpecialRankColour, out var colour))
                     component.specialMark.color = colour;

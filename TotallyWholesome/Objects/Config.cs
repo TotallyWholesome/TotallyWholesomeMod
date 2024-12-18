@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Objects.ConfigObjects;
@@ -27,7 +28,31 @@ namespace TotallyWholesome.Objects
         public HumanBodyBones PetBoneTarget = HumanBodyBones.Neck;
         public float BlindnessRadius = 1f;
         public float DeafenAttenuation = -35f;
+        public string BlindnessVisionColourString = "#7F7F7F";
         public List<string> SwitchingAllowedAvatars = new();
+
+        [JsonIgnore]
+        private Color? _blindfoldVisionColorPriv = null;
+        [JsonIgnore]
+        public Color BlindnessVisionColour
+        {
+            set
+            {
+                BlindnessVisionColourString = "#" + ColorUtility.ToHtmlStringRGB(value);
+                _blindfoldVisionColorPriv = value;
+            }
+            get
+            {
+                if (!_blindfoldVisionColorPriv.HasValue)
+                {
+                    _blindfoldVisionColorPriv = new Color(0.5f, 0.5f, 0.5f, 1);
+                    if (ColorUtility.TryParseHtmlString(BlindnessVisionColourString, out var colour))
+                        _blindfoldVisionColorPriv = colour;
+                }
+
+                return _blindfoldVisionColorPriv.Value;
+            }
+        }
 
         public List<PiShockShocker> PiShockShockers = new();
         

@@ -6,6 +6,8 @@ using BTKUILib.UIObjects;
 using BTKUILib.UIObjects.Components;
 using TotallyWholesome.Managers.Achievements;
 using TotallyWholesome.Managers.Status;
+using TotallyWholesome.Network;
+using TWNetCommon.Data;
 using WholesomeLoader;
 
 namespace TotallyWholesome.Managers.TWUI.Pages;
@@ -20,12 +22,29 @@ public class MyTW : ITWManager
     public ToggleButton EnableStatus, DisplayBadge, HideInPublic, ShowDeviceStatus, ShowAutoAccept;
 
     private Page _achievementPage;
+    private Button _openTagEditor;
 
     public void Setup()
     {
         Instance = this;
 
         QuickMenuAPI.OnOpenedPage += OnOpenedPage;
+        TWNetClient.OnTWNetAuthenticated += OnTWNetAuthenticated;
+        TWNetListener.TagDataUpdateEvent += TagDataUpdateEvent;
+    }
+
+    private void TagDataUpdateEvent(TagData obj)
+    {
+        if (DisplayBadge == null) return;
+
+        UpdateTagState();
+    }
+
+    private void OnTWNetAuthenticated()
+    {
+        if (DisplayBadge == null) return;
+
+        UpdateTagState();
     }
 
     private void OnOpenedPage(string target, string last)
@@ -68,6 +87,14 @@ public class MyTW : ITWManager
 
             StatusManager.Instance.SendStatusUpdate();
         };
+
+        _openTagEditor = mainCat.AddButton("Edit Tag", "Pencil", "Edit your tag text and colours!");
+        _openTagEditor.OnPress += () =>
+        {
+            TagEditor.Instance.OpenTagEditor();
+        };
+
+        UpdateTagState();
 
         HideInPublic = mainCat.AddToggle("Hide Status in Publics", "Hides your TW status when you join public instances", Configuration.JSONConfig.HideInPublicWorlds);
         HideInPublic.OnValueUpdated += b =>
@@ -129,5 +156,10 @@ public class MyTW : ITWManager
         {
             Process.Start("https://wiki.totallywholeso.me/eula");
         };
+    }
+
+    private void UpdateTagState()
+    {
+        _openTagEditor.Hidden = !TWNetClient.Instance.CanUseTag;
     }
 }

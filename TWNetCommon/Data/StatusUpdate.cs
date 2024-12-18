@@ -27,10 +27,14 @@ namespace TWNetCommon.Data
         public bool ButtplugDevice { get; set; }
         [Key(10)]
         public bool PiShockDevice { get; set; }
+        [Key(11)]
+        public bool ActiveBetaUser { get; set; }
+        [Key(12)]
+        public bool TempTag { get; set; }
 
         public override string ToString()
         {
-            return $"Status Update - [UserID: {UserID}, EnableStatus: {EnableStatus}, DisplaySpecialRank: {DisplaySpecialRank}, SpecialRank: {SpecialRank}, SpecialRankColour: {SpecialRankColour}, SpecialRankTextColour: {SpecialRankTextColour}, IsLookingForGroupLegacy: {IsLookingForGroup}]";
+            return $"Status Update - [UserID: {UserID}, EnableStatus: {EnableStatus}, DisplaySpecialRank: {DisplaySpecialRank}, SpecialRank: {SpecialRank}, SpecialRankColour: {SpecialRankColour}, SpecialRankTextColour: {SpecialRankTextColour}, IsLookingForGroupLegacy: {IsLookingForGroup}, TempTag: {TempTag}]";
         }
     }
 }

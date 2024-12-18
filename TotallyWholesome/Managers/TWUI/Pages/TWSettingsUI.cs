@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using ABI_RC.Core.Networking.API.Responses;
@@ -7,6 +8,7 @@ using BTKUILib;
 using BTKUILib.UIObjects;
 using BTKUILib.UIObjects.Components;
 using BTKUILib.UIObjects.Objects;
+using MelonLoader;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Network;
@@ -15,7 +17,6 @@ using TotallyWholesome.Utils;
 using TWNetCommon.Data.ControlPackets;
 using TWNetCommon.Data.ControlPackets.Shockers.Models;
 using UnityEngine;
-using UnityEngine.UI;
 using WholesomeLoader;
 
 namespace TotallyWholesome.Managers.TWUI.Pages;
@@ -34,12 +35,6 @@ public class TWSettingsUI : ITWManager
     public SliderFloat DeafenAttenuationSlider;
     public SliderFloat BlindnessRadiusSlider;
 
-    //Leash colour config
-    private SliderFloat _rSliderFloat;
-    private SliderFloat _gSliderFloat;
-    private SliderFloat _bSliderFloat;
-    private CustomEngineOnFunction _colourPreviewUpdate;
-
     //Notification page
     private MultiSelection _alignmentSelect;
     private SliderFloat _notifXSlider;
@@ -50,15 +45,13 @@ public class TWSettingsUI : ITWManager
     private Dictionary<string, Category> _switchableAvatarList = new();
     private Page _switchableAvatarPage;
 
+    //Preview coroutine handling
+    private int _blindfoldPreviewSeconds = 0;
+    private int _deafenPreviewSeconds = 0;
 
     public void Setup()
     {
         Instance = this;
-
-        QuickMenuAPI.OnMenuGenerated += _ =>
-        {
-            OnColorChanged();
-        };
     }
 
     public void LateSetup()
@@ -226,34 +219,11 @@ public class TWSettingsUI : ITWManager
         var leashStyle = twnet.AddButton("Leash Style", "ListX3", "Opens up the selection page for leash styles");
         leashStyle.OnPress += LeadManager.SelectLeashStyle;
 
-        var leashColourPage = twnet.AddPage("Leash Colour Config", "Settings", "Change the colour of your leash", "TotallyWholesome");
-        var top = leashColourPage.AddCategory("Top", false);
-        var colourPreview = new CustomElement("""{"c":"col-3", "s":[{"c":"round-box", "a":{"id" : "twUI-LeashColorPreview"}}], "a":{"id":"[UUID]"}}""", ElementType.InCategoryElement, null, top);
-        _colourPreviewUpdate = new CustomEngineOnFunction("twUpdateLeashPreview",
-            """let element = document.getElementById("twUI-LeashColorPreview");element.style.backgroundColor = "#" + colour;""",
-            new Parameter("colour", typeof(string), true, false)
-        );
-        colourPreview.AddEngineOnFunction(_colourPreviewUpdate);
-
-        colourPreview.OnElementGenerated += OnColorChanged;
-
-        top.AddCustomElement(colourPreview);
-
-        var save = top.AddButton("Save", "Checkmark", "Save the current leash colour");
-        save.OnPress += SaveColor;
-
-        if (!ColorUtility.TryParseHtmlString(Configuration.JSONConfig.LeashColour, out var currentLeadColor))
+        var leashColourButton = twnet.AddButton("Leash Colour Config", "Settings", "Change the colour of your side of the leash");
+        leashColourButton.OnPress += () =>
         {
-            currentLeadColor = Color.white;
-        }
-
-        _rSliderFloat = top.AddSlider("Red", "Adjust red value in leash colour", currentLeadColor.r, 0, 1);
-        _gSliderFloat = top.AddSlider("Green", "Adjust green value in leash colour", currentLeadColor.g, 0, 1);
-        _bSliderFloat = top.AddSlider("Blue", "Adjust blue value in leash colour", currentLeadColor.b, 0, 1);
-
-        _rSliderFloat.OnValueUpdated += f => OnColorChanged();
-        _gSliderFloat.OnValueUpdated += f => OnColorChanged();
-        _bSliderFloat.OnValueUpdated += f => OnColorChanged();
+            QuickMenuAPI.OpenColourPicker(Configuration.JSONConfig.LeashColour, SaveLeashColor);
+        };
 
         //User manage page
         _userManagePage = new Page("TotallyWholesome", "Manage User: ");
@@ -286,9 +256,32 @@ public class TWSettingsUI : ITWManager
             }
         }
 
+        var blindnessVisionPicker = petCat.AddButton("Blindness Vision Colour", "Ranking", "Set the colour of the vision area while blindfolded");
+        blindnessVisionPicker.OnPress += () =>
+        {
+            QuickMenuAPI.OpenColourPicker(Configuration.JSONConfig.BlindnessVisionColour, (color, s) =>
+            {
+                Configuration.JSONConfig.BlindnessVisionColour = color;
+                Configuration.SaveConfig();
+
+                if (PlayerRestrictionManager.Instance.BlindnessMaterial != null)
+                    PlayerRestrictionManager.Instance.BlindnessMaterial.SetColor(PlayerRestrictionManager.DarknessColour, color);
+
+                if (LeadManager.Instance.MasterPair != null && LeadManager.Instance.MasterPair.Blindfold) return;
+
+                var startCoroutine = _blindfoldPreviewSeconds == 0;
+
+                //Start preview for 3 seconds
+                _blindfoldPreviewSeconds = 3;
+
+                if (startCoroutine)
+                    MelonCoroutines.Start(BlindfoldPreview());
+            }, true);
+        };
+
         //Add the pet settings sliders after main toggle generation so position isn't shit
-        BlindnessRadiusSlider = petCat.AddSlider("Blindness Radius", "Adjust the radius of visibility while blindfolded", 2f, 0f, 10f);
-        DeafenAttenuationSlider = petCat.AddSlider("Deafen Attenuation", "Adjusts the level of volume attenuation while deafened", -35f, -80f, 20f);
+        BlindnessRadiusSlider = petCat.AddSlider("Blindness Radius", "Adjust the radius of visibility while blindfolded", Configuration.JSONConfig.BlindnessRadius, 0f, 10f, 2, 2f, true);
+        DeafenAttenuationSlider = petCat.AddSlider("Deafen Attenuation", "Adjusts the level of volume attenuation while deafened", Configuration.JSONConfig.DeafenAttenuation, -80f, 20f, 2, -35f, true);
 
         BlindnessRadiusSlider.OnValueUpdated += f =>
         {
@@ -297,6 +290,16 @@ public class TWSettingsUI : ITWManager
 
             Configuration.JSONConfig.BlindnessRadius = f;
             Configuration.SaveConfig();
+
+            if (LeadManager.Instance.MasterPair != null && LeadManager.Instance.MasterPair.Blindfold) return;
+
+            var startCoroutine = _blindfoldPreviewSeconds == 0;
+
+            //Start preview for 3 seconds
+            _blindfoldPreviewSeconds = 3;
+
+            if (startCoroutine)
+                MelonCoroutines.Start(BlindfoldPreview());
         };
 
         DeafenAttenuationSlider.OnValueUpdated += f =>
@@ -306,6 +309,16 @@ public class TWSettingsUI : ITWManager
 
             Configuration.JSONConfig.DeafenAttenuation = f;
             Configuration.SaveConfig();
+
+            if (LeadManager.Instance.MasterPair != null && LeadManager.Instance.MasterPair.Deafen) return;
+
+            var startCoroutine = _deafenPreviewSeconds == 0;
+
+            //Start preview for 3 seconds
+            _deafenPreviewSeconds = 3;
+
+            if (startCoroutine)
+                MelonCoroutines.Start(DeafenPreview());
         };
 
         //Notification slider creation, gotta be after ConfigManager element gen
@@ -336,6 +349,14 @@ public class TWSettingsUI : ITWManager
 
         //Let's add all the switchable avatars
         Configuration.JSONConfig.SwitchingAllowedAvatars.ForEach(x => TWUtils.GetAvatarFromAPI(x, CreateAvatarListEntry));
+    }
+
+    private void SaveLeashColor(Color unityColour, string htmlColour)
+    {
+        Configuration.JSONConfig.LeashColour = htmlColour;
+        Configuration.SaveConfig();
+
+        TWNetSendHelpers.SendLeashConfigUpdate();
     }
 
     private void RemoveAllEnabledAvatars()
@@ -415,23 +436,6 @@ public class TWSettingsUI : ITWManager
         _userManagePage.OpenPage();
     }
 
-    private void OnColorChanged()
-    {
-        var color = new Color(_rSliderFloat.SliderValue, _gSliderFloat.SliderValue, _bSliderFloat.SliderValue);
-        var colorhtml = ColorUtility.ToHtmlStringRGB(color);
-        _colourPreviewUpdate.TriggerEvent(colorhtml);
-    }
-
-    private void SaveColor()
-    {
-        var newColor = new Color(_rSliderFloat.SliderValue, _gSliderFloat.SliderValue, _bSliderFloat.SliderValue);
-        Configuration.JSONConfig.LeashColour = "#" + ColorUtility.ToHtmlStringRGB(newColor);
-        Configuration.SaveConfig();
-
-        TWNetSendHelpers.SendLeashConfigUpdate();
-        QuickMenuAPI.GoBack();
-    }
-
     private void BoneAttachPointSelected(int index)
     {
         var bone = TWUtils.GetBodyBoneFromLeadAttachIndex(index);
@@ -448,5 +452,33 @@ public class TWSettingsUI : ITWManager
             Configuration.JSONConfig.MasterBoneTarget = bone.Value;
 
         Configuration.SaveConfig();
+    }
+
+    private IEnumerator BlindfoldPreview()
+    {
+        PlayerRestrictionManager.Instance.ApplyBlindfold(true, true);
+
+        while (_blindfoldPreviewSeconds != 0)
+        {
+            _blindfoldPreviewSeconds--;
+            yield return new WaitForSeconds(1f);
+        }
+
+        if(LeadManager.Instance.MasterPair == null || !LeadManager.Instance.MasterPair.Blindfold)
+            PlayerRestrictionManager.Instance.ApplyBlindfold(false, true);
+    }
+
+    private IEnumerator DeafenPreview()
+    {
+        PlayerRestrictionManager.Instance.ApplyDeafen(true, true);
+
+        while (_deafenPreviewSeconds != 0)
+        {
+            _deafenPreviewSeconds--;
+            yield return new WaitForSeconds(1f);
+        }
+
+        if(LeadManager.Instance.MasterPair == null || !LeadManager.Instance.MasterPair.Deafen)
+            PlayerRestrictionManager.Instance.ApplyDeafen(false, true);
     }
 }

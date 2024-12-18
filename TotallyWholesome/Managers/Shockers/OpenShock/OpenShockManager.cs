@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Harmony;
 using MelonLoader;
 using Newtonsoft.Json;
 using TotallyWholesome.Managers.Lead;
@@ -182,7 +183,7 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
             Logger.Warning("OpenShock service is not connected, cannot send control command");
             return;
         }
-        IEnumerable<Control> controlList;
+        IReadOnlyCollection<Control> controlList;
 
         // If below 1 intensity or 1ms duration, we send a stop command
         if (intensity < 1 || duration < 1)
@@ -195,34 +196,44 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
                 ? ControlListRandomShocker(type, intensity, duration)
                 : ControlListAllShockers(type, intensity, duration);
         }
+
+        if (controlList.Count <= 0)
+        {
+            return;
+        }
         
         await _webSocket!.QueueMessage(new SignalRMessage
         {
             Type = MessageType.Invocation,
             Target = "ControlV2",
-            Arguments = new object?[]
-            {
+            Arguments =
+            [
                 controlList,
                 LeadManager.Instance?.MasterPair?.Master?.Username
-            }
+            ]
         });
     }
 
-    private static IEnumerable<Control> ControlListRandomShocker(ControlType type, byte intensity, ushort duration)
+    private static IReadOnlyCollection<Control> ControlListRandomShocker(ControlType type, byte intensity, ushort duration)
     {
         var allEnabledShockers = OpenShockConfig.Config.Shockers.Where(x => x.Value.Enabled).ToArray();
 
+        if (allEnabledShockers.Length <= 0)
+        {
+            return Array.Empty<Control>();
+        }
+        
         var rand = new System.Random();
         var randomElementIndex = rand.Next(0, allEnabledShockers.Length);
         var randomElement = allEnabledShockers[randomElementIndex];
 
-        return new[]
-        {
-            GetControlItem(randomElement.Key, type, intensity, duration, randomElement.Value),
-        };
+        return
+        [
+            GetControlItem(randomElement.Key, type, intensity, duration, randomElement.Value)
+        ];
     }
 
-    private static IEnumerable<Control> ControlListAllShockersStop()
+    private static IReadOnlyCollection<Control> ControlListAllShockersStop()
     {
         var controlList = new List<Control>();
 
@@ -241,7 +252,7 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
         return controlList;
     }
 
-    private static IEnumerable<Control> ControlListAllShockers(ControlType type, byte intensity, ushort duration)
+    private static IReadOnlyCollection<Control> ControlListAllShockers(ControlType type, byte intensity, ushort duration)
     {
         var controlList = new List<Control>();
 

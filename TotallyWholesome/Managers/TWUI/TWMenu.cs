@@ -85,6 +85,7 @@ public class TWMenu : ITWManager
         RegIcon("TWClose", "TW-Close");
         RegIcon("TWTrash", "TW-Trash");
         RegIcon("TWLogoPride", "TW_Logo_Pride-sm");
+        RegIcon("TWLogoPrideBeta", "TW_Logo_Pride-Beta");
         RegIcon("TWTabIcon", "TW_TabIcon");
         RegIcon("UserPlusRight", "User - Plus Right");
         RegIcon("VolumeMax", "Volume - Maximum");
@@ -94,6 +95,8 @@ public class TWMenu : ITWManager
         RegIcon("ToggleOn");
         RegIcon("ToggleOff");
         RegIcon("ExternalLink");
+        RegIcon("Pencil");
+        RegIcon("Ranking");
         
         TWNetListener.PetConfigUpdateEvent += PetConfigUpdateEvent;
         LeadManager.OnFollowerPairCreated += OnFollowerPairCreated;
@@ -208,7 +211,7 @@ public class TWMenu : ITWManager
         };
 
     
-        TWRootPage.MenuTitle = $"Totally Wholesome - {BuildInfo.AssemblyVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}";
+        TWRootPage.MenuTitle = $"Totally Wholesome - {BuildInfo.AssemblyVersion} Release Build";
     
         _initialised = true;
         UpdateMenuSubtitle();
@@ -373,7 +376,7 @@ public class TWMenu : ITWManager
             return;
         }
 
-        if (Configuration.JSONConfig.ShownUpdateNotice != 10)
+        if (Configuration.JSONConfig.ShownUpdateNotice != 11)
         {
             MelonCoroutines.Start(WaitBeforeShowUpdateNotice());
             return;
@@ -422,10 +425,10 @@ public class TWMenu : ITWManager
     {
         yield return new WaitForSeconds(.2f);
 
-        QuickMenuAPI.ShowNotice("Welcome to TW 3.5!",
-            "<p>Welcome to Totally Wholesome v3.5!</p><p>Been a while hasn't it, we've got some fun stuff in here! This update has been in progress for quite a while, nearly every part of TW has been touch in some way, we've got some new features too!</p><p>Changes:</p><p> - BTKUILib Menu Rework</p><p> - Shocker System Rework</p><p> - Remote Avatar Switching</p><p> - Massive internal fixes and reworks!</p><p>Check the TW Discord for more information!</p>", () =>
+        QuickMenuAPI.ShowNotice("Welcome to TW 3.6!",
+            "<p>Welcome to Totally Wholesome v3.6!</p><p>Merry Christmas nerds! We're still alive over here! This update won't be near as chonky as the rest of them have been, but it has some nice quality of life as well as a couple new features to play with!</p><p>Changes:</p><p> - Blindness/Deafen Setting Previews</p><p> - Blindfold vision area colour config</p><p> - Pride flags and Christmas leashes</p><p> - A handful of bugfixes and more!</p><p>Check the TW Discord for more information!</p>", () =>
             {
-                Configuration.JSONConfig.ShownUpdateNotice = 10;
+                Configuration.JSONConfig.ShownUpdateNotice = 11;
                 Configuration.SaveConfig();
             });
     }

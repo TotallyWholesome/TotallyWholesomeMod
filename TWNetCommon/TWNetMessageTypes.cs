@@ -15,6 +15,7 @@
         UserJoin = 0x0005,
         UserLeave = 0x0006,
         
+        TagDataUpdate = 0x0009,
 
         //--------- Basic Data Types ---------
         SystemNotice = 0x1002,

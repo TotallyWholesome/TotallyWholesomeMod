@@ -14,6 +14,7 @@ using ABI_RC.Core.Savior;
 using ABI.CCK.Components;
 using Microsoft.IO;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.Lead.LeadComponents;
 using TotallyWholesome.Objects;
 using TotallyWholesome.Utils;
 using TWNetCommon.Data.NestedObjects;
@@ -252,27 +253,76 @@ namespace TotallyWholesome
             return combined;
         }
 
-        public static Tuple<Material, LineTextureMode> GetStyleMat(LeashStyle style)
+        public static Tuple<Material, LeashConfigAttribute> GetStyleMat(LeashStyle style)
         {
+            LeashConfigAttribute attribute = LeashConfigAttribute.DefaultConfig;
+            Material leashMaterial = null;
+
+            if (Enum.IsDefined(typeof(LeashStyle), style))
+            {
+                var type = style.GetType();
+                var memberInfo = type.GetMember(style.ToString());
+                var attributes = memberInfo[0].GetCustomAttributes(typeof(LeashConfigAttribute), false);
+                if (attributes.Length > 0)
+                    attribute = (LeashConfigAttribute)attributes[0];
+            }
+
             switch (style)
             {
                 case LeashStyle.Classic:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
+                    leashMaterial = TWAssets.Classic;
+                    break;
                 case LeashStyle.Gradient:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Gradient, LineTextureMode.Stretch);
+                    leashMaterial = TWAssets.Gradient;
+                    break;
                 case LeashStyle.Magic:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Magic, LineTextureMode.Stretch);
+                    leashMaterial = TWAssets.Magic;
+                    break;
                 case LeashStyle.Chain:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Chain, LineTextureMode.RepeatPerSegment);
+                    leashMaterial = TWAssets.Chain;
+                    break;
                 case LeashStyle.Leather:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Leather, LineTextureMode.RepeatPerSegment);
+                    leashMaterial = TWAssets.Leather;
+                    break;
                 case LeashStyle.Amogus:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Amogus, LineTextureMode.RepeatPerSegment);
-                case LeashStyle.Custom:
-                    return new Tuple<Material, LineTextureMode>(null, LineTextureMode.RepeatPerSegment);
-                default:
-                    return new Tuple<Material, LineTextureMode>(TWAssets.Classic, LineTextureMode.RepeatPerSegment);
+                    leashMaterial = TWAssets.Amogus;
+                    break;
+                case LeashStyle.LGBT:
+                    leashMaterial = TWAssets.LGBT;
+                    break;
+                case LeashStyle.Bisexual:
+                    leashMaterial = TWAssets.Bisexual;
+                    break;
+                case LeashStyle.Polysexual:
+                    leashMaterial = TWAssets.Polysexual;
+                    break;
+                case LeashStyle.Pansexual:
+                    leashMaterial = TWAssets.Pansexual;
+                    break;
+                case LeashStyle.Lesbian:
+                    leashMaterial = TWAssets.Lesbian;
+                    break;
+                case LeashStyle.Gay:
+                    leashMaterial = TWAssets.Gay;
+                    break;
+                case LeashStyle.Asexual:
+                    leashMaterial = TWAssets.Asexual;
+                    break;
+                case LeashStyle.Trans:
+                    leashMaterial = TWAssets.Trans;
+                    break;
+                case LeashStyle.Nonbinary:
+                    leashMaterial = TWAssets.Nonbinary;
+                    break;
+                case LeashStyle.Genderfluid:
+                    leashMaterial = TWAssets.Genderfluid;
+                    break;
+                case LeashStyle.Christmas:
+                    leashMaterial = TWAssets.Christmas;
+                    break;
             }
+
+            return new Tuple<Material, LeashConfigAttribute>(leashMaterial, attribute);
         }
 
         public static HumanBodyBones? GetBodyBoneFromLeadAttachIndex(int index)

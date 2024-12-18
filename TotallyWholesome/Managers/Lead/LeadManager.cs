@@ -9,6 +9,7 @@ using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Core.Util;
+using ABI_RC.Systems.Movement;
 using ABI.CCK.Components;
 using BTKUILib;
 using BTKUILib.UIObjects.Components;
@@ -200,6 +201,11 @@ namespace TotallyWholesome.Managers.Lead
             ActiveLeadPairs.Clear();
             LastKey = null;
             FollowerRequest = false;
+
+            //Let's fire the pair destroy event here to ensure stuff clears
+            if(MasterPair != null)
+                OnFollowerPairDestroyed?.Invoke(MasterPair);
+
             MasterPair = null;
             PetPairs.Clear();
             ForcedMute = false;
@@ -207,6 +213,8 @@ namespace TotallyWholesome.Managers.Lead
             LastMasterPairKey = null;
             Patches.IsForceMuted = false;
             _props.Clear();
+            BetterBetterCharacterController.Instance.groundFriction = 8f;
+            BetterBetterCharacterController.Instance.brakingDecelerationWalking = 25f;
         }
         
         public LeadPair GetLeadPairForPet(TWPlayerObject player)
@@ -683,13 +691,15 @@ namespace TotallyWholesome.Managers.Lead
                                 {
                                     Transform matTransfrom = TWUtils.GetRootGameObject(leadPair.Master.AvatarObject, "TWLCustomLeadMat");
                                     Material customMat = matTransfrom.GetComponent<MeshRenderer>().materials[0];
-                                    leadPair.LineController.UpdateLineMaterial(customMat, matinfo.Item2);
+                                    CustomLeashMatConfig customConfig = matTransfrom.GetComponent<CustomLeashMatConfig>();
+                                    leadPair.LineController.UpdateLineMaterialCustom(customMat, customConfig);
                                     Con.Debug("Applied custom lead mat");
                                 }
-                                catch
+                                catch (Exception e)
                                 {
                                     leadPair.LineController.UpdateLineMaterial(TWAssets.Classic, matinfo.Item2);
                                     Con.Debug("Failed to apply custom lead mat");
+                                    Con.Debug(e);
                                 }
                             }
                         }
@@ -973,13 +983,16 @@ namespace TotallyWholesome.Managers.Lead
                     {
                         Transform matTransfrom = TWUtils.GetRootGameObject(leadPair.Master.AvatarObject, "TWLCustomLeadMat");
                         Material customMat = matTransfrom.GetComponent<MeshRenderer>().materials[0];
-                        followerController.UpdateLineMaterial(customMat, matinfo.Item2);
+                        CustomLeashMatConfig customConfig = matTransfrom.GetComponent<CustomLeashMatConfig>();
+                        followerController.UpdateLineMaterialCustom(customMat, customConfig);
                         Con.Debug("Applied custom lead mat");
                     }
-                    catch
+                    catch (Exception e)
                     {
+
                         followerController.UpdateLineMaterial(TWAssets.Classic, matinfo.Item2);
                         Con.Debug("Failed to apply custom lead mat");
+                        Con.Debug(e);
                     }  
                 }
             }
@@ -991,7 +1004,7 @@ namespace TotallyWholesome.Managers.Lead
             //Set the prop target if the prop exists
             var prop = CVRSyncHelper.Props.FirstOrDefault(x => x.InstanceId.Equals(leadPair.PropTarget));
 
-            if (prop != null && prop.Spawnable != null && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
+            if (prop != null && prop.Spawnable != null && leadPair.LockToProp && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
             {
                 Transform propTarget = TWUtils.GetRootGameObject(prop.Spawnable.gameObject, "TWLPropAnchor");
                 if (propTarget == null)
@@ -1000,7 +1013,7 @@ namespace TotallyWholesome.Managers.Lead
                 followerController.targetOverride = propTarget;
             }
 
-            if (leadPair.LeashPinPosition != Vector3.zero && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
+            if (leadPair.LeashPinPosition != Vector3.zero && !leadPair.LockToProp && leadPair.LockToWorld && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
                 followerController.targetOverrideVector = leadPair.LeashPinPosition;
 
             //Ensure we set temp unlock so it gets enforced on avatar changes/resets

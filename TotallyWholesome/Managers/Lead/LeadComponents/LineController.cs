@@ -5,6 +5,7 @@ using TotallyWholesome.Notification;
 using TotallyWholesome.Objects;
 using UnityEngine;
 using UnityEngine.Rendering;
+using WholesomeLoader;
 
 namespace TotallyWholesome.Managers.Lead.LeadComponents
 {
@@ -92,6 +93,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                 line.material.SetFloat(ShowLead, 0);
             }
 
+            BetterBetterCharacterController.Instance.groundFriction = 8f;
+            BetterBetterCharacterController.Instance.brakingDecelerationWalking = 25f;
+
             _isReset = true;
         }
         
@@ -100,11 +104,31 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
             _maxDistance = length;
         }
 
-        public void UpdateLineMaterial(Material material, LineTextureMode textureMode = LineTextureMode.RepeatPerSegment)
+        public void UpdateLineMaterial(Material material, LeashConfigAttribute config)
         {
             line.material = material;
-            line.textureMode = textureMode;
+            line.textureMode = config.LineTextureMode;
+            line.widthMultiplier = config.LineWidth;
+            line.positionCount = config.SegmentCount;
             
+            ApplyColours();
+        }
+
+        public void UpdateLineMaterialCustom(Material mat, CustomLeashMatConfig config)
+        {
+            if (config == null)
+            {
+                UpdateLineMaterial(mat, LeashConfigAttribute.DefaultConfig);
+                return;
+            }
+
+            Con.Debug($"Found CustomLeashMatConfig! Updating LineRenderer parameters {config}");
+
+            line.material = mat;
+            line.textureMode = config.lineTextureMode;
+            line.widthMultiplier = config.lineWidth;
+            line.positionCount = config.segmentCount;
+
             ApplyColours();
         }
 
@@ -182,6 +206,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
 
         private void BreakLeash()
         {
+            BetterBetterCharacterController.Instance.groundFriction = 8f;
+            BetterBetterCharacterController.Instance.brakingDecelerationWalking = 25f;
+
             if (!_noVisibleLeash)
             {
                 line.positionCount = 0;
@@ -251,6 +278,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
 
                 if (_ourPlayer == null) return;
 
+                BetterBetterCharacterController.Instance.groundFriction = 8f;
+                BetterBetterCharacterController.Instance.brakingDecelerationWalking = 25f;
+
                 //Follower movement
                 if (currentDistance > _maxDistance && !_leashBroken && !_tempUnlockLeash &&
                     BetterBetterCharacterController.Instance.CanMove())
@@ -296,6 +326,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                                         
                     if(pauseValue)
                         BetterBetterCharacterController.Instance.PauseGroundConstraint();
+
+                    BetterBetterCharacterController.Instance.groundFriction = Mathf.Lerp(3, 1, (currentDistance - _maxDistance)/1.5f);
+                    BetterBetterCharacterController.Instance.brakingDecelerationWalking = Mathf.Lerp(6, 1, (currentDistance - _maxDistance)/1.5f);
                 }
             }
             else
@@ -303,6 +336,18 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
                 if (!_isReset)
                     ResetRenderer();
             }
+        }
+
+        private void OnDisable()
+        {
+            BetterBetterCharacterController.Instance.groundFriction = 8f;
+            BetterBetterCharacterController.Instance.brakingDecelerationWalking = 25f;
+        }
+
+        private void OnDestroy()
+        {
+            BetterBetterCharacterController.Instance.groundFriction = 8f;
+            BetterBetterCharacterController.Instance.brakingDecelerationWalking = 25f;
         }
     }
 }

@@ -19,7 +19,8 @@ namespace TotallyWholesome
         public static Sprite Close;
         public static Sprite Checkmark;
         public static Sprite BadgeGold, BadgeSilver, BadgeBronze;
-        public static Material Classic, Chain, Gradient, Leather, Magic, Amogus;
+        public static Sprite TWTagNormalIcon, TWTagBetaIcon;
+        public static Material Classic, Chain, Gradient, Leather, Magic, Amogus, Asexual, Bisexual, Gay, Genderfluid, Lesbian, LGBT, Nonbinary, Pansexual, Polysexual, Trans, Christmas;
         public static GameObject StatusPrefab, NotificationPrefab, TWRaycaster, TWBlindness;
         public static AudioMixer TWMixer;
 
@@ -90,6 +91,36 @@ namespace TotallyWholesome
                 BadgeSilver.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 BadgeBronze = _twAssetsBundle.LoadAsset<Sprite>("Badge-Bronze");
                 BadgeBronze.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                TWTagNormalIcon = _twAssetsBundle.LoadAsset<Sprite>("TW_Logo_Pride");
+                TWTagNormalIcon.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                TWTagBetaIcon = _twAssetsBundle.LoadAsset<Sprite>("TW_Logo_Pride-Beta");
+                TWTagBetaIcon.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+
+                //Pride flag materials
+                Asexual = _twAssetsBundle.LoadAsset<Material>("Asexual");
+                Asexual.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Bisexual = _twAssetsBundle.LoadAsset<Material>("Bisexual");
+                Bisexual.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Gay = _twAssetsBundle.LoadAsset<Material>("Gay");
+                Gay.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Genderfluid = _twAssetsBundle.LoadAsset<Material>("Genderfluid");
+                Genderfluid.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Lesbian = _twAssetsBundle.LoadAsset<Material>("Lesbian");
+                Lesbian.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                LGBT = _twAssetsBundle.LoadAsset<Material>("LGBT");
+                LGBT.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Nonbinary = _twAssetsBundle.LoadAsset<Material>("Nonbinary");
+                Nonbinary.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Pansexual = _twAssetsBundle.LoadAsset<Material>("Pansexual");
+                Pansexual.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Polysexual = _twAssetsBundle.LoadAsset<Material>("Polysexual");
+                Polysexual.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                Trans = _twAssetsBundle.LoadAsset<Material>("Trans");
+                Trans.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+
+                Christmas = _twAssetsBundle.LoadAsset<Material>("Christmas");
+                Christmas.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+
             }
 
             Con.Debug("Successfully loaded in assets from TWNotification bundle!");

@@ -9,11 +9,13 @@ using System.Threading;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using ABI_RC.Core.Util.AssetFiltering;
 using ABI_RC.Systems.GameEventSystem;
 using BTKUILib;
 using MelonLoader;
 using Semver;
 using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.Lead.LeadComponents;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
@@ -27,9 +29,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.5.18";
-        public const string TWVersion = "3.5.18";
-        public const bool isBetaBuild = false;
+        public const string AssemblyVersion = "3.6.5";
+        public const string TWVersion = "3.6.5";
         public const string DownloadLink = "https://totallywholeso.me/";
     }
 
@@ -53,7 +54,11 @@ namespace TotallyWholesome
             Instance = this;
 
             
-            Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} {(BuildInfo.isBetaBuild ? "Beta Build" : "Release Build")}");
+            #if BETA
+            Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} Beta Build Commit: {ThisAssembly.Git.Commit}|{ThisAssembly.Git.Branch}");
+            #else
+            Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} Release Build Commit: {ThisAssembly.Git.Commit}|{ThisAssembly.Git.Branch}");
+            
             
 
             if (!RegisteredMelons.Any(x => x.Info.Name.Equals("BTKUILib") && x.Info.SemanticVersion != null && x.Info.SemanticVersion.CompareTo(new SemVersion(2, 1)) >= 0))
@@ -127,6 +132,9 @@ namespace TotallyWholesome
         private void OnPlayerLoggedIn()
         {
             Con.Msg("Attempting auth with TWNet...");
+
+            //Add CustomLeashMatConfig to avatar whitelist
+            SharedFilter.AvatarWhitelist.Add(typeof(CustomLeashMatConfig));
 
             if (Configuration.JSONConfig.AcceptedTOS >= CurrentTOSLevel)
             {

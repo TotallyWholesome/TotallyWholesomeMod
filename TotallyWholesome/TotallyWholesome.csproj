@@ -9,14 +9,22 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
-    <Configurations>Debug;Release;Admin</Configurations>
+    <Configurations>Debug;Release;Admin;Release-Beta</Configurations>
     <Platforms>AnyCPU</Platforms>
     <DoILRepack>false</DoILRepack>
+    <Optimize>true</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Admin|AnyCPU'">
     <DebugSymbols>false</DebugSymbols>
     <OutputPath>bin\Admin\</OutputPath>
-    <DefineConstants>ADMIN</DefineConstants>
+    <DefineConstants>ADMIN, BETA</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-Beta|AnyCPU'">
+    <DebugSymbols>false</DebugSymbols>
+    <OutputPath>bin\Release-Beta\</OutputPath>
+    <DefineConstants>BETA</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
   </PropertyGroup>
@@ -250,6 +258,12 @@
     <EmbeddedResource Include="Images\ToggleOn.png" />
     <None Remove="Images\ExternalLink.png" />
     <EmbeddedResource Include="Images\ExternalLink.png" />
+    <None Remove="Images\TW_Logo_Pride-Beta.png" />
+    <EmbeddedResource Include="Images\TW_Logo_Pride-Beta.png" />
+    <None Remove="Images\Ranking.png" />
+    <EmbeddedResource Include="Images\Ranking.png" />
+    <None Remove="Images\Pencil.png" />
+    <EmbeddedResource Include="Images\Pencil.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="GitInfo" Version="3.3.4">

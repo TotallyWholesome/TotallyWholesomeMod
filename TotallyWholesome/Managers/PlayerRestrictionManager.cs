@@ -21,6 +21,7 @@ namespace TotallyWholesome.Managers
     {
         public static PlayerRestrictionManager Instance;
         public static readonly int Radius = Shader.PropertyToID("_Radius");
+        public static readonly int DarknessColour = Shader.PropertyToID("_DarknessColor");
 
         public int Priority => 0;
 
@@ -42,6 +43,7 @@ namespace TotallyWholesome.Managers
             TWNetListener.LeadAcceptEvent += LeadAcceptEvent;
             LeadManager.OnFollowerPairDestroyed += OnFollowerPairDestroyed;
             Patches.OnWorldLeave += OnWorldLeave;
+            Patches.UserJoin += OnUserJoin;
         }
 
         public void LateSetup()
@@ -54,6 +56,7 @@ namespace TotallyWholesome.Managers
 
             BlindnessMaterial = _twBlindnessObject.transform.Find("Vision Sphere").GetComponent<MeshRenderer>().material;
             BlindnessMaterial.SetFloat(Radius, Configuration.JSONConfig.BlindnessRadius);
+            BlindnessMaterial.SetColor(DarknessColour, Configuration.JSONConfig.BlindnessVisionColour);
 
             Con.Debug("Instantiated TWBlindness prefab!");
 
@@ -61,8 +64,6 @@ namespace TotallyWholesome.Managers
             _twMixerGroup = TWAssets.TWMixer.FindMatchingGroups("Master")[0];
             TWAssets.TWMixer.SetFloat("AttenuationFloat", Configuration.JSONConfig.DeafenAttenuation);
         }
-
-
 
         private void OnFollowerPairDestroyed(LeadPair obj)
         {
@@ -132,6 +133,15 @@ namespace TotallyWholesome.Managers
                 if(ConfigManager.Instance.IsActive(AccessType.AllowDeafening, LeadManager.Instance.MasterPair.MasterID))
                     ApplyDeafen(packet.AppliedFeatures.HasFlag(NetworkedFeature.AllowDeafening), false, packet.AppliedFeatures.HasFlag(NetworkedFeature.MasterBypassDeafen));
             });
+        }
+
+        private void OnUserJoin(CVRPlayerEntity obj)
+        {
+            if (!IsDeafened || (LeadManager.Instance.MasterId == obj.Uuid && MasterBypassApplied)) return;
+
+            var audioSource = obj.PuppetMaster.GetPlayerCommsAudioSource();
+            if (audioSource != null)
+                audioSource.outputAudioMixerGroup = _twMixerGroup;
         }
 
         public void ApplyDeafen(bool deafen, bool silentSwitch = false, bool masterBypass = false)

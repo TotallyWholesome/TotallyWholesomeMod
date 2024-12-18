@@ -5,6 +5,7 @@ using TotallyWholesome.Managers;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Managers.Status;
 using TotallyWholesome.Managers.TWUI;
+using TotallyWholesome.Managers.TWUI.Pages;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Utils;
 using TWNetCommon;
@@ -29,6 +30,7 @@ namespace TotallyWholesome.Network
         public static Action<LeashConfigUpdate> LeashConfigUpdate;
         public static Action<ButtplugUpdate> ButtplugUpdateEvent;
         public static Action<PetConfigUpdate> PetConfigUpdateEvent;
+        public static Action<TagData> TagDataUpdateEvent;
 
         public bool NetworkUnreachable;
         public DateTime ReconnectAttemptTime;
@@ -64,6 +66,8 @@ namespace TotallyWholesome.Network
             }
             
             TWMenu.Instance.OnlineUsers = packet.OnlineUsers;
+            TWNetClient.Instance.CanUseTag = packet.TagData != null;
+            TWNetClient.Instance.CurrentTagData = packet.TagData;
 
             conn.AuthResponse(true, packet.RespMsg);
         }
@@ -284,6 +288,27 @@ namespace TotallyWholesome.Network
             catch (Exception e)
             {
                 Con.Error("An error occured with OnPetConfigUpdate!");
+                Con.Error(e);
+            }
+        }
+
+        public override void OnTagDataUpdate(TagData data, TWNetClient conn)
+        {
+            try
+            {
+                Con.Debug($"[RECV] - {data}");
+
+                Main.Instance.MainThreadQueue.Enqueue(() =>
+                {
+                    TWNetClient.Instance.CanUseTag = data.Success;
+                    TWNetClient.Instance.CurrentTagData = data;
+
+                    TagDataUpdateEvent?.Invoke(data);
+                });
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured with OnTagDataUpdate!");
                 Con.Error(e);
             }
         }
