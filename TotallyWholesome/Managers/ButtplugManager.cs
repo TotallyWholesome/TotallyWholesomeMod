@@ -37,12 +37,14 @@ namespace TotallyWholesome.Managers
 
         private Process intifaceProcess;
         private int port = 12345;
+        private string extHost = null;
         private string buttplugCLIPath;
 
         private bool isUsingExternalInstance = false;
 
         private HashSet<LeadPair> _queue = new HashSet<LeadPair>();
         private Regex _portArgCheck = new Regex("--tw\\.buttplugport (?'bpport'\\d+)", RegexOptions.Compiled);
+        private Regex _hostArgCheck = new Regex("--tw\\.buttplughost (?'bphost'\\S+)", RegexOptions.Compiled);
 
         //AdultToyAPI integration
         private MelonMod _adultToyAPI = null;
@@ -93,6 +95,14 @@ namespace TotallyWholesome.Managers
             {
                 Con.Msg($"Intiface Central/Engine port switched to {newPort}!");
                 port = newPort;
+            }
+
+            match = _hostArgCheck.Match(Environment.CommandLine);
+
+            if (match.Success)
+            {
+                extHost = match.Groups["bphost"].Value;
+                Con.Msg($"Using external Intiface specifed by command line at {ButtplugUri}");
             }
 
             DownloadButtplugCLI();
@@ -170,6 +180,8 @@ namespace TotallyWholesome.Managers
             buttplugCLIPath = "Executables/intiface-engine.exe";
         }
 
+        public Uri ButtplugUri => new Uri($"ws://{extHost ?? "localhost"}:{port}");
+
         private async Task ConnectButtplug()
         {
             try
@@ -190,7 +202,7 @@ namespace TotallyWholesome.Managers
                 buttplugClient.DeviceAdded += ButtplugClient_DeviceAdded;
                 buttplugClient.DeviceRemoved += ButtplugClient_DeviceRemoved;
                 buttplugClient.ScanningFinished += async (_, _2) => await buttplugClient.StartScanningAsync();
-                await buttplugClient.ConnectAsync(new ButtplugWebsocketConnectorOptions(new Uri($"ws://localhost:{port}")));
+                await buttplugClient.ConnectAsync(new ButtplugWebsocketConnectorOptions(ButtplugUri));
                 await buttplugClient.StartScanningAsync();
                 Con.Msg("Connection to Buttplug successful");
             }
@@ -215,6 +227,14 @@ namespace TotallyWholesome.Managers
             }
 
             if (Main.Instance.Quitting) return;
+
+            if (extHost != null)
+            {
+                Con.Msg("Intiface host specified via command line. Using external instance");
+                isUsingExternalInstance = true;
+                new Task(async () => await ConnectButtplug()).Start();
+                return;
+            }
 
             try
             {
