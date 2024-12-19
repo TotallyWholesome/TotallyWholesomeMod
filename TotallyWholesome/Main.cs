@@ -29,8 +29,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.6.5";
-        public const string TWVersion = "3.6.5";
+        public const string AssemblyVersion = "3.6.6";
+        public const string TWVersion = "3.6.6";
         public const string DownloadLink = "https://totallywholeso.me/";
     }
 
@@ -54,12 +54,12 @@ namespace TotallyWholesome
             Instance = this;
 
             
-            #if BETA
+            #if BETA && !ADMIN
             Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} Beta Build Commit: {ThisAssembly.Git.Commit}|{ThisAssembly.Git.Branch}");
-            #else
+            #elif !BETA
             Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} Release Build Commit: {ThisAssembly.Git.Commit}|{ThisAssembly.Git.Branch}");
             
-            
+
 
             if (!RegisteredMelons.Any(x => x.Info.Name.Equals("BTKUILib") && x.Info.SemanticVersion != null && x.Info.SemanticVersion.CompareTo(new SemVersion(2, 1)) >= 0))
             {

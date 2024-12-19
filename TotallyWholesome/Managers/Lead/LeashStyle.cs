@@ -43,7 +43,7 @@ namespace TotallyWholesome.Managers.Lead
         Genderfluid,
 
         //Seasonal
-        [LeashConfig("Seasonal",50, LineTextureMode.RepeatPerSegment, 0f)]
+        [LeashConfig("Seasonal",50, LineTextureMode.Tile, 0f)]
         Christmas
     }
 }

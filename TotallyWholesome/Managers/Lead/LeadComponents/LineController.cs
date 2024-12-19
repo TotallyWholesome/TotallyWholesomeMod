@@ -1,6 +1,6 @@
 ﻿using System;
+using ABI_RC.Core.Savior;
 using ABI_RC.Systems.Movement;
-using MelonLoader;
 using TotallyWholesome.Notification;
 using TotallyWholesome.Objects;
 using UnityEngine;
@@ -127,7 +127,9 @@ namespace TotallyWholesome.Managers.Lead.LeadComponents
             line.material = mat;
             line.textureMode = config.lineTextureMode;
             line.widthMultiplier = config.lineWidth;
-            line.positionCount = config.segmentCount;
+            if((config.segmentCount > 100 || config.segmentCount < 2) && _targetPlayer.Uuid == MetaPort.Instance.ownerId)
+                Con.Warn("Your CustomLeashMatConfig Segment Count is invalid! (Greater then 100 or less then 2)");
+            line.positionCount = Math.Clamp(config.segmentCount, 2, 100);
 
             ApplyColours();
         }
