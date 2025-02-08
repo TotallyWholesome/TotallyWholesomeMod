@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,11 +28,9 @@ namespace TotallyWholesome
     {
         private static MD5 _hasher = MD5.Create();
         private static FieldInfo _animatorGetter = typeof(PuppetMaster).GetField("_animator", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo _nameplateCanvasGetter = typeof(PlayerNameplate).GetField("_canvasGroup", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _getPlayerDescriptor = typeof(PuppetMaster).GetField("_playerDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _localAvatarDescriptor = typeof(PlayerSetup).GetField("_avatarDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo _mlVersionGetter = typeof(MelonLoader.BuildInfo).GetField(nameof(MelonLoader.BuildInfo.Version), BindingFlags.Public | BindingFlags.Static);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
         private static FieldInfo _commsPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -39,9 +38,7 @@ namespace TotallyWholesome
         private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
         private static PropertyInfo _currentInstancePrivacyGetter = typeof(MetaPort).GetProperty("CurrentInstancePrivacy");
         private static FieldInfo _currentInstancePrivacyField = typeof(MetaPort).GetField("CurrentInstancePrivacy");
-        private static Dictionary<string, TWPlayerObject> _players = new();
         private static TWPlayerObject _ourPlayer;
-        public static readonly RecyclableMemoryStreamManager RecyclableMemory = new();
 
         public static string CreateMD5(string input)
         {
@@ -69,11 +66,6 @@ namespace TotallyWholesome
             if (_currentInstancePrivacyGetter != null)
                 return (string)_currentInstancePrivacyGetter.GetValue(MetaPort.Instance);
             return (string)_currentInstancePrivacyField.GetValue(MetaPort.Instance);
-        }
-
-        public static void LeaveWorld()
-        {
-            _players.Clear();
         }
 
         public static AudioSource GetPlayerCommsAudioSource(this PuppetMaster pm)
@@ -123,17 +115,6 @@ namespace TotallyWholesome
             return (string)_selfUsername.GetValue(null);
         }
 
-        public static string GetMelonLoaderVersion()
-        {
-            return (string)_mlVersionGetter.GetValue(null);
-        } 
-
-        public static void UserLeave(CVRPlayerEntity player)
-        {
-            if (_players.ContainsKey(player.Uuid))
-                _players.Remove(player.Uuid);
-        }
-
         public static void OpenKeyboard(string currentValue, Action<string> callback)
         {
             Patches.OnKeyboardSubmitted = callback;
@@ -163,11 +144,6 @@ namespace TotallyWholesome
             return (Animator)_animatorGetter.GetValue(pm);
         }
 
-        public static Canvas GetNameplateCanvas(PlayerNameplate nameplate)
-        {
-            return (Canvas)_nameplateCanvasGetter.GetValue(nameplate);
-        }
-
         public static CVRAvatar GetLocalAvatarDescriptor(this PlayerSetup ps)
         {
             return (CVRAvatar)_localAvatarDescriptor.GetValue(ps);
@@ -180,15 +156,7 @@ namespace TotallyWholesome
             if (MetaPort.Instance.ownerId.Equals(userID))
                 return GetOurPlayer();
 
-            if (_players.TryGetValue(userID, out var playerObj))
-                return playerObj;
-            
-            foreach (var player in CVRPlayerManager.Instance.NetworkPlayers)
-            {
-                if (player.Uuid.Equals(userID)) return new TWPlayerObject(player);
-            }
-
-            return null;
+            return (from player in CVRPlayerManager.Instance.NetworkPlayers where player.Uuid.Equals(userID) select new TWPlayerObject(player)).FirstOrDefault();
         }
 
         public static Transform GetRootGameObject(GameObject root, string target)

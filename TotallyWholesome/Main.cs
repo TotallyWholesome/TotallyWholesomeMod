@@ -29,8 +29,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.6.7";
-        public const string TWVersion = "3.6.7";
+        public const string AssemblyVersion = "3.6.8";
+        public const string TWVersion = "3.6.8";
         public const string DownloadLink = "https://totallywholeso.me/";
     }
 
@@ -79,9 +79,6 @@ namespace TotallyWholesome
             Patches.SetupPatches();
 
             Patches.OnUserLogin += OnPlayerLoggedIn;
-            Patches.OnWorldLeave += TWUtils.LeaveWorld;
-            Patches.EarlyWorldJoin += TWUtils.LeaveWorld;
-            Patches.UserLeave += TWUtils.UserLeave;
             QuickMenuAPI.OnMenuRegenerate += EarlyWorldJoin;
 
             // CVR events

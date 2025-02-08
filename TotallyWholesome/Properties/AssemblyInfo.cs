@@ -24,7 +24,7 @@ using Main = TotallyWholesome.Main;
     BuildInfo.AssemblyVersion,
     BuildInfo.Author,
     BuildInfo.DownloadLink)]
-[assembly: MelonColor(ConsoleColor.Magenta)]
+[assembly: MelonColor(255, 139,0,139)]
 [assembly: MelonOptionalDependencies("UI Expansion Kit", "ActionMenu")]
 
 // Create and Setup a MelonModGame to mark a Mod as Universal or Compatible with specific Games.
