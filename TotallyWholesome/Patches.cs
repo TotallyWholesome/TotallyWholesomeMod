@@ -318,7 +318,15 @@ namespace TotallyWholesome
         static MethodBase TargetMethod()
         {
             RecalculateCoefficients();
-            return typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.FMOD.FMOD_AudioCapture").GetMethod("TransmitPacket", BindingFlags.Instance | BindingFlags.NonPublic);
+            var target = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.FMOD.FMOD_AudioCapture")?.GetMethod("TransmitPacket", BindingFlags.Instance | BindingFlags.NonPublic);
+            //TODO: Remove this after nightly goes stable
+            if(target == null)
+                target = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.Comms_AudioCapture")?.GetMethod("TransmitPacket", BindingFlags.Static | BindingFlags.NonPublic);
+
+            if(target == null)
+                Con.Error("No valid TransmitPacket method found! Unable to apply MicrophoneCapturePatch!");
+
+            return target;
         }
         static bool Prefix(ref float[] data)
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using ABI_RC.Core;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.API;
@@ -33,6 +34,9 @@ namespace TotallyWholesome
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
         private static FieldInfo _commsPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
+        //TODO: Remove this after nightly goes stable
+        private static FieldInfo _hudAnchorCheck = typeof(RootLogic).GetField("hudAnchor", BindingFlags.Public | BindingFlags.Instance);
+        private static FieldInfo _cohtmlHudGetter = typeof(RootLogic).GetField("cohtmlHud", BindingFlags.Public | BindingFlags.Instance);
 
         private static PropertyInfo _commsAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.Components.Comms_AudioTap").GetProperty("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
         private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
@@ -45,6 +49,17 @@ namespace TotallyWholesome
             // Use input string to calculate MD5 hash
             byte[] inputBytes = Encoding.ASCII.GetBytes(input);
             return CreateMD5(inputBytes);
+        }
+
+        //TODO: Remove this after nightly goes stable
+        public static bool DoesHudAnchorExist()
+        {
+            return _hudAnchorCheck != null;
+        }
+
+        public static Transform GetCohtmlHudTransform()
+        {
+            return _cohtmlHudGetter.GetValue(RootLogic.Instance) as Transform;
         }
 
         public static string CreateMD5(byte[] bytes)

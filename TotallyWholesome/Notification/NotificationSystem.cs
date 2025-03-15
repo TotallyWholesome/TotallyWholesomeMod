@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ABI_RC.Core;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Core.UI;
@@ -38,7 +39,16 @@ public class NotificationSystem : ITWManager
 
     public void LateSetup()
     {
-        _hudContent = !MetaPort.Instance.isUsingVr ? PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject : PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject;
+        if (!TWUtils.DoesHudAnchorExist())
+        {
+            _hudContent = !MetaPort.Instance.isUsingVr
+                ? PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject
+                : PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject;
+        }
+        else
+        {
+            _hudContent = TWUtils.GetCohtmlHudTransform().parent.GetComponentInChildren<Canvas>().gameObject;
+        }
 
         Con.Debug("Got hud canvas");
 
@@ -73,17 +83,17 @@ public class NotificationSystem : ITWManager
 
     public void VRModeSwitched()
     {
-        if(_controllerInstance == null)
+        if (_controllerInstance == null)
         {
             return;
         }
 
-        if(MetaPort.Instance.isUsingVr)
-            _hudContent = PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject;
-        else
-            _hudContent = PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject;
+        if (!TWUtils.DoesHudAnchorExist())
+        {
+            _hudContent = MetaPort.Instance.isUsingVr ? PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject : PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject;
 
-        _notificationGO.transform.parent = _hudContent.transform;
+            _notificationGO.transform.parent = _hudContent.transform;
+        }
 
         _notificationRect.localPosition = MetaPort.Instance.isUsingVr ? new Vector3(-3, 0, 0) : Vector3.zero;
         _notificationRect.localRotation = Quaternion.identity;
