@@ -332,10 +332,10 @@ namespace TotallyWholesome.Network
             });
 
             if (_connectedToGS)
-                MoveWaitingForGSToQueue(null);
+                MoveWaitingForGSToQueue();
         }
         
-        private void MoveWaitingForGSToQueue(RichPresenceInstance_t richPresenceInstanceT)
+        private void MoveWaitingForGSToQueue()
         {
             MelonCoroutines.Start(WaitForSecondBeforeFiringInvites());
         }

@@ -27,7 +27,7 @@ namespace TotallyWholesome
         public static Action EarlyWorldJoin;
         public static Action<CVRPlayerEntity> UserJoin;
         public static Action<CVRPlayerEntity> UserLeave;
-        public static Action<RichPresenceInstance_t> OnWorldJoin;
+        public static Action OnWorldJoin;
         public static Action OnWorldLeave;
         public static Action OnGameNetworkConnected;
         public static Action<string> OnAvatarInstantiated;
@@ -63,7 +63,6 @@ namespace TotallyWholesome
             Con.Debug("Setting up Patches...");
             
             ApplyPatches(typeof(NameplatePatches));
-            ApplyPatches(typeof(RichPresensePatch));
             ApplyPatches(typeof(InstancesPatches));
             ApplyPatches(typeof(PuppetMasterPatch));
             ApplyPatches(typeof(ViewManagerPatches));
@@ -139,6 +138,11 @@ namespace TotallyWholesome
                 }
             });
 
+            CVRGameEventSystem.Instance.OnConnected.AddListener(str =>
+            {
+                OnWorldJoin?.Invoke();
+            });
+
             Con.Debug("Finished with patching.");
         }
 
@@ -178,36 +182,6 @@ namespace TotallyWholesome
         static void Postfix()
         {
             Patches.OnChangingInstance?.Invoke();
-        }
-    }
-
-    [HarmonyPatch(typeof(RichPresence))]
-    class RichPresensePatch
-    {
-        [HarmonyPatch(nameof(RichPresence.DisplayMode), MethodType.Setter)]
-        [HarmonyPrefix]
-        static bool OnRichPresenseUpdated()
-        {
-            var rpInfo = TWUtils.GetRichPresenceInfo();
-
-            if (rpInfo == null) return true;
-            
-            if (Patches.LastRichPresenseUpdate == rpInfo.InstanceMeshId) return true;
-            
-            Patches.LastRichPresenseUpdate = rpInfo.InstanceMeshId;
-            
-            Con.Debug("Connected to instance");
-            
-            try
-            {
-                Patches.OnWorldJoin?.Invoke(rpInfo);
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-
-            return true;
         }
     }
 

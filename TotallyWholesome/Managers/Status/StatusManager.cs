@@ -82,9 +82,9 @@ namespace TotallyWholesome.Managers.Status
         }
         
         
-        private void OnInstanceJoin(RichPresenceInstance_t richPresenceInstanceT)
+        private void OnInstanceJoin()
         {
-            var publicWorld = richPresenceInstanceT.InstancePrivacy.Equals("public", StringComparison.InvariantCultureIgnoreCase) || richPresenceInstanceT.InstancePrivacy.Equals("friendsoffriends", StringComparison.InvariantCultureIgnoreCase);
+            var publicWorld = MetaPort.Instance.CurrentInstancePrivacyType == MetaPort.InstancePrivacy.Public || MetaPort.Instance.CurrentInstancePrivacyType == MetaPort.InstancePrivacy.FriendsOfFriends;
 
             if (publicWorld == _isPublicWorld) return;
 
