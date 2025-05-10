@@ -5,6 +5,7 @@ using System.Reflection;
 using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
+using ABI_RC.Core.Networking.API.UserWebsocket;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
@@ -33,7 +34,6 @@ namespace TotallyWholesome
         public static Action<string> OnAvatarInstantiated;
         public static Action OnLocalAvatarReady;
         public static Action<string> OnKeyboardSubmitted;
-        public static Action<Invite_t> OnInviteAccepted;
         public static Action OnChangingInstance;
         public static Action<CVRSpawnable> OnPropSpawned;
         public static Action<CVRSpawnable> OnPropDelete;
@@ -42,8 +42,6 @@ namespace TotallyWholesome
         public static bool IsMuffled;
         public static bool IsFlightLocked;
         public static bool AreSeatsLocked;
-        public static string LastRichPresenseUpdate;
-        public static List<Invite_t> TWInvites = new();
 
         public static DateTime TimeSinceLastUnmute = DateTime.Now;
         public static DateTime TimeSinceKeyboardOpen = DateTime.Now;
@@ -200,6 +198,22 @@ namespace TotallyWholesome
     [HarmonyPatch(typeof(ViewManager))]
     class ViewManagerPatches
     {
+        [HarmonyPatch(nameof(ViewManager.UpdateInvites))]
+        [HarmonyPostfix]
+        static void UpdateInvitesPostfix(List<Invite> invites)
+        {
+            if (TWNetClient.Instance.TargetInstanceID == null) return;
+
+            foreach (Invite invite in invites)
+            {
+                if(!invite.InstanceId.Equals(TWNetClient.Instance.TargetInstanceID)) continue;
+
+                Con.Debug($"Invite Received: Invite InstanceID - {invite.InstanceId} | TargetInstanceID - {TWNetClient.Instance.TargetInstanceID}");
+
+                TWNetClient.Instance.AutoAcceptTargetInvite(invite.InstanceId);
+            }
+        }
+
         [HarmonyPatch("SendToWorldUi")]
         [HarmonyPostfix]
         static void SendToWorldUi(string value)
@@ -209,71 +223,6 @@ namespace TotallyWholesome
                 Patches.OnKeyboardSubmitted?.Invoke(value);
 
             Patches.OnKeyboardSubmitted = null;
-        }
-
-        [HarmonyPatch(nameof(ViewManager.FlagForUpdate))]
-        [HarmonyPrefix]
-        static void UpdateInvitesPatch(ViewManager __instance, ViewManager.UpdateTypes type)
-        {
-            if (type != ViewManager.UpdateTypes.Invites) return;
-
-            if (TWNetClient.Instance.TargetInstanceID != null)
-            {
-                foreach (var invite in __instance.Invites)
-                {
-                    Con.Debug($"Invite Received: Invite InstanceID - {invite.InstanceMeshId} | TargetInstanceID - {TWNetClient.Instance.TargetInstanceID}");
-                    if (!invite.InstanceMeshId.Equals(TWNetClient.Instance.TargetInstanceID)) continue;
-                    
-                    TWNetClient.Instance.AutoAcceptTargetInvite(invite.InviteMeshId);
-                    break;
-                }
-            }
-
-            if (Patches.TWInvites.Count == 0) return;
-            
-            Con.Debug($"UpdateInvitePatchFired {Patches.TWInvites.Count} in TWInvites");
-
-            foreach (var invite in Patches.TWInvites)
-            {
-                if(__instance.Invites.Contains(invite))
-                    continue;
-                
-                __instance.Invites.Add(invite);
-            }
-        }
-
-        [HarmonyPatch(nameof(ViewManager.RespondToInvite))]
-        [HarmonyPrefix]
-        static bool RespondToInvite(ViewManager __instance, string inviteId, string response)
-        {
-            if (!inviteId.StartsWith("twInvite_"))
-                return true;
-
-            var invite = Patches.TWInvites.FirstOrDefault(x => x.InviteMeshId == inviteId);
-
-            if (invite == null)
-                return false;
-            
-            if (response == "deny" || response == "silence")
-            {
-                Patches.TWInvites.Remove(invite);
-                ViewManager.Instance.ExpireInviteIn(inviteId, 2f);
-                ViewManager.Instance.RemoveInvite(inviteId);
-                ViewManager.Instance.FlagForUpdate(ViewManager.UpdateTypes.Invites);
-                return false;
-            }
-            
-            Con.Debug($"Invite accepted! {inviteId} | {invite.SenderUsername}, {invite.WorldName}, {invite.InstanceName}");
-            Patches.OnInviteAccepted?.Invoke(invite);
-            
-            Patches.TWInvites.Remove(invite);
-            ViewManager.Instance.ExpireInviteIn(inviteId, 2f);
-            ViewManager.Instance.RemoveInvite(inviteId);
-            ViewManager.Instance.FlagForUpdate(ViewManager.UpdateTypes.Invites);
-            
-            Con.Debug($"Removed invite from TWInvites {Patches.TWInvites.Count} left");
-
-            return false;
         }
     }
 

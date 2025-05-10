@@ -91,23 +91,6 @@ namespace TotallyWholesome
             return commsAudioSource;
         }
 
-        public static void AddCVRNotification(string inviteID, string senderUsername, string inviteText)
-        {
-            var cvrInvite = new Invite_t();
-
-            cvrInvite.InviteMeshId = $"twInvite_{inviteID}";
-            cvrInvite.SenderUsername = senderUsername;
-            cvrInvite.WorldName = inviteText;
-            cvrInvite.InstanceName = inviteText;
-
-            Patches.TWInvites.Add(cvrInvite);
-
-            if (ViewManager.Instance == null || ViewManager.Instance.gameMenuView == null)
-                return;
-
-            ViewManager.Instance.FlagForUpdate(ViewManager.UpdateTypes.Invites);
-        }
-
         public static void GetAvatarFromAPI(string avatarID, Action<AvatarDetailsResponse> onSuccess)
         {
             TwTask.Run(async () =>

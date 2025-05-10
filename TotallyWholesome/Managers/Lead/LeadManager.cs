@@ -8,6 +8,8 @@ using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using ABI_RC.Core.UI;
+using ABI_RC.Core.UI.UIMessage;
 using ABI_RC.Core.Util;
 using ABI_RC.Systems.Movement;
 using ABI.CCK.Components;
@@ -96,7 +98,6 @@ namespace TotallyWholesome.Managers.Lead
             Patches.OnAvatarInstantiated += OnAvatarIsReady;
             Patches.OnWorldLeave += OnWorldLeave;
             Patches.UserLeave += OnPlayerLeave;
-            Patches.OnInviteAccepted += OnInviteAccepted;
             Patches.OnPropSpawned += OnPropSpawned;
             Patches.OnPropDelete += OnPropDelete;
 
@@ -368,20 +369,6 @@ namespace TotallyWholesome.Managers.Lead
                 QuickMenuAPI.ShowAlertToast($"Requested {QuickMenuAPI.SelectedPlayerName} to be your pet!");
             });
         }
-        
-        private void OnInviteAccepted(Invite_t invite)
-        {
-            if (!invite.InviteMeshId.Contains(_pendingRequest.Key))
-            {
-                NotificationSystem.EnqueueNotification("Totally Wholesome", "You accepted a request that did not exist!", 4f, TWAssets.Alert);
-                return;
-            }
-            
-            if(_petRequest)
-                TWNetSendHelpers.AcceptPetRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
-            else
-                TWNetSendHelpers.AcceptMasterRequest(_pendingRequest.Key, _pendingRequest.RequesterID);
-        }
 
         #endregion
 
@@ -409,8 +396,15 @@ namespace TotallyWholesome.Managers.Lead
 
                 _pendingRequest = packet;
                 _petRequest = false;
-                
-                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting to become your pet!");
+
+                UIMessageManager.Instance.PopUIMessage(new CVRUIMessage("Totally Wholesome Master Request", UIMessageCategory.Invite, packet.Key, $"{requester.Username} is requesting to become your pet!",
+                    requester.CVRPlayer.ApiProfileImageUrl, true, false, null, null,
+                    new UIMessageButton("Accept", "gfx/accept.svg", () =>
+                    {
+                        TWNetSendHelpers.AcceptMasterRequest(packet.Key, packet.RequesterID);
+                    }, quickMenuAcceptButton:true),
+                    new UIMessageButton("Deny", "gfx/deny.svg")
+                ));
             });
         }
 
@@ -436,8 +430,15 @@ namespace TotallyWholesome.Managers.Lead
 
                 _pendingRequest = packet;
                 _petRequest = true;
-                
-                TWUtils.AddCVRNotification(packet.Key, "Totally Wholesome", $" | {requester.Username} is requesting for you to become their pet!");
+
+                UIMessageManager.Instance.PopUIMessage(new CVRUIMessage("Totally Wholesome Pet Request", UIMessageCategory.Other, packet.Key, $"{requester.Username}  is requesting for you to become their pet!",
+                    requester.CVRPlayer.ApiProfileImageUrl, true, false, null, null,
+                    new UIMessageButton("Accept", "gfx/accept.svg", () =>
+                    {
+                        TWNetSendHelpers.AcceptPetRequest(packet.Key, packet.RequesterID);
+                    }, quickMenuAcceptButton:true),
+                    new UIMessageButton("Deny", "gfx/deny.svg")
+                ));
             });
         }
 

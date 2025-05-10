@@ -15,6 +15,7 @@ using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using ABI_RC.Core.UI;
 using BTKUILib;
 using cohtml;
 using MelonLoader;
@@ -394,12 +395,11 @@ namespace TotallyWholesome.Network
 
             if (_inviteID != null)
             {
-                ViewManager.Instance.RespondToInvite(_inviteID, "accept");
+                UIMessageManager.Instance.ClearMessageByReferenceID(UIMessageCategory.Invite, _inviteID);
                 _inviteID = null;
-                yield break;
             }
             
-            Instances.SetJoinTarget(TargetInstanceID, _targetWorld);
+            Instances.SetJoinTarget(TargetInstanceID);
         }
 
         private void OnAuthWorldCheck()
