@@ -10,6 +10,7 @@ using BTKUILib.UIObjects.Components;
 using BTKUILib.UIObjects.Objects;
 using MelonLoader;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.PlayerRestrictions;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;

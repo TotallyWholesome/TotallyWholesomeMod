@@ -25,9 +25,9 @@ namespace TotallyWholesome.Objects
             get
             {
                 if (!_isRemotePlayer)
-                    return PlayerSetup.Instance._avatar;
+                    return PlayerSetup.Instance.AvatarObject;
 
-                return _playerEntity.PuppetMaster == null ? null : _playerEntity.PuppetMaster.avatarObject;
+                return _playerEntity.PuppetMaster == null ? null : _playerEntity.PuppetMaster.AvatarObject;
             }
         }
 
@@ -56,7 +56,7 @@ namespace TotallyWholesome.Objects
             get
             {
                 if (!_isRemotePlayer)
-                    return PlayerSetup.Instance._animator;
+                    return PlayerSetup.Instance.Animator;
                 return ReferenceEquals(_playerEntity, null) ? null : TWUtils.GetAvatarAnimator(_playerEntity.PuppetMaster);
             }
         }

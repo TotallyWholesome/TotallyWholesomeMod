@@ -1,6 +1,7 @@
 ﻿using System;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.PlayerRestrictions;
 
 namespace TotallyWholesome.Managers.Achievements.Conditions
 {

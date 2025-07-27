@@ -11,9 +11,9 @@ using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Systems.GameEventSystem;
+using ABI_RC.Systems.IK.SubSystems;
 using ABI_RC.Systems.Movement;
 using ABI.CCK.Components;
-using ABI.CCK.Scripts;
 using HarmonyLib;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
@@ -33,10 +33,11 @@ namespace TotallyWholesome
         public static Action OnGameNetworkConnected;
         public static Action<string> OnAvatarInstantiated;
         public static Action OnLocalAvatarReady;
-        public static Action<string> OnKeyboardSubmitted;
         public static Action OnChangingInstance;
         public static Action<CVRSpawnable> OnPropSpawned;
         public static Action<CVRSpawnable> OnPropDelete;
+        public static Action OnCalibrate;
+        public static Action<float> OnAvatarHeightUpdate;
 
         public static bool IsForceMuted;
         public static bool IsMuffled;
@@ -62,14 +63,13 @@ namespace TotallyWholesome
             
             ApplyPatches(typeof(NameplatePatches));
             ApplyPatches(typeof(InstancesPatches));
-            ApplyPatches(typeof(PuppetMasterPatch));
             ApplyPatches(typeof(ViewManagerPatches));
             ApplyPatches(typeof(MicrophoneCapturePatch));
-            ApplyPatches(typeof(PlayerSetupPatches));
-            ApplyPatches(typeof(AdvancedAvatarSettingsPatch));
+            ApplyPatches(typeof(BBCCPatches));
             ApplyPatches(typeof(MovementSystemPatches));
             ApplyPatches(typeof(CVRSeatPatch));
             ApplyPatches(typeof(CVRSpawnablePatches));
+            ApplyPatches(typeof(BodySystemPatch));
 
             CVRGameEventSystem.Instance.OnConnected.AddListener((message) =>
             {
@@ -141,6 +141,11 @@ namespace TotallyWholesome
                 OnWorldJoin?.Invoke();
             });
 
+            CVRGameEventSystem.Avatar.OnRemoteAvatarLoad.AddListener((entity, avatar) =>
+            {
+                OnAvatarInstantiated?.Invoke(entity.Uuid);
+            });
+
             Con.Debug("Finished with patching.");
         }
 
@@ -182,18 +187,6 @@ namespace TotallyWholesome
             Patches.OnChangingInstance?.Invoke();
         }
     }
-
-    [HarmonyPatch(typeof(PuppetMaster))]
-    class PuppetMasterPatch
-    {
-        [HarmonyPatch(nameof(PuppetMaster.AvatarInstantiated))]
-        [HarmonyPostfix]
-        static void OnAvatarInstantiated(PuppetMaster __instance)
-        {
-            Patches.OnAvatarInstantiated?.Invoke(TWUtils.GetPlayerDescriptorFromPuppetMaster(__instance).ownerId);
-        }
-    }
-    
     
     [HarmonyPatch(typeof(ViewManager))]
     class ViewManagerPatches
@@ -212,17 +205,6 @@ namespace TotallyWholesome
 
                 TWNetClient.Instance.AutoAcceptTargetInvite(invite.InstanceId);
             }
-        }
-
-        [HarmonyPatch("SendToWorldUi")]
-        [HarmonyPostfix]
-        static void SendToWorldUi(string value)
-        {
-            //Ensure that we check if the keyboard action was used within 3 minutes, this will avoid the next keyboard usage triggering the action
-            if(DateTime.Now.Subtract(Patches.TimeSinceKeyboardOpen).TotalMinutes <= 3)
-                Patches.OnKeyboardSubmitted?.Invoke(value);
-
-            Patches.OnKeyboardSubmitted = null;
         }
     }
 
@@ -330,13 +312,31 @@ namespace TotallyWholesome
             }
         }
     }
-
-    [HarmonyPatch(typeof(CVRAdvancedAvatarSettings))]
-    class AdvancedAvatarSettingsPatch
+    
+    [HarmonyPatch(typeof(BetterBetterCharacterController))]
+    class BBCCPatches
     {
-        [HarmonyPatch(nameof(CVRAdvancedAvatarSettings.LoadAvatarProfiles))]
         [HarmonyPostfix]
-        static void OnLoadAvatarProfiles()
+        [HarmonyPatch(nameof(BetterBetterCharacterController.UpdateAvatarHeight), typeof(float))]
+        static void UpdateHeightPostfix(float newHeight)
+        {
+            try
+            {
+                Patches.OnAvatarHeightUpdate?.Invoke(newHeight);
+            }
+            catch (Exception e)
+            {
+                Con.Error(e);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(BodySystem))]
+    class BodySystemPatch
+    {
+        [HarmonyPostfix]
+        [HarmonyPatch(nameof(BodySystem.InitializeAvatar))]
+        static void InitAvatarPostfix()
         {
             try
             {
@@ -347,29 +347,19 @@ namespace TotallyWholesome
                 Con.Error(e);
             }
         }
-    }
-    
-    [HarmonyPatch(typeof(PlayerSetup))]
-    class PlayerSetupPatches
-    {
-        [HarmonyPatch("Start")]
+
         [HarmonyPostfix]
-        static void OnStart(PlayerSetup __instance)
+        [HarmonyPatch(nameof(BodySystem.Calibrate))]
+        static void CalibratePostfix()
         {
-            __instance.avatarSetupCompleted.AddListener(() =>
+            try
             {
-                //Expect local ready after LoadAvatarProfiles to avoid issue where params are reset
-                if (__instance.GetLocalAvatarDescriptor().avatarUsesAdvancedSettings) return; 
-                
-                try
-                {
-                    Patches.OnLocalAvatarReady?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Con.Error(e);
-                }
-            });
+                Patches.OnCalibrate?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Con.Error(e);
+            }
         }
     }
 

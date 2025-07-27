@@ -18,5 +18,6 @@ public enum NetworkedFeature
     AllowHeight = 512,
     DisableSeats = 1024,
     AllowAnyAvatarSwitching = 2048,
-    MasterBypassDeafen = 4096
+    MasterBypassDeafen = 4096,
+    ArmbindMode = 8192
 }

@@ -29,8 +29,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.6.11";
-        public const string TWVersion = "3.6.11";
+        public const string AssemblyVersion = "3.6.12";
+        public const string TWVersion = "3.6.12-nightly";
         public const string DownloadLink = "https://totallywholeso.me/";
     }
 
@@ -168,8 +168,8 @@ namespace TotallyWholesome
                 //Add our actions into CVRs join and leave
                 QuickMenuAPI.UserJoin += entity => Patches.UserJoin.Invoke(entity);
                 QuickMenuAPI.UserLeave += entity => Patches.UserLeave.Invoke(entity);
-                
-                PlayerSetup.Instance.avatarSetupCompleted.AddListener(() =>
+
+                CVRGameEventSystem.Avatar.OnLocalAvatarLoad.AddListener((avatar) =>
                 {
                     Patches.OnAvatarInstantiated?.Invoke(MetaPort.Instance.ownerId);
                 });

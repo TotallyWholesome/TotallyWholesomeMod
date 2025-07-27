@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
@@ -19,6 +18,7 @@ using BTKUILib.UIObjects.Objects;
 using JetBrains.Annotations;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead.LeadComponents;
+using TotallyWholesome.Managers.PlayerRestrictions;
 using TotallyWholesome.Managers.TWUI.Pages;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
@@ -71,6 +71,7 @@ namespace TotallyWholesome.Managers.Lead
         public bool Blindfold = false;
         public bool Deafen = false;
         public bool MasterDeafenBypass = false;
+        public bool ArmbindMode = false;
         public SliderFloat TetherRange;
         public SliderFloat TetherRangeIPC;
         public Vector3 LeashPinPosition = Vector3.zero;
@@ -397,7 +398,7 @@ namespace TotallyWholesome.Managers.Lead
                 _pendingRequest = packet;
                 _petRequest = false;
 
-                UIMessageManager.Instance.PopUIMessage(new CVRUIMessage("Totally Wholesome Master Request", UIMessageCategory.Invite, packet.Key, $"{requester.Username} is requesting to become your pet!",
+                UIMessageManager.Instance.PopUIMessage(new CVRUIMessage("TW Master Request", UIMessageCategory.Invite, packet.Key, $"{requester.Username} is requesting to become your pet!", null,
                     requester.CVRPlayer.ApiProfileImageUrl, true, false, null, null,
                     new UIMessageButton("Accept", "gfx/accept.svg", () =>
                     {
@@ -431,7 +432,7 @@ namespace TotallyWholesome.Managers.Lead
                 _pendingRequest = packet;
                 _petRequest = true;
 
-                UIMessageManager.Instance.PopUIMessage(new CVRUIMessage("Totally Wholesome Pet Request", UIMessageCategory.Other, packet.Key, $"{requester.Username}  is requesting for you to become their pet!",
+                UIMessageManager.Instance.PopUIMessage(new CVRUIMessage("TW Pet Request", UIMessageCategory.Other, packet.Key, $"{requester.Username}  is requesting for you to become their pet!", null,
                     requester.CVRPlayer.ApiProfileImageUrl, true, false, null, null,
                     new UIMessageButton("Accept", "gfx/accept.svg", () =>
                     {
@@ -465,7 +466,7 @@ namespace TotallyWholesome.Managers.Lead
 
             MasterPair.ForcedMute = packet.AppliedFeatures.HasFlag(ConfigManager.GetNetworkedFeatureEnum(AccessType.AllowForceMute));
 
-            ApplyForcedMute(packet.AppliedFeatures.HasFlag(ConfigManager.GetNetworkedFeatureEnum(AccessType.AllowForceMute)));
+            PlayerRestrictionManager.Instance.ApplyForcedMute(packet.AppliedFeatures.HasFlag(ConfigManager.GetNetworkedFeatureEnum(AccessType.AllowForceMute)));
 
             bool shouldUpdate = false;
             
@@ -491,34 +492,6 @@ namespace TotallyWholesome.Managers.Lead
             
             if(shouldUpdate)
                 TWNetSendHelpers.SendLeashConfigUpdate(MasterPair);
-        }
-
-        private void ApplyForcedMute(bool mute)
-        {
-            Main.Instance.MainThreadQueue.Enqueue(() =>
-            {
-                if (mute && !Patches.IsForceMuted && ConfigManager.Instance.IsActive(AccessType.AllowForceMute, MasterId))
-                {
-                    //Clear before sending to ensure the gag message appears on top
-                    NotificationSystem.ClearNotification();
-                    NotificationSystem.EnqueueNotification("Totally Wholesome", "You have been gagged!", 3f, TWAssets.MicrophoneOff);
-                    if (!ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId))
-                        AudioManagement.SetMicrophoneActive(false);
-
-                    Patches.IsForceMuted = true;
-                    Patches.IsMuffled = ConfigManager.Instance.IsActive(AccessType.EnableMuffledMode, MasterId);
-                }
-                else if (!mute && Patches.IsForceMuted)
-                {
-                    NotificationSystem.ClearNotification();
-                    NotificationSystem.EnqueueNotification("Totally Wholesome", "You have been ungagged!", 3f, TWAssets.MicrophoneOff);
-                    Patches.IsForceMuted = false;
-                    Patches.IsMuffled = false;
-                }
-                
-                //Always reapply TWGag state
-                AvatarParameterManager.Instance.TrySetParameter("TWGag", mute && ConfigManager.Instance.IsActive(AccessType.AllowForceMute, MasterId) ? 1 : 0);
-            });
         }
 
         public void OnRemove(LeadAccept packet)
@@ -749,7 +722,7 @@ namespace TotallyWholesome.Managers.Lead
                 StatusManager.Instance.UpdatePetMasterMark(pair.Master.Uuid, false, false);
 
                 //Remove gag when leash is removed
-                ApplyForcedMute(false);
+                PlayerRestrictionManager.Instance.ApplyForcedMute(false);
             }
             
             //Delete and reset renderer after all other resets complete
@@ -1049,7 +1022,7 @@ namespace TotallyWholesome.Managers.Lead
 
             AvatarParameterManager.Instance.TrySetParameter("TWCollar", 1);
 
-            ApplyForcedMute(leadPair.ForcedMute);
+            PlayerRestrictionManager.Instance.ApplyForcedMute(leadPair.ForcedMute);
         }
 
         #endregion

@@ -7,6 +7,7 @@ using BTKUILib.UIObjects.Components;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using TotallyWholesome.Managers.Lead;
+using TotallyWholesome.Managers.PlayerRestrictions;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Managers.Shockers.PiShock;
 using TotallyWholesome.Managers.Status;

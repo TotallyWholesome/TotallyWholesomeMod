@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ABI_RC.Core.Networking;
+using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using BTKUILib;
@@ -84,7 +85,7 @@ namespace TotallyWholesome.Managers.Status
         
         private void OnInstanceJoin()
         {
-            var publicWorld = MetaPort.Instance.CurrentInstancePrivacyType == MetaPort.InstancePrivacy.Public || MetaPort.Instance.CurrentInstancePrivacyType == MetaPort.InstancePrivacy.FriendsOfFriends;
+            var publicWorld = MetaPort.Instance.CurrentInstancePrivacyType == Instances.InstancePrivacyType.Public || MetaPort.Instance.CurrentInstancePrivacyType == Instances.InstancePrivacyType.FriendsOfFriends || MetaPort.Instance.CurrentInstancePrivacyType == Instances.InstancePrivacyType.GroupPlus;
 
             if (publicWorld == _isPublicWorld) return;
 

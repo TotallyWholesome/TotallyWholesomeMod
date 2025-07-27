@@ -67,7 +67,7 @@ namespace TotallyWholesome
 
         private void LateUpdate()
         {
-            if(ViewManager.Instance.isGameMenuOpen()) return;
+            if(ViewManager.Instance.IsViewShown) return;
 
             if (CVRInputManager.Instance.interactRightDown && _lastRaycastTarget != Vector3.zero)
             {

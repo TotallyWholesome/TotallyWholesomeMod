@@ -28,9 +28,7 @@ namespace TotallyWholesome
     public static class TWUtils
     {
         private static MD5 _hasher = MD5.Create();
-        private static FieldInfo _animatorGetter = typeof(PuppetMaster).GetField("_animator", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _getPlayerDescriptor = typeof(PuppetMaster).GetField("_playerDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo _localAvatarDescriptor = typeof(PlayerSetup).GetField("_avatarDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
         private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
         private static FieldInfo _commsPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -83,6 +81,11 @@ namespace TotallyWholesome
             return (string)_currentInstancePrivacyField.GetValue(MetaPort.Instance);
         }
 
+        public static float GetLocalAvatarHeight(this PlayerSetup ps)
+        {
+            return ps.AvatarHeight;
+        }
+
         public static AudioSource GetPlayerCommsAudioSource(this PuppetMaster pm)
         {
             var commsPipeline = _commsPipelineGetter.GetValue(pm);
@@ -113,13 +116,6 @@ namespace TotallyWholesome
             return (string)_selfUsername.GetValue(null);
         }
 
-        public static void OpenKeyboard(string currentValue, Action<string> callback)
-        {
-            Patches.OnKeyboardSubmitted = callback;
-            Patches.TimeSinceKeyboardOpen = DateTime.Now;
-            ViewManager.Instance.openMenuKeyboard(currentValue);
-        }
-
         public static TWPlayerObject GetOurPlayer()
         {
             return _ourPlayer ??= new TWPlayerObject(null);
@@ -139,12 +135,12 @@ namespace TotallyWholesome
         public static Animator GetAvatarAnimator(PuppetMaster pm)
         {
             if (pm == null) return null;
-            return (Animator)_animatorGetter.GetValue(pm);
+            return pm.Animator;
         }
 
         public static CVRAvatar GetLocalAvatarDescriptor(this PlayerSetup ps)
         {
-            return (CVRAvatar)_localAvatarDescriptor.GetValue(ps);
+            return ps.AvatarDescriptor;
         }
         
         public static TWPlayerObject GetPlayerFromPlayerlist(string userID)

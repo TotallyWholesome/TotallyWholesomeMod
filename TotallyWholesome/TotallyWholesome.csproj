@@ -283,6 +283,7 @@
   <ItemGroup>
     <Compile Remove="Managers\LovenseManager.cs" />
     <Compile Remove="TWUI\**" />
+    <Compile Remove="Managers\PlayerRestrictionManager.cs" />
   </ItemGroup>
   <ItemGroup Label="FilesToCopy">
     <Content Include="LogFiles\*.config" Pack="true" PackagePath="contentFiles\LogFiles">
