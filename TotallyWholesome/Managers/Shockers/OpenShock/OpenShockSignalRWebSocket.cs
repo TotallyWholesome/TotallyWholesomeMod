@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using MelonLoader;
+using MelonLoader.Logging;
 using TotallyWholesome.Managers.Shockers.OpenShock.Models.SignalR;
 using TotallyWholesome.Utils;
 #pragma warning disable CS4014
@@ -15,7 +16,7 @@ public sealed class OpenShockSignalRWebSocket : IAsyncDisposable
 {
     private readonly Uri _hubUri;
     private readonly string _token;
-    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.OpenShock.SignalRClient", Color.Green);
+    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.OpenShock.SignalRClient", ColorARGB.Green);
     
     public event MessageEvent OnMessage;
     public event StatusUpdate OnStatusUpdate;

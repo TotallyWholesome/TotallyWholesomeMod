@@ -29,8 +29,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.6.12";
-        public const string TWVersion = "3.6.12-nightly";
+        public const string AssemblyVersion = "3.6.13";
+        public const string TWVersion = "3.6.13";
         public const string DownloadLink = "https://totallywholeso.me/";
     }
 

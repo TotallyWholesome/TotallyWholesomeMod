@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MelonLoader;
+using MelonLoader.Logging;
 using Newtonsoft.Json;
 using TotallyWholesome.Utils;
 
@@ -15,7 +16,7 @@ public static class PiShockConfig
 {
     private const string ConfigPath = "UserData/TotallyWholesome/PiShock.json";
     
-    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.PiShock.Config", Color.Green);
+    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.PiShock.Config", ColorARGB.Green);
     private static PiShockConf? _internalConfig;
 
     static PiShockConfig()

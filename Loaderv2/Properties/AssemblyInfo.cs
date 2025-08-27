@@ -14,6 +14,6 @@ using MelonLoader;
 [assembly: AssemblyVersion(WholesomeLoader.LoaderBuildInfo.Version)]
 [assembly: AssemblyFileVersion(WholesomeLoader.LoaderBuildInfo.Version)]
 [assembly: MelonInfo(typeof(WholesomeLoader.WholesomeLoader), WholesomeLoader.LoaderBuildInfo.Name, WholesomeLoader.LoaderBuildInfo.Version, WholesomeLoader.LoaderBuildInfo.Author, WholesomeLoader.LoaderBuildInfo.DownloadLink)]
-[assembly: MelonGame("Alpha Blend Interactive", "ChilloutVR")]
-[assembly: MelonColor(System.ConsoleColor.Green)]
+[assembly: MelonGame("ChilloutVR", "ChilloutVR")]
+[assembly: MelonColor(255, 0, 255, 0)]
 [assembly: HarmonyDontPatchAll]

@@ -93,7 +93,7 @@ namespace TotallyWholesome.Objects
             {
                 if (!_isRemotePlayer)
                     return MetaPort.Instance.currentAvatarGuid;
-                return ReferenceEquals(_playerEntity, null) ? null : _playerEntity.AvatarId;
+                return ReferenceEquals(_playerEntity, null) ? null : _playerEntity.PuppetMaster.AvatarDescriptor?.AssetInfo?.objectId;
             }
         }
 

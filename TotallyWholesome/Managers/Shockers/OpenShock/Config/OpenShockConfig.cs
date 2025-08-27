@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MelonLoader;
+using MelonLoader.Logging;
 using Newtonsoft.Json;
 using TotallyWholesome.Utils;
 
@@ -15,7 +16,7 @@ public static class OpenShockConfig
 {
     private const string ConfigPath = "UserData/TotallyWholesome/OpenShock.json";
     
-    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.OpenShock.Config", Color.Green);
+    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.OpenShock.Config", ColorARGB.Green);
     private static OpenShockConf? _internalConfig;
 
     static OpenShockConfig()

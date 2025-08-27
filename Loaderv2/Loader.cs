@@ -19,7 +19,7 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.3.6";
+        public const string Version = "3.3.7";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 

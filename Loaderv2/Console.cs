@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using MelonLoader;
+using MelonLoader.Logging;
 
 namespace WholesomeLoader;
 
@@ -9,7 +10,7 @@ public static class Con
     public static bool DebugMode;
 
     //Create an instance of MelonLogger.Instance to adhere to 0.5.x logging changes
-    private static readonly MelonLogger.Instance Logger = new MelonLogger.Instance("TotallyWholesome", Color.Green);
+    private static readonly MelonLogger.Instance Logger = new MelonLogger.Instance("TotallyWholesome", ColorARGB.Green);
 
     public static void Msg(object data) => Logger.Msg(data);
 

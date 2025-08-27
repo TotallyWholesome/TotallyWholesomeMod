@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using BTKUILib;
 using MelonLoader;
+using MelonLoader.Logging;
 using OneOf;
 using OneOf.Types;
 using TotallyWholesome.Managers.AvatarParams;
@@ -21,7 +22,7 @@ namespace TotallyWholesome.Managers.Shockers;
 public sealed class ShockerManager : ITWManager
 {
     private static readonly MelonLogger.Instance Logger =
-        new("TotallyWholesome ShockerManager", System.Drawing.Color.Green);
+        new("TotallyWholesome ShockerManager", ColorARGB.Green);
 
     public static ShockerManager Instance { get; private set; } = null!;
     public IShockerProvider? ShockerProvider { get; private set; }

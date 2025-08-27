@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Harmony;
 using MelonLoader;
+using MelonLoader.Logging;
 using Newtonsoft.Json;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Shockers.OpenShock.Config;
@@ -25,7 +26,7 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
 {
     public static OpenShockManager? Instance { get; private set; }
     
-    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.OpenShock", Color.Green);
+    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.OpenShock", ColorARGB.Green);
 
     private const string AuthTokenHeaderName = "OpenShockToken";
 

@@ -203,9 +203,9 @@ namespace TotallyWholesome.Managers.AvatarParams
                         if(value >= profiles.Length) continue;
 
                         if(value != 0)
-                            PlayerSetup.Instance.LoadCurrentAvatarSettingsProfile(profiles[value]);
+                            PlayerSetup.Instance.LoadCurrentAvatarSettingsProfile(profiles[value], false);
                         else
-                            PlayerSetup.Instance.LoadCurrentAvatarSettingsDefault();
+                            PlayerSetup.Instance.LoadCurrentAvatarSettingsDefault(false);
 
                         continue;
                     }

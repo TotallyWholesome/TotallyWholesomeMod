@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
+using MelonLoader.Logging;
 using Newtonsoft.Json;
 using OneOf;
 using OneOf.Types;
@@ -34,7 +35,7 @@ public class PiShockManager : IShockerProvider, IAsyncDisposable
     private const string PiShockGetKey = "GetKeyAndNameFromShort";
     private const string PiShockGetLogs = "getlastlogsfromshort";
 
-    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.PiShock.Config", Color.Green);
+    private static readonly MelonLogger.Instance Logger = new("TotallyWholesome.PiShock.Config", ColorARGB.Green);
 
     private readonly HttpClient _httpClient = new HttpClient();
 
