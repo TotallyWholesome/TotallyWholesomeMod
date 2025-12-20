@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
-using BTKUILib;
+using ABI_RC.Systems.UI.UILib;
 using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
 using TotallyWholesome.Managers.Shockers.OpenShock.Config;
 using TotallyWholesome.Managers.Shockers.PiShock.Config;
@@ -84,7 +85,7 @@ namespace TotallyWholesome.Managers.Status
         
         private void OnInstanceJoin()
         {
-            var publicWorld = MetaPort.Instance.CurrentInstancePrivacyType == Instances.InstancePrivacyType.Public || MetaPort.Instance.CurrentInstancePrivacyType == Instances.InstancePrivacyType.FriendsOfFriends || MetaPort.Instance.CurrentInstancePrivacyType == Instances.InstancePrivacyType.GroupPlus;
+            var publicWorld = !Instances.IsInPrivateInstance();
 
             if (publicWorld == _isPublicWorld) return;
 
@@ -158,11 +159,9 @@ namespace TotallyWholesome.Managers.Status
                 _ourLastStatusUpdate = packet;
                 
                 Main.Instance.MainThreadQueue.Enqueue(() => {
-                    if (!UIUtils.IsQMReady()) return;
+                    if (!CVR_MenuManager.IsReadyStatic) return;
                     UpdateQuickMenuStatus();
                 });
-
-                return;
             }
 
             if (packet.UserID == null) return;

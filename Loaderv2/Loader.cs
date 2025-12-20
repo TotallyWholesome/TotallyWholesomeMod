@@ -153,7 +153,7 @@ namespace WholesomeLoader
 
         private bool CheckCompatibility()
         {
-            var mlVersion = SemVersion.Parse(BuildInfo.Version);
+            var mlVersion = SemVersion.Parse(MelonLoader.Properties.BuildInfo.Version);
             var cvrVersion = new CVRVersion(Application.version);
 
             //Check all available branches for compatibility

@@ -68,7 +68,6 @@ namespace TotallyWholesome
             ApplyPatches(typeof(BBCCPatches));
             ApplyPatches(typeof(MovementSystemPatches));
             ApplyPatches(typeof(CVRSeatPatch));
-            ApplyPatches(typeof(CVRSpawnablePatches));
             ApplyPatches(typeof(BodySystemPatch));
 
             CVRGameEventSystem.Instance.OnConnected.AddListener((message) =>
@@ -145,6 +144,30 @@ namespace TotallyWholesome
             {
                 OnAvatarInstantiated?.Invoke(entity.Uuid);
             });
+            
+            CVRGameEventSystem.Spawnable.OnPropSpawned.AddListener((s, data) =>
+            {
+                try
+                {
+                    OnPropSpawned?.Invoke(data.Spawnable);
+                }
+                catch (Exception e)
+                {
+                    Con.Error(e);
+                }
+            });
+            
+            CVRGameEventSystem.Spawnable.OnPropDestroyed.AddListener((s, data) =>
+            {
+                try
+                {
+                    OnPropDelete?.Invoke(data.Spawnable);
+                }
+                catch (Exception e)
+                {
+                    Con.Error(e);
+                }
+            });
 
             Con.Debug("Finished with patching.");
         }
@@ -158,7 +181,7 @@ namespace TotallyWholesome
     [HarmonyPatch(typeof(PlayerNameplate))]
     class NameplatePatches
     {
-        [HarmonyPatch(nameof(PlayerNameplate.UpdateNamePlate))]
+        [HarmonyPatch("UpdateNamePlateState")]
         [HarmonyPostfix]
         static void UpdateNameplate(PlayerNameplate __instance)
         {
@@ -355,38 +378,6 @@ namespace TotallyWholesome
             try
             {
                 Patches.OnCalibrate?.Invoke();
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(CVRSpawnable))]
-    class CVRSpawnablePatches
-    {
-        [HarmonyPatch("Start")]
-        [HarmonyPostfix]
-        static void PropStartPostfix(CVRSpawnable __instance)
-        {
-            try
-            {
-                Patches.OnPropSpawned?.Invoke(__instance);
-            }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
-        }
-
-        [HarmonyPatch(nameof(CVRSpawnable.OnDestroy))]
-        [HarmonyPostfix]
-        static void PropDeletePostfix(CVRSpawnable __instance)
-        {
-            try
-            {
-                Patches.OnPropDelete?.Invoke(__instance);
             }
             catch (Exception e)
             {

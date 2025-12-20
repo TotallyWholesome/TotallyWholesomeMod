@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BTKUILib;
-using BTKUILib.UIObjects;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Managers.Shockers.PiShock;
 using TotallyWholesome.Managers.Shockers.PiShock.Config;

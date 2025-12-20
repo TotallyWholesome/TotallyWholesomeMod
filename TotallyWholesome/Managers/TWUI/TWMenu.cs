@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using BTKUILib;
-using BTKUILib.UIObjects;
-using BTKUILib.UIObjects.Components;
-using BTKUILib.UIObjects.Objects;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib.UIObjects.Objects;
 using MelonLoader;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Shockers;
@@ -170,10 +170,10 @@ public class TWMenu : ITWManager
 
     public void LateSetup()
     {
-        Con.Msg("Adding TW elements to BTKUI!");
+        Con.Msg("Adding TW elements to UILib!");
 
         //Let's setup a custom element?
-        TWMenuButton = new CustomElement("""{"c": "container twUI-btn", "s": [{"c": "icon"}, {"c": "status-background hidden", "a":{"id": "twUI-status-bg"}}, {"c": "status-pet hidden", "a":{"id": "twUI-status-pet"}}, {"c": "status-master hidden", "a":{"id": "twUI-status-master"}}, {"c": "status-icon-shock hidden", "a":{"id": "twUI-status-icon-shock"}}, {"c": "status-icon-vibrate hidden", "a":{"id": "twUI-status-icon-vibrate"}}, {"c": "badge hidden", "a":{"id": "twUI-badge"}, "s":[{"c": "badge-text", "a":{"id": "twUI-badgeText"}, "h":"DEV"}]}], "x":"twUIAction-OpenTab", "a":{"id":"btkUI-Custom-[UUID]"}}""", ElementType.GlobalElement);
+        TWMenuButton = new CustomElement("""{"c": "container twUI-btn", "s": [{"c": "icon"}, {"c": "status-background hidden", "a":{"id": "twUI-status-bg"}}, {"c": "status-pet hidden", "a":{"id": "twUI-status-pet"}}, {"c": "status-master hidden", "a":{"id": "twUI-status-master"}}, {"c": "status-icon-shock hidden", "a":{"id": "twUI-status-icon-shock"}}, {"c": "status-icon-vibrate hidden", "a":{"id": "twUI-status-icon-vibrate"}}, {"c": "badge hidden", "a":{"id": "twUI-badge"}, "s":[{"c": "badge-text", "a":{"id": "twUI-badgeText"}, "h":"DEV"}]}], "x":"twUIAction-OpenTab", "a":{"id":"CVRUI-QMUI-Custom-[UUID]"}}""", ElementType.GlobalElement);
         //Inject CSS for the TW button?
 
         using (StreamReader stream = new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("TotallyWholesome.Managers.TWUI.TWStyle.css") ?? throw new InvalidOperationException()))
@@ -185,7 +185,7 @@ public class TWMenu : ITWManager
         TWRootPage = new Page("TotallyWholesome", "TWRoot", true, null, null, true);
 
         //Button custom action, I hate this so much but it does work
-        TWMenuButton.AddAction("twUIAction-OpenTab", $"uiRefBTK.core.playSoundCore(\"Click\");var tabs = document.querySelectorAll(\".container-tabs .tab\");for(let i=0; i < tabs.length; i++){{let tab = tabs[i];tab.classList.remove(\"selected\");}}engine.call(\"btkUI-TabChange\", \"{TWRootPage.ElementID}\");");
+        TWMenuButton.AddAction("twUIAction-OpenTab", $"menu.core.playSoundCore(\"Click\");var tabs = document.querySelectorAll(\".container-tabs .tab\");for(let i=0; i < tabs.length; i++){{let tab = tabs[i];tab.classList.remove(\"selected\");}}engine.call(\"CVRUI-QMUI-TabChange\", \"{TWRootPage.ElementID}\");");
 
         TWStatusUpdate = new CustomEngineOnFunction("twStatusUpdate",
             """console.log("twStatusUpdate Fired | " + backgroundColour + " | " + textColour + " | " + badgeText + " | " + displayBadge + " | " + petAutoAccept + " | " + masterAutoAccept + " | " + vibDevice + " | " + shockDevice);if(displayBadge) {cvr("#twUI-badge").show();}else {cvr("#twUI-badge").hide();}if(petAutoAccept){cvr("#twUI-status-pet").show();}else {cvr("#twUI-status-pet").hide();}if(masterAutoAccept){cvr("#twUI-status-master").show();let masterAutoElement = document.getElementById("twUI-status-master");if(petAutoAccept){masterAutoElement.classList.add("status-master-mask");}else{masterAutoElement.classList.remove("status-master-mask");}}else {cvr("#twUI-status-master").hide();}if(vibDevice){cvr("#twUI-status-icon-vibrate").show();}else {cvr("#twUI-status-icon-vibrate").hide();}if(shockDevice){cvr("#twUI-status-icon-shock").show();}else {cvr("#twUI-status-icon-shock").hide();}if(shockDevice || vibDevice){cvr("#twUI-status-bg").show();}else{cvr("#twUI-status-bg").hide();}cvr("#twUI-badgeText").innerHTML(badgeText);document.getElementById('twUI-badge').setAttribute('style', 'background-color: ' + backgroundColour + ';');document.getElementById('twUI-badgeText').setAttribute('style', 'color: ' + textColour + ';');""",

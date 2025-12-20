@@ -1,7 +1,7 @@
 ﻿using System;
-using BTKUILib;
-using BTKUILib.UIObjects;
-using BTKUILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
 using TotallyWholesome.Managers.Shockers.OpenShock.Config;
 using TotallyWholesome.Managers.Shockers.OpenShock.Models;
 using TotallyWholesome.Managers.Status;

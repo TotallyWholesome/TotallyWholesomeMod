@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Shockers.OpenShock.Models;
 
-public class ResponseDeviceWithShockers : ResponseDevice
+public sealed class ResponseHubWithShockers : ResponseHub
 {
     public IEnumerable<ShockerResponse> Shockers { get; set; }
 }

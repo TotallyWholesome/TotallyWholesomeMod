@@ -97,6 +97,7 @@ public class NotificationSystem : ITWManager
 
         _notificationRect.localPosition = MetaPort.Instance.isUsingVr ? new Vector3(-3, 0, 0) : Vector3.zero;
         _notificationRect.localRotation = Quaternion.identity;
+        _notificationRect.localScale = Vector3.one;
     }
 
     public static void EnqueueAchievement(string description, Sprite icon = null)

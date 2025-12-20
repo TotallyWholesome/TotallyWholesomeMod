@@ -1,7 +1,7 @@
 using ABI_RC.Core.InteractionSystem;
-using BTKUILib;
-using BTKUILib.UIObjects;
-using BTKUILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
 using TotallyWholesome.Network;
 using TotallyWholesome.Utils;
 using TWNetCommon;

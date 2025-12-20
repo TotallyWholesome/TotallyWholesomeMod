@@ -2,7 +2,7 @@
 
 namespace TotallyWholesome.Managers.Shockers.OpenShock.Models;
 
-public class ResponseDevice
+public class ResponseHub
 {
     public Guid Id { get; set; }
     public string Name { get; set; }

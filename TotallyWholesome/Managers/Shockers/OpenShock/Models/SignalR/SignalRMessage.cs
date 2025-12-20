@@ -10,7 +10,7 @@ public class SignalRMessage
     [CanBeNull] public IList<object> Arguments { get; set; }
 }
 
-public class SignalRServerMessage : SignalRMessage
+public sealed class SignalRServerMessage : SignalRMessage
 {
     [CanBeNull] public string Error { get; set; }
 }

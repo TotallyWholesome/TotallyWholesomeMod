@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using BTKUILib;
-using BTKUILib.UIObjects;
-using BTKUILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Managers.Shockers.OpenShock;
 using TotallyWholesome.Managers.Shockers.OpenShock.Config;
@@ -67,7 +67,7 @@ public static class OpenShockPage
         return page;
     }
 
-    public static void UpdateDevices(IEnumerable<ResponseDeviceWithShockers> devices)
+    public static void UpdateDevices(IEnumerable<ResponseHubWithShockers> devices)
     {
         if (QuickMenuAPI.CurrentPageID == ShockerPage.Page.ElementID) QuickMenuAPI.GoBack();
         

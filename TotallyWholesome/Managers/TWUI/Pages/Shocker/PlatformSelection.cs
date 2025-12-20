@@ -1,5 +1,5 @@
-﻿using BTKUILib;
-using BTKUILib.UIObjects;
+﻿using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
 using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Objects;
 

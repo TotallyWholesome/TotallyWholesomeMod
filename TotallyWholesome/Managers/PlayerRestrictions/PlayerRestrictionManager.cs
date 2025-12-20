@@ -110,7 +110,7 @@ public class PlayerRestrictionManager : ITWManager
             TWUtils.GetAvatarFromAPI(packet.TargetAvatar, response =>
             {
                 //Queue up and fire!
-                if (!response.SwitchPermitted)
+                if (!response.Permitted)
                 {
                     Con.Warn("Your master requested you switch into an avatar you have no access to!");
                     return;

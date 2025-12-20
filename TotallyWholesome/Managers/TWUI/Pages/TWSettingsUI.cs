@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using ABI_RC.Core.Networking.API.Responses;
+using ABI_RC.Core.Networking.API.Responses.DetailsV2;
+using ABI_RC.Core.Networking.IO.UserGeneratedContent;
 using ABI_RC.Core.Savior;
-using BTKUILib;
-using BTKUILib.UIObjects;
-using BTKUILib.UIObjects.Components;
-using BTKUILib.UIObjects.Objects;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib.UIObjects.Objects;
 using MelonLoader;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.PlayerRestrictions;
@@ -396,10 +398,10 @@ public class TWSettingsUI : ITWManager
         QuickMenuAPI.ShowAlertToast("Added current avatar to switchable avatar list!");
     }
 
-    private void CreateAvatarListEntry(AvatarDetailsResponse avatarDetails)
+    private void CreateAvatarListEntry(ContentAvatarResponse avatarDetails)
     {
         var cat = _switchableAvatarPage.AddCategory(avatarDetails.Name);
-        cat.AddButton("", avatarDetails.ImageUrl, avatarDetails.Description, ButtonStyle.FullSizeImage);
+        cat.AddButton("", avatarDetails.Image.ToString(), avatarDetails.Description, ButtonStyle.FullSizeImage);
         var delete = cat.AddButton("Remove Avatar", "TWTrash", "Remove this avatar from the switchable avatar list");
         delete.OnPress += () =>
         {

@@ -10,7 +10,7 @@
   z-index: 9;
 }
 #quickmenu-wrapper .twUI-btn .icon {
-  background: url("mods/BTKUI/images/TotallyWholesome/TWLogoPride.png");
+  background: url("UILib/Images/TotallyWholesome/TWLogoPride.png");
   background-size: cover;
   background-repeat: no-repeat;
   height: 256px;
@@ -54,7 +54,7 @@
   clip-path: polygon(80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%, 20% 0%);
 }
 #quickmenu-wrapper .twUI-btn .status-icon-vibrate {
-  background: url("mods/BTKUI/images/TotallyWholesome/Vibration.png");
+  background: url("UILib/Images/TotallyWholesome/Vibration.png");
   background-size: cover;
   background-repeat: no-repeat;
   width: 40px;
@@ -65,7 +65,7 @@
   z-index: 12;
 }
 #quickmenu-wrapper .twUI-btn .status-icon-shock {
-  background: url("mods/BTKUI/images/TotallyWholesome/Bolt.png");
+  background: url("UILib/Images/TotallyWholesome/Bolt.png");
   background-size: cover;
   background-repeat: no-repeat;
   width: 40px;

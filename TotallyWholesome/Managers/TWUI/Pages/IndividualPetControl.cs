@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using ABI_RC.Core.Savior;
 using ABI.CCK.Scripts;
-using BTKUILib;
-using BTKUILib.UIObjects;
-using BTKUILib.UIObjects.Components;
-using BTKUILib.UIObjects.Objects;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib.UIObjects.Objects;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Shockers;
@@ -325,7 +325,7 @@ public class IndividualPetControl : ITWManager
                 TWUtils.GetAvatarFromAPI(avatar, response =>
                 {
                     //Create button with icon
-                    var button = _petAvatarListCat.AddButton(response.Name, response.ImageUrl, $"Switch the selected pet into \"{response.Name}\"!", ButtonStyle.FullSizeImage);
+                    var button = _petAvatarListCat.AddButton(response.Name, response.Image.AbsoluteUri, $"Switch the selected pet into \"{response.Name}\"!", ButtonStyle.FullSizeImage);
                     button.OnPress += () =>
                     {
                         QuickMenuAPI.ShowConfirm("Are you sure?",

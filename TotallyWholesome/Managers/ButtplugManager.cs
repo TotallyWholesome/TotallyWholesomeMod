@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ABI_RC.Core.Savior;
-using BTKUILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
 using ButtplugManaged;
 using MelonLoader;
 using Newtonsoft.Json;

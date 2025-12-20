@@ -15,7 +15,7 @@ using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Core.UI;
-using BTKUILib;
+using ABI_RC.Systems.UI.UILib;
 using cohtml;
 using MelonLoader;
 using MessagePack;
@@ -387,7 +387,7 @@ namespace TotallyWholesome.Network
         {
             yield return new WaitForSeconds(10f);
 
-            if (MetaPort.Instance.CurrentInstanceId.Equals(TargetInstanceID)) yield break;
+            if (Instances.CurrentInstanceId.Equals(TargetInstanceID)) yield break;
             
             Con.Msg("Set new target world, changing instance!");
 
@@ -397,7 +397,7 @@ namespace TotallyWholesome.Network
                 _inviteID = null;
             }
             
-            Instances.SetJoinTarget(TargetInstanceID);
+            Instances.TryJoinInstance(TargetInstanceID, Instances.JoinInstanceSource.Mod);
         }
 
         private void OnAuthWorldCheck()
@@ -433,7 +433,7 @@ namespace TotallyWholesome.Network
             if (_connectedToGS)
                 return;
             
-            if (MetaPort.Instance.IsHomeInstance)
+            if (Instances.IsHomeInstance)
                 return;
 
             _connectedToGS = true;

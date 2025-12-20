@@ -4,11 +4,13 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using ABI_RC.API;
 using ABI_RC.Core;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.API;
 using ABI_RC.Core.Networking.API.Responses;
+using ABI_RC.Core.Networking.API.Responses.DetailsV2;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Networking.IO.UserGeneratedContent;
 using ABI_RC.Core.Player;
@@ -30,8 +32,6 @@ namespace TotallyWholesome
         private static MD5 _hasher = MD5.Create();
         private static FieldInfo _getPlayerDescriptor = typeof(PuppetMaster).GetField("_playerDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo _vmSpawnablesGetter = typeof(ViewManager).GetField("_spawneables", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static FieldInfo _commsPipelineGetter = typeof(PuppetMaster).GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance);
         //TODO: Remove this after nightly goes stable
         private static FieldInfo _hudAnchorCheck = typeof(RootLogic).GetField("hudAnchor", BindingFlags.Public | BindingFlags.Instance);
         private static FieldInfo _cohtmlHudGetter = typeof(RootLogic).GetField("cohtmlHud", BindingFlags.Public | BindingFlags.Instance);
@@ -88,17 +88,15 @@ namespace TotallyWholesome
 
         public static AudioSource GetPlayerCommsAudioSource(this PuppetMaster pm)
         {
-            var commsPipeline = _commsPipelineGetter.GetValue(pm);
-            if (commsPipeline == null) return null;
-            AudioSource commsAudioSource = _commsAudioSourceGetter.GetValue(commsPipeline) as AudioSource;
+            AudioSource commsAudioSource = _commsAudioSourceGetter.GetValue(pm.CommsPipeline) as AudioSource;
             return commsAudioSource;
         }
 
-        public static void GetAvatarFromAPI(string avatarID, Action<AvatarDetailsResponse> onSuccess)
+        public static void GetAvatarFromAPI(string avatarID, Action<ContentAvatarResponse> onSuccess)
         {
             TwTask.Run(async () =>
             {
-                var avatarDetails = await ApiConnection.MakeRequest<AvatarDetailsResponse>(ApiConnection.ApiOperation.AvatarDetail, new { avatarID });
+                var avatarDetails = await ApiConnection.MakeRequest<ContentAvatarResponse>(ApiConnection.ApiOperation.AvatarDetail, new { avatarID }, "2");
                 if (!avatarDetails.IsSuccessStatusCode) return;
 
                 //Got a good avatar response
@@ -126,10 +124,9 @@ namespace TotallyWholesome
             return (PlayerDescriptor)_getPlayerDescriptor.GetValue(pm);
         }
 
-        public static List<Spawnable_t> GetSpawnables()
+        public static List<Spawnable> GetSpawnables()
         {
-            if (ViewManager.Instance == null) return null;
-            return (List<Spawnable_t>)_vmSpawnablesGetter.GetValue(ViewManager.Instance);
+            return SpawnableAPI.AllSpawnablesInternal;
         }
 
         public static Animator GetAvatarAnimator(PuppetMaster pm)

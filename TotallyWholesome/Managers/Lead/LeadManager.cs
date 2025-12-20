@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using ABI_RC.Core.InteractionSystem;
+using ABI_RC.Core.Networking.API;
+using ABI_RC.Core.Networking.API.Responses;
+using ABI_RC.Core.Networking.API.Responses.DetailsV2;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
@@ -12,9 +15,9 @@ using ABI_RC.Core.UI.UIMessage;
 using ABI_RC.Core.Util;
 using ABI_RC.Systems.Movement;
 using ABI.CCK.Components;
-using BTKUILib;
-using BTKUILib.UIObjects.Components;
-using BTKUILib.UIObjects.Objects;
+using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects.Components;
+using ABI_RC.Systems.UI.UILib.UIObjects.Objects;
 using JetBrains.Annotations;
 using TotallyWholesome.Managers.AvatarParams;
 using TotallyWholesome.Managers.Lead.LeadComponents;
@@ -30,6 +33,7 @@ using TWNetCommon.Data.ControlPackets;
 using TWNetCommon.Data.NestedObjects;
 using UnityEngine;
 using WholesomeLoader;
+using Yggdrasil.Logging;
 using Object = UnityEngine.Object;
 using StatusManager = TotallyWholesome.Managers.Status.StatusManager;
 
@@ -84,6 +88,7 @@ namespace TotallyWholesome.Managers.Lead
         private static MultiSelection _propSelectionGlobal;
         private static MultiSelection _leashStyleSelection;
         private static Dictionary<string, string> _props;
+        private static Dictionary<string, string> _ourPropNames = new();
         private static TWRaycaster _twRaycaster;
 
         public void Setup()
@@ -865,13 +870,29 @@ namespace TotallyWholesome.Managers.Lead
         {
             try
             {
-                //Add prop to our lists if needed
-                var ourSpawnables = TWUtils.GetSpawnables();
-                var spawnable = ourSpawnables.FirstOrDefault(x => x.SpawnableId == obj.guid);
-                if (spawnable != null && !_props.ContainsKey(obj.instanceId))
+                if (!_ourPropNames.ContainsKey(obj.guid))
                 {
-                    _props.Add(obj.instanceId, spawnable.SpawnableName);
+                    TwTask.Run(async () =>
+                    {
+                        BaseResponse<ContentSpawnableResponse> response = await ApiConnection.MakeRequest<ContentSpawnableResponse>(ApiConnection.ApiOperation.PropDetail, apiVersion: "2", data: new { id = obj.guid });
+                        if (response.IsSuccessStatusCode)
+                        {
+                            //Store prop name and call OnPropSpawned again
+                            _ourPropNames.TryAdd(obj.guid, response.Data.Name);
+                            Con.Debug($"Fetched prop name from API {response.Data.Name} - {obj.guid}");
+                            Main.Instance.MainThreadQueue.Enqueue(() =>
+                            {
+                                OnPropSpawned(obj);
+                            });
+                        }
+                    });
+                    
+                    return;
                 }
+                
+                //Add prop to our lists if needed
+                if (obj.SpawnedByMe && !_props.ContainsKey(obj.instanceId)) 
+                    _props.Add(obj.instanceId, _ourPropNames[obj.guid]);
 
                 var pairs = ActiveLeadPairs.Values.Where(x => x.PropTarget != null && x.PropTarget.Equals(obj.instanceId)).ToArray();
 

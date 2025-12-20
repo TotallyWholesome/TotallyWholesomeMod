@@ -166,7 +166,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BTKUILib\BTKUILib.csproj" />
     <ProjectReference Include="..\Loaderv2\WholesomeLoader-v2.csproj" />
     <ProjectReference Include="..\ManagedButtplugIo\ButtplugCSharp\ManagedButtplugIo.csproj" />
     <ProjectReference Include="..\MessagePack-CSharp\src\MessagePack\MessagePack.csproj" />

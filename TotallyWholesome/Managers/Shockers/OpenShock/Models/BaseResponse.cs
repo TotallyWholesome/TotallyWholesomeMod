@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace TotallyWholesome.Managers.Shockers.OpenShock.Models;
 
-public class BaseResponse<T>
+public sealed class BaseResponse<T>
 {
     public string? Message { get; set; }
     public T? Data { get; set; }

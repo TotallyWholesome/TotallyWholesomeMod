@@ -11,7 +11,7 @@ using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Core.Util.AssetFiltering;
 using ABI_RC.Systems.GameEventSystem;
-using BTKUILib;
+using ABI_RC.Systems.UI.UILib;
 using MelonLoader;
 using Semver;
 using TotallyWholesome.Managers;
@@ -29,8 +29,8 @@ namespace TotallyWholesome
         public const string Name = "TotallyWholesome";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string AssemblyVersion = "3.6.13";
-        public const string TWVersion = "3.6.13";
+        public const string AssemblyVersion = "3.6.15";
+        public const string TWVersion = "3.6.15";
         public const string DownloadLink = "https://totallywholeso.me/";
     }
 
@@ -59,14 +59,6 @@ namespace TotallyWholesome
             #elif !BETA
             Con.Msg($"Welcome to Totally Wholesome! You are on version {BuildInfo.TWVersion} Release Build Commit: {ThisAssembly.Git.Commit}|{ThisAssembly.Git.Branch}");
             
-
-
-            if (!RegisteredMelons.Any(x => x.Info.Name.Equals("BTKUILib") && x.Info.SemanticVersion != null && x.Info.SemanticVersion.CompareTo(new SemVersion(2, 1)) >= 0))
-            {
-                Con.Error("BTKUILib was not detected or it outdated! TotallyWholesome cannot function without it!");
-                Con.Error("Please download BTKUILib version 2.0.0 or greater!");
-                return;
-            }
 
             var dir = "ChilloutVR_Data\\StreamingAssets\\Cohtml\\UIResources\\GameUI\\mods\\TWUI";
 

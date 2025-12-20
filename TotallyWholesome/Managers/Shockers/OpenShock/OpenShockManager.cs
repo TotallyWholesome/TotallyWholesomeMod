@@ -129,7 +129,7 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
             Logger.Error("Error parsing shockers, response was empty");
             return;
         }
-        var devices = JsonConvert.DeserializeObject<BaseResponse<IReadOnlyCollection<ResponseDeviceWithShockers>>>(json)!.Data!;
+        var devices = JsonConvert.DeserializeObject<BaseResponse<IReadOnlyCollection<ResponseHubWithShockers>>>(json)!.Data!;
 
         if (deviceId != null)
             if (devices.All(x => x.Id != deviceId))

@@ -6,7 +6,6 @@ public class MinimalShocker
 {
     public Guid Id { get; set; }
     public ushort RfId { get; set; }
-    public ShockerModelType Model { get; set; }
 }
 
 public class ShockerResponse : MinimalShocker
