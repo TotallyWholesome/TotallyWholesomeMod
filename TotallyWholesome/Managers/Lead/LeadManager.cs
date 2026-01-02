@@ -88,7 +88,6 @@ namespace TotallyWholesome.Managers.Lead
         private static MultiSelection _propSelectionGlobal;
         private static MultiSelection _leashStyleSelection;
         private static Dictionary<string, string> _props;
-        private static Dictionary<string, string> _ourPropNames = new();
         private static TWRaycaster _twRaycaster;
 
         public void Setup()
@@ -870,29 +869,9 @@ namespace TotallyWholesome.Managers.Lead
         {
             try
             {
-                if (!_ourPropNames.ContainsKey(obj.guid))
-                {
-                    TwTask.Run(async () =>
-                    {
-                        BaseResponse<ContentSpawnableResponse> response = await ApiConnection.MakeRequest<ContentSpawnableResponse>(ApiConnection.ApiOperation.PropDetail, apiVersion: "2", data: new { id = obj.guid });
-                        if (response.IsSuccessStatusCode)
-                        {
-                            //Store prop name and call OnPropSpawned again
-                            _ourPropNames.TryAdd(obj.guid, response.Data.Name);
-                            Con.Debug($"Fetched prop name from API {response.Data.Name} - {obj.guid}");
-                            Main.Instance.MainThreadQueue.Enqueue(() =>
-                            {
-                                OnPropSpawned(obj);
-                            });
-                        }
-                    });
-                    
-                    return;
-                }
-                
                 //Add prop to our lists if needed
                 if (obj.SpawnedByMe && !_props.ContainsKey(obj.instanceId)) 
-                    _props.Add(obj.instanceId, _ourPropNames[obj.guid]);
+                    _props.Add(obj.instanceId, obj.PropData.ContentMetadata.AssetName);
 
                 var pairs = ActiveLeadPairs.Values.Where(x => x.PropTarget != null && x.PropTarget.Equals(obj.instanceId)).ToArray();
 
