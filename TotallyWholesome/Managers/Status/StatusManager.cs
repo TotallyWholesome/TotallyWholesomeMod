@@ -29,6 +29,9 @@ namespace TotallyWholesome.Managers.Status
         private Dictionary<string, StatusUpdate> _knownStatuses;
 
         private bool _isPublicWorld;
+        private bool _localUserStatusGenerated;
+        private StatusComponent _localUserStatusComp;
+        private StatusUpdate _localUserStatusUpdate;
         private StatusUpdate _ourLastStatusUpdate;
         private DateTime _lastStatusUpdate;
         private Task _statusUpdateTask;
@@ -166,59 +169,62 @@ namespace TotallyWholesome.Managers.Status
 
             if (packet.UserID == null) return;
             
-            //Add or Update KnownStatuses
-            _knownStatuses[packet.UserID] = packet;
-            if (!_statusComponents.ContainsKey(packet.UserID)) return;
+            StatusComponent targetComponent = null;
             
+            //Add or Update KnownStatuses
+            if (packet.UserID != MetaPort.Instance.ownerId)
+            {
+                _knownStatuses[packet.UserID] = packet;
+                if (!_statusComponents.TryGetValue(packet.UserID, out targetComponent)) return;
+            }
+            else
+            {
+                _localUserStatusUpdate = packet;
+                if (!_localUserStatusGenerated) return;
+                targetComponent = _localUserStatusComp;
+            }
+
             if (ConfigManager.Instance.IsActive(AccessType.HideNameplateBadges)) return;
 
             Main.Instance.MainThreadQueue.Enqueue(() =>
             {
-                if (!_statusComponents.ContainsKey(packet.UserID))
-                {
-                    Con.Error($"{packet.UserID} does not exist in the statusComponents list!");
-                    return;
-                }
-                
-                var component = _statusComponents[packet.UserID];
-
-                if (component == null) return;
-                if (component.gameObject == null) return;
+                if (targetComponent == null) return;
+                if (targetComponent.gameObject == null) return;
 
 
                 if (!packet.EnableStatus)
                 {
-                    component.ResetStatus();
+                    targetComponent.ResetStatus();
                     return;
                 }
 
 
-                component.specialMark.gameObject.SetActive(packet.DisplaySpecialRank); //Controlled by server
-                component.specialMarkText.text = packet.SpecialRank;
+                targetComponent.specialMark.gameObject.SetActive(packet.DisplaySpecialRank); //Controlled by server
+                targetComponent.specialMarkText.text = packet.SpecialRank;
 
 
                 //Status will be shown and updated
-                component.gameObject.SetActive(true);
+                targetComponent.gameObject.SetActive(true);
                 if (packet.IsLookingForGroup && !packet.PetAutoAccept && !packet.MasterAutoAccept)
                 {
                     //Old client, display single colour mode
-                    component.UpdateAutoAcceptGroup(false,false,true, false);
+                    targetComponent.UpdateAutoAcceptGroup(false,false,true, false);
                 }
                 else
                 {
                     //Updated client, show complete status indicator
-                    component.UpdateAutoAcceptGroup(packet.PiShockDevice, packet.ButtplugDevice, packet.PetAutoAccept, packet.MasterAutoAccept);
+                    targetComponent.UpdateAutoAcceptGroup(packet.PiShockDevice, packet.ButtplugDevice, packet.PetAutoAccept, packet.MasterAutoAccept);
                 }
 
                 //Enable beta icon if build is release-beta
                 #if BETA
-                component.backgroundImage.sprite = packet.ActiveBetaUser ? TWAssets.TWTagBetaIcon : TWAssets.TWTagNormalIcon;
+                targetComponent.backgroundImage.sprite = packet.ActiveBetaUser ? TWAssets.TWTagBetaIcon : TWAssets.TWTagNormalIcon;
                 
 
                 if (ColorUtility.TryParseHtmlString(packet.SpecialRankColour, out var colour))
-                    component.specialMark.color = colour;
+                    targetComponent.specialMark.color = colour;
                 if (ColorUtility.TryParseHtmlString(packet.SpecialRankTextColour, out var colour2))
-                    component.specialMarkText.color = colour2;
+                    targetComponent.specialMarkText.color = colour2;
             });
         }
 
@@ -270,8 +276,8 @@ namespace TotallyWholesome.Managers.Status
             if (player.gameObject == null) return;
             var userID = player.ownerId;
             
-            if (_statusComponents.ContainsKey(userID) && _statusComponents[userID] != null) return;
-
+            if ((_statusComponents.ContainsKey(userID) && _statusComponents[userID] != null) || player.IsLocalPlayer && _localUserStatusGenerated) return;
+            
             _statusComponents.Remove(userID);
 
             Transform parent = null;
@@ -294,12 +300,20 @@ namespace TotallyWholesome.Managers.Status
             StatusComponent component = newStatus.AddComponent<StatusComponent>();
             component.SetupStatus(newStatus);
             component.ResetStatus();
-            
-            _statusComponents.Add(userID, component);
 
-            if (!_knownStatuses.ContainsKey(userID)) return;
-            
-            OnStatusUpdate(_knownStatuses[userID]);
+            if (player.IsLocalPlayer)
+            {
+                _localUserStatusGenerated = true;
+                _localUserStatusComp = component;
+                if(_localUserStatusUpdate != null)
+                    OnStatusUpdate(_localUserStatusUpdate);
+            }
+            else
+            {
+                _statusComponents.Add(userID, component);
+                if (!_knownStatuses.ContainsKey(userID)) return;
+                OnStatusUpdate(_knownStatuses[userID]);
+            }
         }
 
         private void OnWorldLeave()

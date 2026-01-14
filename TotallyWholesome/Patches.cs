@@ -181,7 +181,7 @@ namespace TotallyWholesome
     [HarmonyPatch(typeof(PlayerNameplate))]
     class NameplatePatches
     {
-        [HarmonyPatch("UpdateNamePlateState")]
+        [HarmonyPatch(nameof(PlayerNameplate.UpdateNamePlateSettings))]
         [HarmonyPostfix]
         static void UpdateNameplate(PlayerNameplate __instance)
         {

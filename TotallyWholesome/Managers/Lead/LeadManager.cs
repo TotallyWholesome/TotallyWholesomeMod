@@ -895,8 +895,8 @@ namespace TotallyWholesome.Managers.Lead
         
         private void OnPropDelete(CVRSpawnable obj)
         {
-            if (_props.ContainsKey(obj.instanceId))
-                _props.Remove(obj.instanceId);
+            if (obj == null) return;
+            _props.Remove(obj.instanceId);
         }
 
         private void ApplyLeash(LeadPair leadPair, float leadLength = 3f)
