@@ -39,16 +39,7 @@ public class NotificationSystem : ITWManager
 
     public void LateSetup()
     {
-        if (!TWUtils.DoesHudAnchorExist())
-        {
-            _hudContent = !MetaPort.Instance.isUsingVr
-                ? PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject
-                : PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject;
-        }
-        else
-        {
-            _hudContent = TWUtils.GetCohtmlHudTransform().parent.GetComponentInChildren<Canvas>().gameObject;
-        }
+        _hudContent = TWUtils.GetCohtmlHudTransform().parent.GetComponentInChildren<Canvas>().gameObject;
 
         Con.Debug("Got hud canvas");
 
@@ -86,13 +77,6 @@ public class NotificationSystem : ITWManager
         if (_controllerInstance == null)
         {
             return;
-        }
-
-        if (!TWUtils.DoesHudAnchorExist())
-        {
-            _hudContent = MetaPort.Instance.isUsingVr ? PlayerSetup.Instance.vrCamera.GetComponentInChildren<Canvas>().gameObject : PlayerSetup.Instance.desktopCamera.GetComponentInChildren<Canvas>().gameObject;
-
-            _notificationGO.transform.parent = _hudContent.transform;
         }
 
         _notificationRect.localPosition = MetaPort.Instance.isUsingVr ? new Vector3(-3, 0, 0) : Vector3.zero;

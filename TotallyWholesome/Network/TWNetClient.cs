@@ -310,10 +310,9 @@ namespace TotallyWholesome.Network
 
             _waitingForGSConnection.Add(() =>
             {
-                if (LeadManager.Instance.LastFollowerPairKeys.Contains(packet.Key) && Friends.FriendsWith(packet.UserID) &&
-                    Enum.TryParse<Instances.InstancePrivacyType>(TWUtils.GetCurrentInstancePrivacy(), out var privacy))
+                if (LeadManager.Instance.LastFollowerPairKeys.Contains(packet.Key) && Friends.FriendsWith(packet.UserID))
                 {
-                    if (privacy == Instances.InstancePrivacyType.EveryoneCanInvite)
+                    if (Instances.CurrentInstancePrivacyType == Instances.InstancePrivacyType.EveryoneCanInvite)
                     {
                         ApiConnection.SendWebSocketRequest(RequestType.InviteSend, new
                         {

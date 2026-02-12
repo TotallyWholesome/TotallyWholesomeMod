@@ -1,22 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using ABI_RC.API;
 using ABI_RC.Core;
-using ABI_RC.Core.InteractionSystem;
-using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.API;
-using ABI_RC.Core.Networking.API.Responses;
 using ABI_RC.Core.Networking.API.Responses.DetailsV2;
-using ABI_RC.Core.Networking.IO.Social;
-using ABI_RC.Core.Networking.IO.UserGeneratedContent;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI.CCK.Components;
-using Microsoft.IO;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Lead.LeadComponents;
 using TotallyWholesome.Objects;
@@ -30,16 +22,10 @@ namespace TotallyWholesome
     public static class TWUtils
     {
         private static MD5 _hasher = MD5.Create();
-        private static FieldInfo _getPlayerDescriptor = typeof(PuppetMaster).GetField("_playerDescriptor", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo _richPresenceLastMsgGetter = typeof(RichPresence).GetField("LastMsg", BindingFlags.Static | BindingFlags.NonPublic);
-        //TODO: Remove this after nightly goes stable
-        private static FieldInfo _hudAnchorCheck = typeof(RootLogic).GetField("hudAnchor", BindingFlags.Public | BindingFlags.Instance);
         private static FieldInfo _cohtmlHudGetter = typeof(RootLogic).GetField("cohtmlHud", BindingFlags.Public | BindingFlags.Instance);
 
         private static PropertyInfo _commsAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.Components.Comms_AudioTap").GetProperty("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
         private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
-        private static PropertyInfo _currentInstancePrivacyGetter = typeof(MetaPort).GetProperty("CurrentInstancePrivacy");
-        private static FieldInfo _currentInstancePrivacyField = typeof(MetaPort).GetField("CurrentInstancePrivacy");
         private static TWPlayerObject _ourPlayer;
 
         public static string CreateMD5(string input)
@@ -48,13 +34,7 @@ namespace TotallyWholesome
             byte[] inputBytes = Encoding.ASCII.GetBytes(input);
             return CreateMD5(inputBytes);
         }
-
-        //TODO: Remove this after nightly goes stable
-        public static bool DoesHudAnchorExist()
-        {
-            return _hudAnchorCheck != null;
-        }
-
+        
         public static Transform GetCohtmlHudTransform()
         {
             return _cohtmlHudGetter.GetValue(RootLogic.Instance) as Transform;
@@ -73,19 +53,7 @@ namespace TotallyWholesome
 
             return sb.ToString();
         }
-
-        public static string GetCurrentInstancePrivacy()
-        {
-            if (_currentInstancePrivacyGetter != null)
-                return (string)_currentInstancePrivacyGetter.GetValue(MetaPort.Instance);
-            return (string)_currentInstancePrivacyField.GetValue(MetaPort.Instance);
-        }
-
-        public static float GetLocalAvatarHeight(this PlayerSetup ps)
-        {
-            return ps.AvatarHeight;
-        }
-
+        
         public static AudioSource GetPlayerCommsAudioSource(this PuppetMaster pm)
         {
             AudioSource commsAudioSource = _commsAudioSourceGetter.GetValue(pm.CommsPipeline) as AudioSource;
@@ -104,11 +72,6 @@ namespace TotallyWholesome
             });
         }
 
-        public static RichPresenceInstance_t GetRichPresenceInfo()
-        {
-            return _richPresenceLastMsgGetter.GetValue(null) as RichPresenceInstance_t;
-        }
-
         public static string GetSelfUsername()
         {
             return (string)_selfUsername.GetValue(null);
@@ -117,16 +80,6 @@ namespace TotallyWholesome
         public static TWPlayerObject GetOurPlayer()
         {
             return _ourPlayer ??= new TWPlayerObject(null);
-        }
-
-        public static PlayerDescriptor GetPlayerDescriptorFromPuppetMaster(PuppetMaster pm)
-        {
-            return (PlayerDescriptor)_getPlayerDescriptor.GetValue(pm);
-        }
-
-        public static List<Spawnable> GetSpawnables()
-        {
-            return SpawnableAPI.AllSpawnablesInternal;
         }
 
         public static Animator GetAvatarAnimator(PuppetMaster pm)
