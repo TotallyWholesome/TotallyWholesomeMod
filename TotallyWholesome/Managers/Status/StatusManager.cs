@@ -7,6 +7,7 @@ using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Systems.UI.UILib;
+using TMPro;
 using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
 using TotallyWholesome.Managers.Shockers.OpenShock.Config;
 using TotallyWholesome.Managers.Shockers.PiShock.Config;
@@ -16,7 +17,9 @@ using TotallyWholesome.Utils;
 using TWNetCommon;
 using TWNetCommon.Data;
 using UnityEngine;
+using UnityEngine.UI;
 using WholesomeLoader;
+using Yggdrasil.Logging;
 using Object = UnityEngine.Object;
 
 namespace TotallyWholesome.Managers.Status
@@ -50,7 +53,7 @@ namespace TotallyWholesome.Managers.Status
             ButtplugManager.Instance.ButtplugDeviceAdded += DeviceChangeStatusUpdate;
             //PiShockManager.Instance.PiShockDeviceUpdated += DeviceChangeStatusUpdate;
             
-            Patches.OnNameplateRebuild += OnNameplateRebuild;
+            Patches.OnOverheadControllerStart += OnOverheadControllerStart;
             Patches.OnWorldLeave += OnWorldLeave;
             Patches.UserLeave += OnPlayerLeave;
             Patches.OnWorldJoin += OnInstanceJoin;
@@ -205,6 +208,7 @@ namespace TotallyWholesome.Managers.Status
 
                 //Status will be shown and updated
                 targetComponent.gameObject.SetActive(true);
+                targetComponent.StatusEnabled = true;
                 if (packet.IsLookingForGroup && !packet.PetAutoAccept && !packet.MasterAutoAccept)
                 {
                     //Old client, display single colour mode
@@ -262,47 +266,37 @@ namespace TotallyWholesome.Managers.Status
         {
             SendStatusUpdate();
         }
-
-        internal void OnNameplateRebuild(PlayerNameplate nameplate)
+        
+        private void OnOverheadControllerStart(OverheadController controller, List<IOverhead> overheads)
         {
-            if(!VRCPlatesAdapter.IsVRCPlatesEnabled())
-                OnNameplateRebuild(nameplate.player, nameplate.transform);
-        }
-
-        //Setup the prefab on all nameplates, but call ResetStatus to hide the object
-        internal void OnNameplateRebuild(PlayerDescriptor player, Transform nameplate)
-        {
-            if (player == null) return;
-            if (player.gameObject == null) return;
-            var userID = player.ownerId;
+            if (controller.playerBase == null) return;
+            if (controller.playerBase.gameObject == null) return;
+            var player = controller.playerBase;
+            var userID = player.playerDescriptor.ownerId;
+            
+            Con.Debug($"OverheadController start fired, creating TWStatus object for {userID} ({player.playerDescriptor.userName})");
             
             if ((_statusComponents.ContainsKey(userID) && _statusComponents[userID] != null) || player.IsLocalPlayer && _localUserStatusGenerated) return;
             
             _statusComponents.Remove(userID);
 
-            Transform parent = null;
-
-            parent = VRCPlatesAdapter.IsVRCPlatesEnabled() ? nameplate : nameplate.transform.Find("Canvas");
-
-            GameObject newStatus = Object.Instantiate(TWAssets.StatusPrefab, parent);
+            GameObject newStatus = Object.Instantiate(TWAssets.StatusPrefab, controller.canvas.transform);
             RectTransform rectTransform = newStatus.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(1, 0);
             rectTransform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
 
-            //Adjust positions and scales to fit VRCPlates
-            if (VRCPlatesAdapter.IsVRCPlatesEnabled())
-            {
-                rectTransform.localPosition = new Vector3(550, 0, 0);
-                rectTransform.localRotation = Quaternion.identity;
-                rectTransform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
-            }
-
             StatusComponent component = newStatus.AddComponent<StatusComponent>();
             component.SetupStatus(newStatus);
             component.ResetStatus();
+            
+            //Register as overhead
+            overheads.Add(component);
 
             if (player.IsLocalPlayer)
             {
+                Con.Debug("Setting local user status material properties");
+                SetLocalUserMaterialProperties(newStatus);
+                component.IsLocalUser = true;
                 _localUserStatusGenerated = true;
                 _localUserStatusComp = component;
                 if(_localUserStatusUpdate != null)
@@ -313,6 +307,68 @@ namespace TotallyWholesome.Managers.Status
                 _statusComponents.Add(userID, component);
                 if (!_knownStatuses.ContainsKey(userID)) return;
                 OnStatusUpdate(_knownStatuses[userID]);
+            }
+        }
+
+        private void SetLocalUserMaterialProperties(GameObject newStatus)
+        {
+            //Get all components with things we need to touch
+            var images = newStatus.GetComponentsInChildren<Image>(true);
+            var tmpTexts = newStatus.GetComponentsInChildren<TMP_Text>(true);
+            
+            var fadeStart = Shader.PropertyToID("_FadeStartDistance");
+            var fadeEnd = Shader.PropertyToID("_FadeEndDistance");
+            var firstPersonLocalNameplateScaleVr = Shader.PropertyToID("_FirstPersonLocalNameplateScaleVr");
+            var firstPersonLocalNameplateScaleDesktop = Shader.PropertyToID("_FirstPersonLocalNameplateScaleDesktop");
+            var isLocalPlayer = Shader.PropertyToID("_IsLocalPlayer");
+
+            newStatus.layer = 8;
+            
+            //Set all gameobjects to PlayerLocal layer
+            var children = newStatus.GetComponentsInChildren<Transform>(includeInactive: true);
+            foreach (var child in children)
+            {
+                child.gameObject.layer = 8;
+            }
+
+            if (tmpTexts.Length > 0)
+            {
+                var textMeshMat = new Material(tmpTexts[0].fontSharedMaterial);
+                textMeshMat.SetFloat(fadeStart, PlayerNameplate.LocalPlayerFadeStart);
+                textMeshMat.SetFloat(fadeEnd, PlayerNameplate.LocalPlayerFadeEnd);
+                textMeshMat.SetFloat(firstPersonLocalNameplateScaleVr, PlayerNameplate.FirstPersonLocalScaleVr);
+                textMeshMat.SetFloat(firstPersonLocalNameplateScaleDesktop, PlayerNameplate.FirstPersonLocalScaleDesktop);
+                textMeshMat.SetFloat(isLocalPlayer, 1f);
+                
+                foreach(var tmpText in tmpTexts)
+                    tmpText.fontSharedMaterial = textMeshMat;
+            }
+
+            if (images.Length > 0)
+            {
+                var imageMat = new Material(images.FirstOrDefault(x => x.material.shader.name == "TotallyWholesome/NameplateStatusBillboard")?.material);
+                var imageMaskMat = new Material(images.FirstOrDefault(x => x.material.shader.name == "TotallyWholesome/NameplateStatusBillboardMask")?.material);
+                if (imageMat == null || imageMaskMat == null)
+                {
+                    Con.Error("There was no images with valid shader in the TWStatus prefab? How?");
+                    return;
+                }
+                    
+                imageMat.SetFloat(fadeStart, PlayerNameplate.LocalPlayerFadeStart);
+                imageMat.SetFloat(fadeEnd, PlayerNameplate.LocalPlayerFadeEnd);
+                imageMat.SetFloat(firstPersonLocalNameplateScaleVr, PlayerNameplate.FirstPersonLocalScaleVr);
+                imageMat.SetFloat(firstPersonLocalNameplateScaleDesktop, PlayerNameplate.FirstPersonLocalScaleDesktop);
+                imageMat.SetFloat(isLocalPlayer, 1f);
+                
+                imageMaskMat.SetFloat(fadeStart, PlayerNameplate.LocalPlayerFadeStart);
+                imageMaskMat.SetFloat(fadeEnd, PlayerNameplate.LocalPlayerFadeEnd);
+                imageMaskMat.SetFloat(firstPersonLocalNameplateScaleVr, PlayerNameplate.FirstPersonLocalScaleVr);
+                imageMaskMat.SetFloat(firstPersonLocalNameplateScaleDesktop, PlayerNameplate.FirstPersonLocalScaleDesktop);
+                imageMaskMat.SetFloat(isLocalPlayer, 1f);
+
+                foreach (var image in images) 
+                    image.material = image.material.shader.name == "TotallyWholesome/NameplateStatusBillboardMask" ? imageMaskMat : imageMat;
+                
             }
         }
 

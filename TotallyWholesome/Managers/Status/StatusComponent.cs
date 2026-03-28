@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using ABI_RC.Core.Player;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -6,8 +7,10 @@ using UnityEngine.UI;
 
 namespace TotallyWholesome.Managers.Status
 {
-    public class StatusComponent : MonoBehaviour
+    public class StatusComponent : MonoBehaviour, IOverhead
     {
+        public bool IsActive => StatusEnabled && ((IsLocalUser && PlayerNameplate.ShouldDisplayLocalNameplate()) || (!IsLocalUser && PlayerNameplate.ShouldDisplayRemoteNameplate()));
+
         //Special Mark
         public Image specialMark;
         public TextMeshProUGUI specialMarkText;
@@ -22,8 +25,12 @@ namespace TotallyWholesome.Managers.Status
         public Image petAuto;
         //Background
         public Image backgroundImage;
-        private static readonly int MaskEnabled = Shader.PropertyToID("_MaskEnabled");
 
+        public bool StatusEnabled = false;
+        public bool IsLocalUser = false;
+        
+        private static readonly int MaskEnabled = Shader.PropertyToID("_MaskEnabled");
+        
         public void SetupStatus(GameObject statusInstance)
         {
             specialMark = statusInstance.transform.Find("SpecialMark").GetComponent<Image>();
@@ -49,6 +56,7 @@ namespace TotallyWholesome.Managers.Status
             masterAuto.gameObject.SetActive(false);
             petAuto.gameObject.SetActive(false);
             gameObject.SetActive(false);
+            StatusEnabled = false;
         }
 
         public void UpdateAutoAcceptGroup(bool piShock, bool buttplug, bool pet, bool master)

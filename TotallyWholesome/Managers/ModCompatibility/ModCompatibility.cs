@@ -22,12 +22,6 @@ namespace TotallyWholesome.Managers.ModCompatibility
             {
                 Con.Msg("Detected [Information Redacted]'s NotificationAPI, it will be used in place of the CVR hud notifications!");
             }
-
-            if (VRCPlatesAdapter.IsVRCPlatesEnabled())
-            {
-                Con.Msg("Detected FS's VRCPlates, TW Status will be adjusted to work with them.");
-                VRCPlatesAdapter.SetupVRCPlateCompat();
-            }
         }
 
         private void OnLocalAvatarReady()

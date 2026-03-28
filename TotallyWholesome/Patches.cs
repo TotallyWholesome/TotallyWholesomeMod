@@ -18,12 +18,13 @@ using HarmonyLib;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using WholesomeLoader;
+using Yggdrasil.Logging;
 
 namespace TotallyWholesome
 {
     internal class Patches
     {
-        public static Action<PlayerNameplate> OnNameplateRebuild;        
+        public static Action<OverheadController, List<IOverhead>> OnOverheadControllerStart;        
         public static Action OnUserLogin;
         public static Action EarlyWorldJoin;
         public static Action<CVRPlayerEntity> UserJoin;
@@ -61,7 +62,7 @@ namespace TotallyWholesome
         {
             Con.Debug("Setting up Patches...");
             
-            ApplyPatches(typeof(NameplatePatches));
+            ApplyPatches(typeof(OverheadControllerPatch));
             ApplyPatches(typeof(InstancesPatches));
             ApplyPatches(typeof(ViewManagerPatches));
             ApplyPatches(typeof(MicrophoneCapturePatch));
@@ -178,21 +179,24 @@ namespace TotallyWholesome
         }
     }
 
-    [HarmonyPatch(typeof(PlayerNameplate))]
-    class NameplatePatches
+    [HarmonyPatch(typeof(OverheadController))]
+    class OverheadControllerPatch
     {
-        [HarmonyPatch(nameof(PlayerNameplate.UpdateNamePlateSettings))]
+        private static FieldInfo overheadsPriv = typeof(OverheadController).GetField("_overheads", BindingFlags.Instance | BindingFlags.NonPublic);
+        
+        [HarmonyPatch("Start")]
         [HarmonyPostfix]
-        static void UpdateNameplate(PlayerNameplate __instance)
+        static void StartPatch(OverheadController __instance)
         {
-            try
+            var overheads = overheadsPriv.GetValue(__instance) as List<IOverhead>;
+            if (overheads == null)
             {
-                Patches.OnNameplateRebuild?.Invoke(__instance);
+                Con.Error("TW was unable to retrieve OverheadController overheads list!");
+                return;
             }
-            catch (Exception e)
-            {
-                Con.Error(e);
-            }
+            
+            //Fire off StatusManager with overheads list to create and inject
+            Patches.OnOverheadControllerStart?.Invoke(__instance, overheads);
         }
     }
 
