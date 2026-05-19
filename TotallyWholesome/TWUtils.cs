@@ -4,10 +4,12 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using ABI_RC.Core;
+using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.API;
 using ABI_RC.Core.Networking.API.Responses.DetailsV2;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
+using ABI_RC.Systems.Communications.Audio.Components;
 using ABI.CCK.Components;
 using TotallyWholesome.Managers.Lead;
 using TotallyWholesome.Managers.Lead.LeadComponents;
@@ -24,8 +26,7 @@ namespace TotallyWholesome
         private static MD5 _hasher = MD5.Create();
         private static FieldInfo _cohtmlHudGetter = typeof(RootLogic).GetField("cohtmlHud", BindingFlags.Public | BindingFlags.Instance);
 
-        private static PropertyInfo _commsAudioSourceGetter = typeof(MetaPort).Assembly.GetType("ABI_RC.Systems.Communications.Audio.Components.Comms_AudioTap").GetProperty("_audioSource", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static PropertyInfo _selfUsername = typeof(MetaPort).Assembly.GetType("ABI_RC.Core.Networking.AuthManager").GetProperty("Username", BindingFlags.Static | BindingFlags.Public);
+        private static PropertyInfo _commsAudioSourceGetter = typeof(Comms_ParticipantPipeline).GetProperty("AudioSource", BindingFlags.NonPublic | BindingFlags.Instance);
         private static TWPlayerObject _ourPlayer;
 
         public static string CreateMD5(string input)
@@ -74,7 +75,7 @@ namespace TotallyWholesome
 
         public static string GetSelfUsername()
         {
-            return (string)_selfUsername.GetValue(null);
+            return AuthManager.Username;
         }
 
         public static TWPlayerObject GetOurPlayer()

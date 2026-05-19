@@ -19,12 +19,13 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.3.7";
+        public const string Version = "3.4.0";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 
     public class WholesomeLoader : MelonMod
     {
+        public static WholesomeLoader Instance;
         public static TWAssemblyVersion[] AvailableVersions;
         
         private MelonMod _wholesomeLoaderV2;
@@ -44,6 +45,8 @@ namespace WholesomeLoader
 
         public override void OnInitializeMelon()
         {
+            Instance = this;
+            
             Con.Msg("Welcome to WholesomeLoader!");
 
             if (!Directory.Exists(NewConfigRoot))
@@ -213,7 +216,7 @@ namespace WholesomeLoader
             _currentVersion = File.Exists(NewConfigRoot + "\\version.dat") ? Encoding.UTF8.GetString(File.ReadAllBytes(NewConfigRoot + "\\version.dat")) : "none";
         }
 
-        private bool CheckNewAssemblyVersion()
+        public bool CheckNewAssemblyVersion()
         {
             try
             {
