@@ -9,6 +9,7 @@ using ABI_RC.Core.Networking.API.Responses.DetailsV2;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
+using ABI_RC.Core.PropManagement;
 using ABI_RC.Core.Savior;
 using ABI_RC.Core.UI;
 using ABI_RC.Core.UI.UIMessage;
@@ -628,13 +629,11 @@ namespace TotallyWholesome.Managers.Lead
                     leadPair.PropTarget = packet.PropTarget;
                     leadPair.LockToProp = true;
 
-                    var prop = CVRSyncHelper.Props.FirstOrDefault(x => x.InstanceId.Equals(packet.PropTarget));
-
-                    if (prop != null && leadPair.LineController != null)
+                    if (Props.TryGetSpawnable(packet.PropTarget, out var spawnable) && leadPair.LineController != null)
                     {
-                        Transform propTarget = TWUtils.GetRootGameObject(prop.Spawnable.gameObject, "TWLPropAnchor");
+                        Transform propTarget = TWUtils.GetRootGameObject(spawnable.gameObject, "TWLPropAnchor");
                         if (propTarget == null)
-                            propTarget = prop.Spawnable.transform;
+                            propTarget = spawnable.transform;
 
                         leadPair.LineController.targetOverride = propTarget;
                     }
@@ -871,7 +870,7 @@ namespace TotallyWholesome.Managers.Lead
             {
                 //Add prop to our lists if needed
                 if (obj.SpawnedByMe && !_props.ContainsKey(obj.instanceId)) 
-                    _props.Add(obj.instanceId, obj.PropData.ContentMetadata.AssetName);
+                    _props.Add(obj.instanceId, obj.PropSoul.ContentMetadata.AssetName);
 
                 var pairs = ActiveLeadPairs.Values.Where(x => x.PropTarget != null && x.PropTarget.Equals(obj.instanceId)).ToArray();
 
@@ -976,13 +975,11 @@ namespace TotallyWholesome.Managers.Lead
             }
 
             //Set the prop target if the prop exists
-            var prop = CVRSyncHelper.Props.FirstOrDefault(x => x.InstanceId.Equals(leadPair.PropTarget));
-
-            if (prop != null && prop.Spawnable != null && leadPair.LockToProp && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
+            if (Props.TryGetSpawnable(leadPair.PropTarget, out var spawnable) && leadPair.LockToProp && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
             {
-                Transform propTarget = TWUtils.GetRootGameObject(prop.Spawnable.gameObject, "TWLPropAnchor");
+                Transform propTarget = TWUtils.GetRootGameObject(spawnable.gameObject, "TWLPropAnchor");
                 if (propTarget == null)
-                    propTarget = prop.Spawnable.transform;
+                    propTarget = spawnable.transform;
 
                 followerController.targetOverride = propTarget;
             }
