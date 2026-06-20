@@ -4,10 +4,8 @@ using System.Linq;
 using System.Reflection;
 using ABI_RC.Core.Base;
 using ABI_RC.Core.InteractionSystem;
-using ABI_RC.Core.Networking;
 using ABI_RC.Core.Networking.API.UserWebsocket;
 using ABI_RC.Core.Networking.IO.Instancing;
-using ABI_RC.Core.Networking.IO.Social;
 using ABI_RC.Core.Player;
 using ABI_RC.Core.Savior;
 using ABI_RC.Systems.GameEventSystem;
@@ -15,6 +13,8 @@ using ABI_RC.Systems.IK.SubSystems;
 using ABI_RC.Systems.Movement;
 using ABI.CCK.Components;
 using HarmonyLib;
+using JetBrains.Annotations;
+using TotallyWholesome.Managers;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using WholesomeLoader;
@@ -48,11 +48,11 @@ namespace TotallyWholesome
         public static DateTime TimeSinceLastUnmute = DateTime.Now;
         public static DateTime TimeSinceKeyboardOpen = DateTime.Now;
 
-        private static void ApplyPatches(Type type)
+        public static void ApplyPatches(Type type)
         {
             Con.Debug($"Applying {type.Name} patches!");
             try {
-                HarmonyLib.Harmony.CreateAndPatchAll(type, BuildInfo.Name + "_Hooks");
+                HarmonyLib.Harmony.CreateAndPatchAll(type, BuildInfo.Name + "_Hooks_" + type.Name);
             } catch (Exception e) {
                 Con.Error($"Failed while patching {type.Name}!\n{e}");
             }
@@ -70,6 +70,7 @@ namespace TotallyWholesome
             ApplyPatches(typeof(MovementSystemPatches));
             ApplyPatches(typeof(CVRSeatPatch));
             ApplyPatches(typeof(BodySystemPatch));
+            ApplyPatches(typeof(InstancesEarlyWorldJoinPatch));
 
             CVRGameEventSystem.Instance.OnConnected.AddListener((message) =>
             {
@@ -122,19 +123,6 @@ namespace TotallyWholesome
                     Con.Error(e);
                 }
             });
-            
-            CVRGameEventSystem.World.OnLoad.AddListener((message) =>
-            {
-                try
-                {
-                    EarlyWorldJoin?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Con.Error("An error occured within EarlyWorldJoin!");
-                    Con.Error(e);
-                }
-            });
 
             CVRGameEventSystem.Instance.OnConnected.AddListener(str =>
             {
@@ -182,13 +170,13 @@ namespace TotallyWholesome
     [HarmonyPatch(typeof(OverheadController))]
     class OverheadControllerPatch
     {
-        private static FieldInfo overheadsPriv = typeof(OverheadController).GetField("_overheads", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo OverheadsPriv = typeof(OverheadController).GetField("_overheads", BindingFlags.Instance | BindingFlags.NonPublic);
         
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
         static void StartPatch(OverheadController __instance)
         {
-            var overheads = overheadsPriv.GetValue(__instance) as List<IOverhead>;
+            var overheads = OverheadsPriv.GetValue(__instance) as List<IOverhead>;
             if (overheads == null)
             {
                 Con.Error("TW was unable to retrieve OverheadController overheads list!");
@@ -203,18 +191,39 @@ namespace TotallyWholesome
     [HarmonyPatch]
     class InstancesPatches
     {
+        [UsedImplicitly]
         static MethodBase TargetMethod()
         {
             var tryNewTarget = typeof(Instances).GetMethods(BindingFlags.Public | BindingFlags.Static).FirstOrDefault(x => x.Name == "SetJoinTarget" && x.GetParameters().Length == 1);
             return tryNewTarget != null ? tryNewTarget : typeof(Instances).GetMethod("SetJoinTarget", BindingFlags.Public | BindingFlags.Static);
         }
 
+        [UsedImplicitly]
         static void Postfix()
         {
             Patches.OnChangingInstance?.Invoke();
         }
     }
-    
+
+    [HarmonyPatch(typeof(Instances))]
+    class InstancesEarlyWorldJoinPatch
+    {
+        [HarmonyPatch(nameof(Instances.RequestInstanceJoin))]
+        [HarmonyPrefix]
+        public static void RequestInstanceJoin()
+        {
+            try
+            {
+                Patches.EarlyWorldJoin?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Con.Error("An error occured within EarlyWorldJoin!");
+                Con.Error(e);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(ViewManager))]
     class ViewManagerPatches
     {
@@ -239,14 +248,15 @@ namespace TotallyWholesome
     public class MicrophoneCapturePatch
     {
         //These 2 numbers are still magic, changing it too far from these breaks the filter entirely
-        public static float MagicFilterLevel = 433.1509f;
-        public static float QLevel = 0.003219661f;
+        private static readonly float MagicFilterLevel = 433.1509f;
+        private static readonly float QLevel = 0.003219661f;
         
         private static float[] _a = new float[3];
         private static float[] _b = new float[3];
 
         private static float _in1, _in2, _out1, _out2;
-
+        
+        [UsedImplicitly]
         static MethodBase TargetMethod()
         {
             RecalculateCoefficients();
@@ -260,9 +270,11 @@ namespace TotallyWholesome
 
             return target;
         }
+        
+        [UsedImplicitly]
         static bool Prefix(ref float[] data)
         {
-            if (!Patches.IsMuffled)
+            if (!Patches.IsMuffled || !Patches.IsForceMuted)
                 return true;
 
             for (int i = 0; i < data.Length; i++)

@@ -277,6 +277,7 @@ namespace TotallyWholesome.Managers.Lead
             {
                 //Reset IsForceMuted on clear all leads
                 Patches.IsForceMuted = false;
+                Patches.IsMuffled = false;
 
                 if (Instance.MasterPair != null)
                 {
@@ -975,7 +976,7 @@ namespace TotallyWholesome.Managers.Lead
             }
 
             //Set the prop target if the prop exists
-            if (Props.TryGetSpawnable(leadPair.PropTarget, out var spawnable) && leadPair.LockToProp && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
+            if (!string.IsNullOrWhiteSpace(leadPair.PropTarget) && Props.TryGetSpawnable(leadPair.PropTarget, out var spawnable) && leadPair.LockToProp && ConfigManager.Instance.IsActive(AccessType.AllowWorldPropPinning, leadPair.MasterID))
             {
                 Transform propTarget = TWUtils.GetRootGameObject(spawnable.gameObject, "TWLPropAnchor");
                 if (propTarget == null)
