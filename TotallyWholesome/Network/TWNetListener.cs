@@ -155,7 +155,7 @@ namespace TotallyWholesome.Network
             try
             {
                 Con.Debug($"[RECV] - {packet}");
-                StatusManager.Instance.OnStatusUpdate(packet);
+                StatusManager.OnStatusUpdate(packet);
             }
             catch (Exception e)
             {

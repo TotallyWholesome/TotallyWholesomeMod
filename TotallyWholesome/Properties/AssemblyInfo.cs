@@ -25,7 +25,7 @@ using Main = TotallyWholesome.Main;
     BuildInfo.Author,
     BuildInfo.DownloadLink)]
 [assembly: MelonColor(255, 139,0,139)]
-[assembly: MelonOptionalDependencies("UI Expansion Kit", "ActionMenu")]
+[assembly: MelonOptionalDependencies("UI Expansion Kit", "ActionMenu", "CleanPlates")]
 
 // Create and Setup a MelonModGame to mark a Mod as Universal or Compatible with specific Games.
 // If no MelonModGameAttribute is found or any of the Values for any MelonModGame on the Mod is null or empty it will be assumed the Mod is Universal.

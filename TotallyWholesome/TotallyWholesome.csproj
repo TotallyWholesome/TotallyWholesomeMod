@@ -40,6 +40,9 @@
       <HintPath>..\3rdparty\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="CleanPlates">
+      <HintPath>..\3rdparty\Mods\CleanPlates.dll</HintPath>
+    </Reference>
     <Reference Include="cohtml.Net">
       <HintPath>..\3rdparty\Managed\cohtml.Net.dll</HintPath>
       <Private>true</Private>

@@ -15,6 +15,7 @@ using ABI.CCK.Components;
 using HarmonyLib;
 using JetBrains.Annotations;
 using TotallyWholesome.Managers;
+using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
 using TotallyWholesome.Network;
 using TotallyWholesome.Notification;
 using WholesomeLoader;
@@ -61,8 +62,9 @@ namespace TotallyWholesome
         public static void SetupPatches()
         {
             Con.Debug("Setting up Patches...");
-            
-            ApplyPatches(typeof(OverheadControllerPatch));
+
+            if (!CleanPlatesAdapter.GetCleanPlatesMethods())
+                ApplyPatches(typeof(OverheadControllerPatch));
             ApplyPatches(typeof(InstancesPatches));
             ApplyPatches(typeof(ViewManagerPatches));
             ApplyPatches(typeof(MicrophoneCapturePatch));

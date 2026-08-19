@@ -45,7 +45,7 @@ Introduces unique and new player-to-player interactions that allow for one playe
 
 This is intended to be used with one or more consenting parties, so all features can be toggled and role requests are mandatory by default.
 
-### TotallyWholesome is not made by or affiliated with ChilloutVR or the ChilloutVR Team
+### TotallyWholesome is not made by or affiliated with Alpha Blend Interactive
 
 
 ### Features

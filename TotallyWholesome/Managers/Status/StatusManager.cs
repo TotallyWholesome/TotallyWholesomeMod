@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ABI_RC.Core;
 using ABI_RC.Core.InteractionSystem;
 using ABI_RC.Core.Networking.IO.Instancing;
 using ABI_RC.Core.Player;
@@ -19,7 +20,6 @@ using TWNetCommon.Data;
 using UnityEngine;
 using UnityEngine.UI;
 using WholesomeLoader;
-using Yggdrasil.Logging;
 using Object = UnityEngine.Object;
 
 namespace TotallyWholesome.Managers.Status
@@ -28,23 +28,35 @@ namespace TotallyWholesome.Managers.Status
     {
         public static StatusManager Instance;
         
-        private Dictionary<string, StatusComponent> _statusComponents;
-        private Dictionary<string, StatusUpdate> _knownStatuses;
+        private static Dictionary<string, StatusComponent> _statusComponents;
+        private static Dictionary<string, StatusUpdate> _knownStatuses;
 
         private bool _isPublicWorld;
-        private bool _localUserStatusGenerated;
-        private StatusComponent _localUserStatusComp;
-        private StatusUpdate _localUserStatusUpdate;
-        private StatusUpdate _ourLastStatusUpdate;
+        private static bool _localUserStatusGenerated;
+        private static StatusComponent _localUserStatusComp;
+        private static StatusUpdate _localUserStatusUpdate;
+        private static StatusUpdate _ourLastStatusUpdate;
         private DateTime _lastStatusUpdate;
         private Task _statusUpdateTask;
         private StatusUpdate _nextUpdatePacket;
+
+        private static int _fadeStartID;
+        private static int _fadeEndID;
+        private static int _firstPersonLocalNameplateScaleVrID;
+        private static int _firstPersonLocalNameplateScaleDesktopID;
+        private static int _isLocalPlayerID;
 
         public int Priority => 1;
 
         public void Setup()
         {
             Instance = this;
+            
+            _fadeStartID = Shader.PropertyToID("_FadeStartDistance");
+            _fadeEndID = Shader.PropertyToID("_FadeEndDistance");
+            _firstPersonLocalNameplateScaleVrID = Shader.PropertyToID("_FirstPersonLocalNameplateScaleVr");
+            _firstPersonLocalNameplateScaleDesktopID = Shader.PropertyToID("_FirstPersonLocalNameplateScaleDesktop");
+            _isLocalPlayerID = Shader.PropertyToID("_IsLocalPlayer");
             
             _statusComponents = new Dictionary<string, StatusComponent>();
             _knownStatuses = new Dictionary<string, StatusUpdate>();
@@ -158,7 +170,7 @@ namespace TotallyWholesome.Managers.Status
             });
         }
 
-        public void OnStatusUpdate(StatusUpdate packet)
+        public static void OnStatusUpdate(StatusUpdate packet)
         {
             if (packet.UserID == MetaPort.Instance.ownerId)
             {
@@ -232,7 +244,7 @@ namespace TotallyWholesome.Managers.Status
             });
         }
 
-        public void UpdateQuickMenuStatus()
+        private static void UpdateQuickMenuStatus()
         {
             if (_ourLastStatusUpdate == null) return;
             
@@ -260,6 +272,63 @@ namespace TotallyWholesome.Managers.Status
                 component.masterIndicator.SetActive(master);
                 component.petIndicator.SetActive(pet);
             });
+        }
+
+        public static void CleanPlatesPlateAttached(PlayerBase player, GameObject _)
+        {
+            Con.Debug("CleanPlates PlateAttached fired!");
+            var userID = player.PlayerId;
+            
+            if ((!string.IsNullOrWhiteSpace(userID) && _statusComponents.ContainsKey(userID) && _statusComponents[userID] != null) || (player.IsLocalPlayer && _localUserStatusGenerated && _localUserStatusComp != null)) return;
+
+            if(!string.IsNullOrWhiteSpace(userID))
+                _statusComponents.Remove(userID);
+
+            var parent = CleanPlatesAdapter.GetPlateCorner(player, 7);
+            
+            GameObject newStatus = Object.Instantiate(TWAssets.StatusPrefab, parent);
+            //Make NAK's cracked up thing not touch my shit lol
+            newStatus.name += "_No";
+            RectTransform rectTransform = newStatus.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(50f, 0);
+
+            StatusComponent component = newStatus.AddComponent<StatusComponent>();
+            component.SetupStatus(newStatus);
+            component.ResetStatus();
+
+            var plateMat = CleanPlatesAdapter.GetPlateGraphicMat(player.IsLocalPlayer);
+            
+            SetMaterialProperties(
+                newStatus,
+                plateMat.GetFloat(_fadeStartID), 
+                plateMat.GetFloat(_fadeEndID),
+                plateMat.GetFloat(_firstPersonLocalNameplateScaleVrID),
+                plateMat.GetFloat(_firstPersonLocalNameplateScaleDesktopID),
+                player.IsLocalPlayer);
+
+            if (player.IsLocalPlayer)
+            {
+                Con.Debug("Setup local player nameplate with CleanPlates adapter");
+                component.IsLocalUser = true;
+                _localUserStatusGenerated = true;
+                _localUserStatusComp = component;
+                if(_localUserStatusUpdate != null)
+                    OnStatusUpdate(_localUserStatusUpdate);
+            }
+            else
+            {
+                _statusComponents.Add(userID, component);
+                if (!_knownStatuses.ContainsKey(userID)) return;
+                OnStatusUpdate(_knownStatuses[userID]);
+            }
+        }
+
+        public static void CleanPlatesPlateDetached(PlayerBase player, GameObject _)
+        {
+            if (player.IsLocalPlayer)
+                _localUserStatusGenerated = false;
+            else
+                _statusComponents.Remove(player.PlayerId);
         }
         
         private void OnTWNetAuthenticated()
@@ -295,7 +364,7 @@ namespace TotallyWholesome.Managers.Status
             if (player.IsLocalPlayer)
             {
                 Con.Debug("Setting local user status material properties");
-                SetLocalUserMaterialProperties(newStatus);
+                SetMaterialProperties(newStatus, PlayerNameplate.LocalPlayerFadeStart, PlayerNameplate.LocalPlayerFadeEnd, PlayerNameplate.FirstPersonLocalScaleVr, PlayerNameplate.FirstPersonLocalScaleDesktop, true);
                 component.IsLocalUser = true;
                 _localUserStatusGenerated = true;
                 _localUserStatusComp = component;
@@ -310,35 +379,28 @@ namespace TotallyWholesome.Managers.Status
             }
         }
 
-        private void SetLocalUserMaterialProperties(GameObject newStatus)
+        private static void SetMaterialProperties(GameObject newStatus, float fadeStart, float fadeEnd, float fpLocalScaleVR, float fpLocalScaleDesktop, bool localPlayer)
         {
             //Get all components with things we need to touch
             var images = newStatus.GetComponentsInChildren<Image>(true);
             var tmpTexts = newStatus.GetComponentsInChildren<TMP_Text>(true);
-            
-            var fadeStart = Shader.PropertyToID("_FadeStartDistance");
-            var fadeEnd = Shader.PropertyToID("_FadeEndDistance");
-            var firstPersonLocalNameplateScaleVr = Shader.PropertyToID("_FirstPersonLocalNameplateScaleVr");
-            var firstPersonLocalNameplateScaleDesktop = Shader.PropertyToID("_FirstPersonLocalNameplateScaleDesktop");
-            var isLocalPlayer = Shader.PropertyToID("_IsLocalPlayer");
 
-            newStatus.layer = 8;
+            newStatus.layer = CVRLayers.UI;
             
-            //Set all gameobjects to PlayerLocal layer
             var children = newStatus.GetComponentsInChildren<Transform>(includeInactive: true);
             foreach (var child in children)
             {
-                child.gameObject.layer = 8;
+                child.gameObject.layer = CVRLayers.UI;
             }
 
             if (tmpTexts.Length > 0)
             {
                 var textMeshMat = new Material(tmpTexts[0].fontSharedMaterial);
-                textMeshMat.SetFloat(fadeStart, PlayerNameplate.LocalPlayerFadeStart);
-                textMeshMat.SetFloat(fadeEnd, PlayerNameplate.LocalPlayerFadeEnd);
-                textMeshMat.SetFloat(firstPersonLocalNameplateScaleVr, PlayerNameplate.FirstPersonLocalScaleVr);
-                textMeshMat.SetFloat(firstPersonLocalNameplateScaleDesktop, PlayerNameplate.FirstPersonLocalScaleDesktop);
-                textMeshMat.SetFloat(isLocalPlayer, 1f);
+                textMeshMat.SetFloat(_fadeStartID, fadeStart);
+                textMeshMat.SetFloat(_fadeEndID, fadeEnd);
+                textMeshMat.SetFloat(_firstPersonLocalNameplateScaleVrID, fpLocalScaleVR);
+                textMeshMat.SetFloat(_firstPersonLocalNameplateScaleDesktopID, fpLocalScaleDesktop);
+                textMeshMat.SetFloat(_isLocalPlayerID, localPlayer ? 1f : 0f);
                 
                 foreach(var tmpText in tmpTexts)
                     tmpText.fontSharedMaterial = textMeshMat;
@@ -354,21 +416,20 @@ namespace TotallyWholesome.Managers.Status
                     return;
                 }
                     
-                imageMat.SetFloat(fadeStart, PlayerNameplate.LocalPlayerFadeStart);
-                imageMat.SetFloat(fadeEnd, PlayerNameplate.LocalPlayerFadeEnd);
-                imageMat.SetFloat(firstPersonLocalNameplateScaleVr, PlayerNameplate.FirstPersonLocalScaleVr);
-                imageMat.SetFloat(firstPersonLocalNameplateScaleDesktop, PlayerNameplate.FirstPersonLocalScaleDesktop);
-                imageMat.SetFloat(isLocalPlayer, 1f);
+                imageMat.SetFloat(_fadeStartID, fadeStart);
+                imageMat.SetFloat(_fadeEndID, fadeEnd);
+                imageMat.SetFloat(_firstPersonLocalNameplateScaleVrID, fpLocalScaleVR);
+                imageMat.SetFloat(_firstPersonLocalNameplateScaleDesktopID, fpLocalScaleDesktop);
+                imageMat.SetFloat(_isLocalPlayerID, localPlayer ? 1f : 0f);
                 
-                imageMaskMat.SetFloat(fadeStart, PlayerNameplate.LocalPlayerFadeStart);
-                imageMaskMat.SetFloat(fadeEnd, PlayerNameplate.LocalPlayerFadeEnd);
-                imageMaskMat.SetFloat(firstPersonLocalNameplateScaleVr, PlayerNameplate.FirstPersonLocalScaleVr);
-                imageMaskMat.SetFloat(firstPersonLocalNameplateScaleDesktop, PlayerNameplate.FirstPersonLocalScaleDesktop);
-                imageMaskMat.SetFloat(isLocalPlayer, 1f);
+                imageMaskMat.SetFloat(_fadeStartID, fadeStart);
+                imageMaskMat.SetFloat(_fadeEndID, fadeEnd);
+                imageMaskMat.SetFloat(_firstPersonLocalNameplateScaleVrID, fpLocalScaleVR);
+                imageMaskMat.SetFloat(_firstPersonLocalNameplateScaleDesktopID, fpLocalScaleDesktop);
+                imageMaskMat.SetFloat(_isLocalPlayerID, localPlayer ? 1f : 0f);
 
                 foreach (var image in images) 
                     image.material = image.material.shader.name == "TotallyWholesome/NameplateStatusBillboardMask" ? imageMaskMat : imageMat;
-                
             }
         }
 
