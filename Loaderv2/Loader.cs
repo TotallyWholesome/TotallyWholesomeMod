@@ -19,7 +19,7 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.4.0";
+        public const string Version = "3.4.1";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 
@@ -42,6 +42,7 @@ namespace WholesomeLoader
         private Config _configJson;
         private HttpClient _wlClient;
         private TWAssemblyVersion _selectedVersion = new();
+        private bool _apiOffline;
 
         public override void OnInitializeMelon()
         {
@@ -113,9 +114,12 @@ namespace WholesomeLoader
 
             var loadCached = CheckNewAssemblyVersion();
 
-            Con.Debug($"LoadCached: {loadCached} {_selectedVersion}");
+            if (_apiOffline) 
+                Con.Error("Totally Wholesome's API is not responding! It may be down for maintenance! TW will attempt to load the last cached version of TW, this may or may not work properly!");
 
-            if(twAssembly == null)
+            Con.Debug($"TW Load: Cached: {loadCached} | Selected: {_selectedVersion} | API Offline: {_apiOffline}");
+
+            if(twAssembly == null && !_apiOffline)
                 if (!CheckCompatibility())
                     return;
 
@@ -259,6 +263,7 @@ namespace WholesomeLoader
                         break;
                     default:
                         Con.Error($"An unknown error has occured! HTTP Status Code: {message.StatusCode}\nUnable to retrieve TW assembly versions!");
+                        _apiOffline = true;
                         break;
                 }
             }
@@ -266,6 +271,7 @@ namespace WholesomeLoader
             {
                 Con.Error("Unable to retrieve TW assembly versions from api!");
                 Con.Error(e);
+                _apiOffline = true;
             }
 
             return false;
@@ -282,9 +288,9 @@ namespace WholesomeLoader
 
             Con.Debug($"getTW_Assy {loadCached} {md5Sum} Compared to: {_selectedVersion.AssemblyHash}");
 
-            if (loadCached && md5Sum != null)
+            if ((loadCached || _apiOffline) && md5Sum != null)
             {
-                if (_selectedVersion.AssemblyHash != null && (md5Sum.Equals(_selectedVersion.AssemblyHash) || string.IsNullOrWhiteSpace(_selectedVersion.AssemblyHash)))
+                if ((!string.IsNullOrWhiteSpace(_selectedVersion.AssemblyHash) && md5Sum.Equals(_selectedVersion.AssemblyHash)) || _apiOffline)
                 {
                     Con.Msg("\u001b[0m[\u001b[34mSUCCESS\u001b[0m] \u001b[36mLoaded cached TotallyWholesome assembly!\u001b[0m");
                     twAssy = Assembly.Load(File.ReadAllBytes(NewConfigRoot + "TotallyWholesome.dll"));
