@@ -1,4 +1,5 @@
-﻿using ABI_RC.Systems.UI.UILib.UIObjects;
+﻿using ABI_RC.Systems.UI.UILib;
+using ABI_RC.Systems.UI.UILib.UIObjects;
 using TotallyWholesome.Objects;
 
 namespace TotallyWholesome.Managers.TWUI.Pages.Shocker;
@@ -28,6 +29,10 @@ public class _ShockSettings : ITWManager
                     break;
                 case Config.ShockerPlatform.PiShock:
                     PiShockPage.Page.OpenPage();
+                    break;
+                default:
+                    QuickMenuAPI.ShowAlertToast("Unknown/unsupported shocker platform, please re-select your platform");
+                    PlatformSelection.Page.OpenPage();
                     break;
             }
         };

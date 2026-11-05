@@ -269,7 +269,7 @@ namespace TotallyWholesome.Managers
     {
         [Access(Category = "SettingsGeneral", Name = "Hide the leash",
             DescriptionGlobal = "This will hide the leash for all your Pets/Masters",
-            DescriptionUser = "This will hide the leash for this your Pets/Masters",
+            DescriptionUser = "This will hide the leash for this Pet/Master",
             Global = true, User = true,
             DialogMessageGlobal = "Changing No Visible Leash will not apply until you clear and create new leashes!",
             DialogMessageUser = "Changing No Visible Leash will not apply until you clear and create it again!")]

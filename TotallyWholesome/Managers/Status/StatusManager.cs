@@ -10,8 +10,7 @@ using ABI_RC.Core.Savior;
 using ABI_RC.Systems.UI.UILib;
 using TMPro;
 using TotallyWholesome.Managers.ModCompatibility.CompatbilityReflections;
-using TotallyWholesome.Managers.Shockers.OpenShock.Config;
-using TotallyWholesome.Managers.Shockers.PiShock.Config;
+using TotallyWholesome.Managers.Shockers;
 using TotallyWholesome.Managers.TWUI;
 using TotallyWholesome.Network;
 using TotallyWholesome.Utils;
@@ -135,7 +134,7 @@ namespace TotallyWholesome.Managers.Status
                 update.DisplaySpecialRank = Configuration.JSONConfig.DisplaySpecialStatus;
                 update.MasterAutoAccept = ConfigManager.Instance.IsActive(AccessType.AutoAcceptMasterRequest) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
                 update.PetAutoAccept = ConfigManager.Instance.IsActive(AccessType.AutoAcceptPetRequest) && !ConfigManager.Instance.IsActive(AccessType.AutoAcceptFriendsOnly) && Configuration.JSONConfig.ShowAutoAccept;
-                update.PiShockDevice = (OpenShockConfig.Config.Shockers.Count > 0 || PiShockConfig.Config.Shockers.Count > 0) && Configuration.JSONConfig.ShowDeviceStatus;
+                update.PiShockDevice = ShockerManager.Instance.HasShockers() && Configuration.JSONConfig.ShowDeviceStatus;
                 if(ButtplugManager.Instance.buttplugClient != null)
                     update.ButtplugDevice = ButtplugManager.Instance.buttplugClient.Devices.Length > 0 && Configuration.JSONConfig.ShowDeviceStatus;
             }

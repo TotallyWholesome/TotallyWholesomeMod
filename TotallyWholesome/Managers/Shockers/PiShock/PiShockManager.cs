@@ -169,6 +169,7 @@ public class PiShockManager : IShockerProvider, IAsyncDisposable
         Main.Instance.MainThreadQueue.Enqueue(() => PiShockPage.UpdateShockerInfo(_shockerInfoCache));
     }
 
+    /// <inheritdoc/>
     public async Task Control(ControlType type, byte intensity, ushort duration)
     {
         var piShockOperation = PiShockUtils.OperationTranslation[type];
@@ -200,6 +201,9 @@ public class PiShockManager : IShockerProvider, IAsyncDisposable
                 new StringContent(commandsJson, Encoding.UTF8, "application/json"));
         }
     }
+
+    /// <inheritdoc/>
+    public bool HasShockers() => PiShockConfig.Config.Shockers.Values.Any(x => x.Enabled);
 
     public bool NoLimits { get; }
 

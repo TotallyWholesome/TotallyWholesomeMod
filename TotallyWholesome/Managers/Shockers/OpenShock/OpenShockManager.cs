@@ -215,6 +215,9 @@ public sealed class OpenShockManager : IShockerProvider, IAsyncDisposable
         });
     }
 
+    /// <inheritdoc />
+    public bool HasShockers() => OpenShockConfig.Config.Shockers.Values.Any(x => x.Enabled);
+
     private static IReadOnlyCollection<Control> ControlListRandomShocker(ControlType type, byte intensity, ushort duration)
     {
         var allEnabledShockers = OpenShockConfig.Config.Shockers.Where(x => x.Value.Enabled).ToArray();

@@ -229,7 +229,9 @@ public class TWSettingsUI : ITWManager
         };
 
         //User manage page
-        _userManagePage = new Page("TotallyWholesome", "Manage User: ");
+        _userManagePage = new Page("TotallyWholesome", "User: ");
+        _userManagePage.MenuTitle = "Manage User";
+        _userManagePage.MenuSubtitle = "Individual permissions for this user";
         QuickMenuAPI.AddRootPage(_userManagePage);
 
         TWMenu.Categories.Add("UserSettingsGeneral", _userManagePage.AddCategory("General"));
@@ -433,7 +435,7 @@ public class TWSettingsUI : ITWManager
         }
 
         var player = TWUtils.GetPlayerFromPlayerlist(userID);
-        _userManagePage.PageDisplayName = $"Manage User: {player}";
+        _userManagePage.PageDisplayName = $"User: {player.Username}";
 
         Con.Debug("Updated UserManagePage toggle states, opening menu.");
         _userManagePage.OpenPage();

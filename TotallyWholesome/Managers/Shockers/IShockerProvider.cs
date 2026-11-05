@@ -14,6 +14,12 @@ public interface IShockerProvider
     /// <returns></returns>
     public Task Control(ControlType type, byte intensity, ushort duration);
     
+    /// <summary>
+    /// Does this provider have any shockers enabled?
+    /// </summary>
+    /// <returns></returns>
+    public bool HasShockers();
+
     // < ---- ACHIEVEMENTS ---- >
     
     /// <summary>

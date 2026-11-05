@@ -129,6 +129,11 @@ public sealed class ShockerManager : ITWManager
     }
 
     /// <summary>
+    /// Does the current platform have shockers available
+    /// </summary>
+    public bool HasShockers() => ShockerProvider?.HasShockers() ?? false;
+
+    /// <summary>
     /// Send a shock to your pets
     /// </summary>
     /// <param name="type"></param>
@@ -173,12 +178,10 @@ public sealed class ShockerManager : ITWManager
             notAllowed =>
             {
                 Logger.Msg($"Not allowed to control shockers with type: {type}");
-                QuickMenuAPI.ShowAlertToast("Not allowed to control shockers with type: " + type);
             },
             noPlatformEnabled =>
             {
                 Logger.Msg("No platform enabled to control shocker"); 
-                QuickMenuAPI.ShowAlertToast("No platform enabled to control shocker");
             });
     }
 
