@@ -49,7 +49,7 @@ public class PlayerRestrictionManager : ITWManager
 
     public void LateSetup()
     {
-        var cameraGO = PlayerSetup.Instance.GetActiveCamera();
+        var cameraGO = PlayerSetup.Instance.activeCam;
 
         _twBlindnessObject = Object.Instantiate(TWAssets.TWBlindness, cameraGO.transform);
         _twBlindnessObject.transform.localPosition = Vector3.zero;

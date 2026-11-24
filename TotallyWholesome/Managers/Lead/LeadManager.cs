@@ -754,9 +754,7 @@ namespace TotallyWholesome.Managers.Lead
         {
             foreach (var pair in ActiveLeadPairs.Where(x => x.Value.PetID == player.Uuid).ToArray())
             {
-                //Don't remove from ActiveLeadPairs if we're currently disconnecting from the instance
-                if(!Instances.ForceDisconnect)
-                    ActiveLeadPairs.Remove(pair.Key);
+                ActiveLeadPairs.Remove(pair.Key);
                 OnLeadPairDestroyed?.Invoke(pair.Value);
 
                 if (MasterPair != null && pair.Value.Key == MasterPair.Key)

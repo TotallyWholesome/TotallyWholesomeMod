@@ -19,7 +19,7 @@ namespace WholesomeLoader
         public const string Name = "WholesomeLoader";
         public const string Author = "Totally Wholesome Team";
         public const string Company = "TotallyWholesome";
-        public const string Version = "3.4.1";
+        public const string Version = "3.4.2";
         public const string DownloadLink = "https://totallywholeso.me/downloads/WholesomeLoader.dll";
     }
 
@@ -161,7 +161,11 @@ namespace WholesomeLoader
         private bool CheckCompatibility()
         {
             var mlVersion = SemVersion.Parse(MelonLoader.Properties.BuildInfo.Version);
-            var cvrVersion = new CVRVersion(Application.version);
+            if (!SemVersion.TryParse(Application.version, out var cvrVersion))
+            {
+                Con.Error("This version of WholesomeLoader does not support pre-GS2 ChilloutVR clients!");
+                return false;
+            }
 
             //Check all available branches for compatibility
             foreach (var version in AvailableVersions)
@@ -171,7 +175,7 @@ namespace WholesomeLoader
                 if(mlVersion.CompareByPrecedence(minMLVersion) < 0)
                     continue;
                 version.IsMLCompatible = true;
-                if(cvrVersion.IsVersionNewer(version.MinVer) < 0 || cvrVersion.IsVersionNewer(version.MaxVer) > 0)
+                if(!version.IsMinCompatible(cvrVersion) || !version.IsMaxCompatible(cvrVersion))
                     continue;
                 version.IsCVRCompatible = true;
                 Con.Debug($"Version: {version.TWVersionInfo} | Branch: {version.BranchPrettyName} is compatible with this game/ml configuration");
@@ -183,7 +187,7 @@ namespace WholesomeLoader
                 if (!_selectedVersion.IsMLCompatible)
                     Con.Warn($"Selected branch {_selectedVersion.BranchPrettyName} with version {_selectedVersion.TWVersionInfo} is not listed as compatible with this version of MelonLoader! Minimum required version: {_selectedVersion.MinMLVersion}");
                 if (!_selectedVersion.IsCVRCompatible)
-                    Con.Warn($"Selected branch {_selectedVersion.BranchPrettyName} with version {_selectedVersion.TWVersionInfo} is not listed as compatible with this version of ChilloutVR! Expected minimum version: {_selectedVersion.ExpectedCVRVersion}");
+                    Con.Warn($"Selected branch {_selectedVersion.BranchPrettyName} with version {_selectedVersion.TWVersionInfo} is not listed as compatible with this version of ChilloutVR! Expected minimum version: {_selectedVersion.MinVer}");
                 
                 Con.Msg("Checking for available compatible versions...");
                 var compatibleVersions = AvailableVersions.Where(x => x.IsMLCompatible && x.IsCVRCompatible).ToArray();
@@ -403,42 +407,6 @@ namespace WholesomeLoader
                 _hasQuit = true;
                 Con.Msg(System.ConsoleColor.Red, "TotallyWholesome says bye bye!");
             }
-        }
-    }
-
-    public class TWAssemblyVersion
-    {
-        public string Branch = "live";
-        public string BranchPrettyName = "Live";
-        public string TWVersionInfo = "No name";
-        public string AssemblyName;
-        public string AssemblyHash;
-        public string MinMLVersion;
-        public bool IsCVRCompatible = false;
-        public bool IsMLCompatible = false;
-        public CVRVersion MinVer;
-        public CVRVersion MaxVer;
-
-        public string ExpectedCVRVersion
-        {
-            set => MinVer = new CVRVersion(value);
-            get => MinVer?.VersionString;
-        }
-
-        public string MaxCVRVersion
-        {
-            set => MaxVer = new CVRVersion(value);
-            get => MaxVer?.VersionString;
-        }
-
-        public bool IsValid()
-        {
-            return !string.IsNullOrWhiteSpace(AssemblyHash) && !string.IsNullOrWhiteSpace(AssemblyName);
-        }
-
-        public override string ToString()
-        {
-            return $"[TWAssemblyVersion] {Branch}, {BranchPrettyName}, {TWVersionInfo}, {AssemblyName} {AssemblyHash}";
         }
     }
     
